@@ -1,0 +1,46 @@
+@if (property(); as prop) {
+<div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
+  <div class="relative">
+    <img class="h-56 w-full object-cover" [src]="prop.imageUrl" [alt]="prop.title">
+    <div class="absolute top-3 left-3 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
+      {{ prop.propertyType }}
+    </div>
+  </div>
+
+  <div class="p-6 flex-grow flex flex-col">
+    <h3 class="text-xl font-bold text-gray-900 truncate">{{ prop.title }}</h3>
+    <p class="text-sm text-gray-500 mt-1">{{ prop.address }}</p>
+
+    <div class="mt-4 flex-grow">
+      <div class="flex justify-between items-center text-sm">
+        <span class="font-semibold text-gray-700">Funding Progress</span>
+        <span class="font-bold text-teal-600">{{ fundingPercentage() | number:'1.0-0' }}%</span>
+      </div>
+      <div class="mt-1 w-full bg-gray-200 rounded-full h-2.5">
+        <div class="bg-teal-500 h-2.5 rounded-full" [style.width.%]="fundingPercentage()"></div>
+      </div>
+    </div>
+    
+    <div class="mt-6 grid grid-cols-3 gap-4 text-center border-t border-gray-100 pt-4">
+      <div>
+        <p class="text-sm text-gray-500">Return</p>
+        <p class="font-bold text-gray-800">{{ prop.expectedReturn }}%</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Investors</p>
+        <p class="font-bold text-gray-800">{{ prop.investors }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">LTV</p>
+        <p class="font-bold text-gray-800">{{ prop.loanToValue }}%</p>
+      </div>
+    </div>
+
+  </div>
+  <div class="p-6 pt-0">
+    <button class="w-full bg-teal-50 text-teal-700 px-4 py-2 rounded-lg font-semibold hover:bg-teal-100 hover:text-teal-800 transition-colors duration-200">
+      View Details
+    </button>
+  </div>
+</div>
+}

@@ -1,0 +1,55 @@
+@if (property(); as prop) {
+<section class="mb-16">
+  <div class="bg-white rounded-2xl shadow-lg overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4">
+    <div class="relative min-h-80 lg:min-h-full">
+      <img [src]="prop.imageUrl" [alt]="prop.title" class="absolute h-full w-full object-cover">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      <div class="absolute top-4 left-4">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-teal-100 text-teal-800">
+          <svg class="w-4 h-4 mr-1.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10.868 2.884c.321-.772 1.305-.772 1.626 0l1.838 4.442a.75.75 0 00.564.41l4.904.713c.852.124 1.192 1.168.573 1.776l-3.549 3.458a.75.75 0 00-.216.664l.838 4.884c.146.848-.744 1.5-1.528 1.103l-4.385-2.305a.75.75 0 00-.702 0l-4.385 2.305c-.784.4-1.674-.255-1.528-1.103l.838-4.884a.75.75 0 00-.216-.664l-3.549-3.458c-.62-.608-.28-1.652.574-1.776l4.904-.713a.75.75 0 00.563-.41l1.838-4.442z" clip-rule="evenodd" />
+          </svg>
+          Featured
+        </span>
+      </div>
+    </div>
+
+    <div class="p-8 lg:p-12 flex flex-col justify-center">
+      <h2 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">{{ prop.title }}</h2>
+      <p class="mt-2 text-gray-500 font-medium">{{ prop.address }}</p>
+      <p class="mt-4 text-gray-600 leading-relaxed">{{ prop.description }}</p>
+
+      <div class="mt-8">
+        <div class="flex justify-between items-baseline">
+          <p class="text-2xl font-bold text-teal-600">
+            {{ prop.raisedAmount | number:'1.0-0' }}
+          </p>
+          <p class="text-sm font-medium text-gray-500">
+            raised of {{ prop.totalInvestment | number:'1.0-0' }} goal
+          </p>
+        </div>
+        <div class="mt-2 w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-teal-500 h-3 rounded-full" [style.width.%]="fundingPercentage()"></div>
+        </div>
+      </div>
+      
+      <div class="mt-8 grid grid-cols-2 gap-6 text-center">
+        <div class="bg-teal-50/50 p-4 rounded-lg">
+          <div class="text-3xl font-bold text-teal-600">{{ prop.expectedReturn }}%</div>
+          <div class="text-sm font-medium text-gray-500 mt-1">Targeted Return</div>
+        </div>
+        <div class="bg-teal-50/50 p-4 rounded-lg">
+          <div class="text-3xl font-bold text-teal-600">{{ prop.investors }}</div>
+          <div class="text-sm font-medium text-gray-500 mt-1">Investors</div>
+        </div>
+      </div>
+
+      <div class="mt-8">
+        <button class="w-full bg-teal-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-teal-700 transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+          View Details & Invest
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+}
