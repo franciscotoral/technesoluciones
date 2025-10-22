@@ -34,11 +34,19 @@
         </h3>
         <div class="mt-8 flex justify-center items-center flex-wrap gap-x-12 gap-y-6">
           @for (partner of partners(); track partner.name) {
-            <img class="h-8 object-contain" [src]="partner.logoUrl" [alt]="partner.name">
-          }
-        </div>
-      </div>
-    </section>
+            <img
+          class="h-8 object-contain opacity-80 hover:opacity-100 transition"
+          [src]="partner.logoUrl"
+          [alt]="partner.name + ' logo'"
+          loading="lazy"
+          height="32"
+          width="120"
+          (error)="onLogoError($event)"
+            />
+            }
+            </div>
+          </div>
+        </section>
 
     <!-- Services Section -->
     <section id="services" class="py-20 md:py-28">

@@ -62,11 +62,9 @@ export class AppComponent {
   ]);
 
   readonly partners = signal<Partner[]>([
-      { name: 'IETcc-CSIC', logoUrl: 'https://i.imgur.com/L136m2P.png' },
-      { name: 'Tech Solutions', logoUrl: 'https://i.imgur.com/vHZd3nS.png' },
-      { name: 'Innovate Corp', logoUrl: 'https://i.imgur.com/kS5xMAf.png' },
-      { name: 'Quantum Industries', logoUrl: 'https://i.imgur.com/5J3e2w1.png' },
-      { name: 'Synergy Group', logoUrl: 'https://i.imgur.com/3hX2mYk.png' },
+      { name: 'CSIC', logoUrl: 'assets/partners/csic.svg' },
+      { name: 'UAM',  logoUrl: 'assets/partners/uam.png'  },
+      { name: 'FLC',  logoUrl: 'assets/partners/flc.png'  },
   ]);
 
   readonly sectors = signal<string[]>([
