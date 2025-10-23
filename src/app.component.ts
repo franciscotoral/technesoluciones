@@ -15,6 +15,8 @@ interface Partner {
   logoUrl: string;
 }
 
+declare global { interface Window { Calendly?: any; } }
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -70,4 +72,28 @@ export class AppComponent {
   readonly sectors = signal<string[]>([
     'Residential', 'Industrial', 'Healthcare', 'Energy'
   ]);
+ private readonly CALENDLY_URL =
+    'https://calendly.com/administracion-techneconstrucciones?hide_gdpr_banner=1';
+
+  openCalendly(evt?: Event) {
+    evt?.preventDefault();
+
+    const open = () => window.Calendly?.initPopupWidget({ url: this.CALENDLY_URL });
+
+    if (window.Calendly) { open(); return; }
+
+    const id = 'calendly-widget-script';
+    let s = document.getElementById(id) as HTMLScriptElement | null;
+    if (!s) {
+      s = document.createElement('script');
+      s.id = id;
+      s.src = 'https://assets.calendly.com/assets/external/widget.js';
+      s.async = true;
+      s.onload = open;
+      document.body.appendChild(s);
+    } else {
+      open();
+    }
+  }
+
 }
