@@ -1,0 +1,32 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 180" role="img" aria-label="Techne logo">
+  <defs>
+    <style>
+      .word { fill: #0d1f33; font: 800 112px 'Manrope', Arial, sans-serif; }
+      .sq1 { fill: #0f5ea8; }
+      .sq2 { fill: #2478b5; }
+      .sq3 { fill: #3e8ec0; }
+      .sq4 { fill: #5ca4cf; }
+    </style>
+  </defs>
+
+  <g transform="translate(6,14)">
+    <rect class="sq1" x="0" y="84" width="34" height="34" rx="2"/>
+    <rect class="sq2" x="40" y="84" width="34" height="34" rx="2"/>
+    <rect class="sq3" x="80" y="84" width="34" height="34" rx="2"/>
+
+    <rect class="sq1" x="0" y="124" width="34" height="34" rx="2"/>
+    <rect class="sq2" x="40" y="124" width="34" height="34" rx="2"/>
+    <rect class="sq3" x="80" y="124" width="34" height="34" rx="2"/>
+
+    <rect class="sq1" x="40" y="44" width="34" height="34" rx="2"/>
+    <rect class="sq4" x="80" y="44" width="34" height="34" rx="2"/>
+
+    <rect class="sq2" x="80" y="4" width="34" height="34" rx="2"/>
+    <rect class="sq4" x="120" y="4" width="34" height="34" rx="2"/>
+
+    <rect class="sq1" x="40" y="164" width="34" height="34" rx="2"/>
+    <rect class="sq2" x="80" y="164" width="34" height="34" rx="2"/>
+  </g>
+
+  <text class="word" x="184" y="128">Techne</text>
+</svg>

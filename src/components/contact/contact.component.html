@@ -1,0 +1,96 @@
+﻿<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow py-16 md:py-24">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">{{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}</h1>
+        <p class="mt-4 text-lg text-gray-400">
+          {{ i18n.lang() === 'es' ? 'Cuéntanos sobre tu proyecto y te responderemos con un diagnóstico y próximos pasos.' : 'Tell us about your project and we will get back to you with a tailored diagnostic and next steps.' }}
+        </p>
+      </div>
+
+      <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <article class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+          <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Envíanos un mensaje' : 'Send us a message' }}</h2>
+
+          <form class="mt-6 space-y-4" [formGroup]="contactForm" (ngSubmit)="submitForm()" novalidate>
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="name">{{ i18n.lang() === 'es' ? 'Nombre completo' : 'Full name' }}</label>
+              <input id="name" formControlName="name" type="text" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              @if (contactForm.controls.name.touched && contactForm.controls.name.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Introduce un nombre válido (mín. 2 caracteres).' : 'Enter a valid name (min 2 characters).' }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="email">Email</label>
+              <input id="email" formControlName="email" type="email" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              @if (contactForm.controls.email.touched && contactForm.controls.email.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Introduce un correo válido.' : 'Enter a valid email address.' }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="company">{{ i18n.lang() === 'es' ? 'Empresa' : 'Company' }}</label>
+              <input id="company" formControlName="company" type="text" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="message">{{ i18n.lang() === 'es' ? 'Mensaje' : 'Message' }}</label>
+              <textarea id="message" formControlName="message" rows="5" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              @if (contactForm.controls.message.touched && contactForm.controls.message.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Añade más contexto (mín. 10 caracteres).' : 'Please add a bit more context (min 10 characters).' }}</p>
+              }
+            </div>
+
+            @if (submitError()) {
+              <p class="text-sm text-red-300">{{ submitError() }}</p>
+            }
+
+            @if (submitOk()) {
+              <p class="text-sm text-green-300">{{ i18n.lang() === 'es' ? 'Mensaje enviado correctamente. Te contactaremos pronto.' : 'Message sent successfully. We will contact you shortly.' }}</p>
+            }
+
+            <button
+              type="submit"
+              [disabled]="submitting()"
+              class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              @if (submitting()) {
+                {{ i18n.lang() === 'es' ? 'Enviando...' : 'Sending...' }}
+              } @else {
+                {{ i18n.lang() === 'es' ? 'Enviar mensaje' : 'Send Message' }}
+              }
+            </button>
+          </form>
+        </article>
+
+        <aside class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+          <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Canales directos' : 'Direct channels' }}</h2>
+
+          <div class="mt-6 space-y-4">
+            <p>
+              <span class="block text-sm text-gray-400">Email</span>
+              <a href="mailto:francisco.toral@technesoluciones.es" class="text-blue-400 hover:text-blue-300">
+                francisco.toral@technesoluciones.es
+              </a>
+            </p>
+
+            <p>
+              <span class="block text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Casos de estudio' : 'Case studies' }}</span>
+              <a href="/cases" class="text-blue-400 hover:text-blue-300">{{ i18n.lang() === 'es' ? 'Ver proyectos recientes' : 'View recent projects' }}</a>
+            </p>
+
+            <p>
+              <span class="block text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Foco de negocio' : 'Business focus' }}</span>
+              {{ i18n.lang() === 'es' ? 'Implementación de IA, aceleración CE-Marking/ETA, BIM y optimización de operaciones técnicas.' : 'AI implementation, CE-Marking/ETA acceleration, BIM and technical operations optimization.' }}
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

@@ -1,0 +1,127 @@
+﻿<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow py-16 md:py-24">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+      @if (caseStudy(); as cs) {
+        <a [routerLink]="['/cases']" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-8">
+          <span aria-hidden="true">&larr;</span>
+          {{ i18n.lang() === 'es' ? 'Volver a casos de estudio' : 'Back to case studies' }}
+        </a>
+
+        <img
+          [src]="cs.imageUrl"
+          [alt]="(i18n.lang() === 'es' ? cs.titleEs : cs.titleEn) + ' thumbnail'"
+          class="w-full h-56 md:h-80 object-cover rounded-xl border border-gray-700/50"
+          loading="lazy"
+        />
+
+        <h1 class="mt-8 text-3xl md:text-5xl font-bold text-white tracking-tight">{{ i18n.lang() === 'es' ? cs.titleEs : cs.titleEn }}</h1>
+        <p class="mt-4 text-lg text-gray-300">{{ i18n.lang() === 'es' ? cs.summaryEs : cs.summaryEn }}</p>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          @if (cs.tags?.length) {
+            @for (tag of cs.tags; track tag) {
+              <span class="text-xs bg-slate-700/60 text-gray-300 px-2.5 py-1 rounded-full">{{ tag }}</span>
+            }
+          }
+        </div>
+
+        <article class="mt-10 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8 leading-7 text-gray-300 space-y-8">
+          <section>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Contexto' : 'Context' }}</h2>
+            <p class="mt-2">{{ i18n.lang() === 'es' ? cs.detailEs.context : cs.detailEn.context }}</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Problemas típicos detectados' : 'Typical problems detected' }}</h2>
+            <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.problem : cs.detailEn.problem); track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Enfoque / solución con IA' : 'AI approach / solution' }}</h2>
+            <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.approach : cs.detailEn.approach); track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Entregables del piloto/servicio' : 'Pilot/service deliverables' }}</h2>
+            <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.deliverables : cs.detailEn.deliverables); track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Propuesta comercial derivada (servicio)' : 'Derived commercial proposal (service)' }}</h2>
+            <ol class="mt-3 list-decimal pl-5 space-y-2 marker:text-blue-400">
+              @for (step of (i18n.lang() === 'es' ? cs.detailEs.commercialProposal : cs.detailEn.commercialProposal); track step.phase) {
+                <li>
+                  <span class="font-semibold text-white">{{ step.phase }}:</span>
+                  {{ step.description }}
+                </li>
+              }
+            </ol>
+          </section>
+
+          <section class="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+            <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Mensaje clave' : 'Key message' }}</h2>
+            <p class="mt-2">{{ i18n.lang() === 'es' ? cs.detailEs.keyMessage : cs.detailEn.keyMessage }}</p>
+          </section>
+        </article>
+
+        <section class="mt-10 rounded-xl border border-gray-700/50 bg-slate-900/40 p-4 md:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            @if (previousCase(); as prev) {
+              <a [routerLink]="['/cases', prev.slug]" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                <span aria-hidden="true">&larr;</span>
+                {{ i18n.lang() === 'es' ? 'Anterior' : 'Previous' }}
+              </a>
+            } @else {
+              <span class="text-gray-500">{{ i18n.lang() === 'es' ? 'Anterior' : 'Previous' }}</span>
+            }
+
+            @if (nextCase(); as next) {
+              <a [routerLink]="['/cases', next.slug]" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300">
+                {{ i18n.lang() === 'es' ? 'Siguiente' : 'Next' }}
+                <span aria-hidden="true">&rarr;</span>
+              </a>
+            } @else {
+              <span class="text-gray-500">{{ i18n.lang() === 'es' ? 'Siguiente' : 'Next' }}</span>
+            }
+          </div>
+
+          <div class="mt-4 flex gap-3 overflow-x-auto pb-2">
+            @for (item of allCases; track item.slug) {
+              <a
+                [routerLink]="['/cases', item.slug]"
+                class="group block min-w-40 w-40 rounded-lg border border-gray-700/60 overflow-hidden"
+                [class.border-blue-400]="item.slug === cs.slug"
+              >
+                <img [src]="item.imageUrl" [alt]="(i18n.lang() === 'es' ? item.titleEs : item.titleEn) + ' thumbnail'" class="h-24 w-full object-cover" loading="lazy" />
+                <div class="p-2 text-xs text-gray-300 group-hover:text-white line-clamp-2">{{ i18n.lang() === 'es' ? item.titleEs : item.titleEn }}</div>
+              </a>
+            }
+          </div>
+        </section>
+      } @else {
+        <h1 class="text-3xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Caso no encontrado' : 'Case not found' }}</h1>
+        <p class="mt-3 text-gray-400">{{ i18n.lang() === 'es' ? 'No existe un caso para este identificador.' : 'There is no case for this identifier.' }}</p>
+        <a [routerLink]="['/cases']" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mt-6">
+          <span aria-hidden="true">&larr;</span>
+          {{ i18n.lang() === 'es' ? 'Ir a casos de estudio' : 'Go to case studies' }}
+        </a>
+      }
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { LanguageService } from '../../services/language.service';
 
 @Component({
   selector: 'app-footer',
@@ -7,5 +9,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   standalone: true,
 })
 export class FooterComponent {
-  currentYear = new Date().getFullYear();
+  readonly currentYear = new Date().getFullYear();
+  readonly i18n = inject(LanguageService);
 }

@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="CE Marking ETA case thumbnail">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2937" />
+      <stop offset="100%" stop-color="#1e40af" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g2)"/>
+  <rect x="70" y="80" width="340" height="470" rx="22" fill="#ffffff" opacity="0.12"/>
+  <text x="120" y="230" fill="#e5f0ff" font-family="Arial, sans-serif" font-size="120" font-weight="800">CE</text>
+  <text x="460" y="260" fill="#ffffff" font-family="Arial, sans-serif" font-size="54" font-weight="800">ETA Acceleration</text>
+  <text x="460" y="325" fill="#cfd8ff" font-family="Arial, sans-serif" font-size="30" font-weight="500">Automatizacion documental con IA</text>
+</svg>

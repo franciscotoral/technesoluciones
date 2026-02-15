@@ -1,27 +1,55 @@
-<header class="border-b border-gray-700/50 sticky top-0 bg-[#0d1f33]/80 backdrop-blur-md z-50">
+﻿<header class="border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur-md z-50">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-20">
-      <!-- Left side: Logo and Nav -->
       <div class="flex items-center space-x-12">
-        <a href="#" class="flex items-center space-x-2">
-          <span class="text-2xl font-bold text-white tracking-tight">Techne Soluciones</span>
+        <a href="/" class="flex items-center">
+          <img
+            src="assets/logo.png"
+            alt="Techne"
+            class="h-12 w-auto object-contain"
+            loading="eager"
+            decoding="async"
+          />
         </a>
         <nav class="hidden md:flex items-center space-x-8">
-          <a href="#services" class="text-gray-300 hover:text-white transition-colors duration-200">Services</a>
-          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Case Studies</a>
-          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">About Us</a>
-          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Contact</a>
+          <a href="/#services" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Servicios' : 'Services' }}
+          </a>
+          <a href="/cases" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}
+          </a>
+          <a href="#" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
+          </a>
+          <a href="/contact" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}
+          </a>
         </nav>
       </div>
 
-      <!-- Right side: CTA -->
-      <div class="hidden md:flex items-center space-x-6">
-        <a href="#" class="border border-blue-500 text-blue-400 px-4 py-2 rounded-md font-semibold hover:bg-blue-500 hover:text-white transition-colors duration-300">
-          Schedule Consultation
+      <div class="hidden md:flex items-center space-x-4">
+        <div class="inline-flex rounded-md border border-slate-300 overflow-hidden">
+          <button
+            type="button"
+            (click)="i18n.setLang('es')"
+            class="px-2 py-1 text-xs font-semibold"
+            [class]="i18n.lang() === 'es' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+          >ES</button>
+          <button
+            type="button"
+            (click)="i18n.setLang('en')"
+            class="px-2 py-1 text-xs font-semibold"
+            [class]="i18n.lang() === 'en' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+          >EN</button>
+        </div>
+
+        <a href="/login" class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300">
+          {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
         </a>
       </div>
-       <div class="md:hidden">
-        <button class="text-gray-300 hover:text-white">
+
+      <div class="md:hidden">
+        <button class="text-[#0d1f33] hover:text-[#0a4a86]">
           <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
           </svg>

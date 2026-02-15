@@ -1,0 +1,23 @@
+﻿/* TEST: animacion visible para verificar que carga el CSS */
+.blob {
+  will-change: transform, opacity, filter;
+  filter: blur(40px) saturate(120%);
+}
+/* animacion corta para que se note al instante */
+.blob-1 { animation: floatA 6s ease-in-out infinite alternate; }
+.blob-2 { animation: floatB 6s ease-in-out infinite alternate; }
+
+/* mas desplazamiento para que se vea claro */
+@keyframes floatA {
+  0%   { transform: translate3d(0,0,0) scale(1.00); opacity: .85; }
+  100% { transform: translate3d(18%, -12%, 0) scale(1.10); opacity: .95; }
+}
+@keyframes floatB {
+  0%   { transform: translate3d(0,0,0) scale(1.00); opacity: .75; }
+  100% { transform: translate3d(-16%, 14%, 0) scale(1.12); opacity: .80; }
+}
+
+/* respeta reducir movimiento: lo apagamos */
+@media (prefers-reduced-motion: reduce) {
+  .techno-canvas { width:100%; height:100%; display:block; pointer-events:none; }
+}

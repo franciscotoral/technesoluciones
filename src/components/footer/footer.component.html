@@ -1,48 +1,50 @@
-<footer class="bg-slate-800/50 border-t border-gray-700/50 text-gray-400">
+﻿<footer class="bg-slate-800/50 border-t border-gray-700/50 text-gray-400">
   <div class="container mx-auto px-4 py-12">
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
       <div class="col-span-2 lg:col-span-1">
-        <a href="#" class="flex items-center space-x-2 mb-4">
-            <span class="text-2xl font-bold text-white">Techne Soluciones</span>
+        <a href="/" class="flex items-center space-x-2 mb-4">
+          <span class="text-2xl font-bold text-white">Techne Soluciones</span>
         </a>
-        <p class="text-sm">High-value technical consulting for complex industries.</p>
+        <p class="text-sm">
+          {{ i18n.lang() === 'es' ? 'Consultoría técnica de alto valor para industrias complejas.' : 'High-value technical consulting for complex industries.' }}
+        </p>
       </div>
       <div>
-        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">Services</h3>
+        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">{{ i18n.lang() === 'es' ? 'Servicios' : 'Services' }}</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="hover:text-blue-400 transition-colors">CE-Marking</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">BIM & Digital Twins</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">AI/IoT Dashboards</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Due Diligence</a></li>
+          <li><a href="/#services" class="hover:text-blue-400 transition-colors">CE-Marking</a></li>
+          <li><a href="/#services" class="hover:text-blue-400 transition-colors">BIM & Digital Twins</a></li>
+          <li><a href="/#services" class="hover:text-blue-400 transition-colors">AI/IoT Dashboards</a></li>
+          <li><a href="/#services" class="hover:text-blue-400 transition-colors">Due Diligence</a></li>
         </ul>
       </div>
       <div>
-        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">Company</h3>
+        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">{{ i18n.lang() === 'es' ? 'Empresa' : 'Company' }}</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="hover:text-blue-400 transition-colors">About Us</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Case Studies</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Resources</a></li>
+          <li><a href="#" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}</a></li>
+          <li><a href="/cases" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}</a></li>
+          <li><a href="#" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Recursos' : 'Resources' }}</a></li>
         </ul>
       </div>
       <div>
         <h3 class="text-white font-semibold tracking-wider uppercase mb-4">Legal</h3>
         <ul class="space-y-2">
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Privacy Policy</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Terms of Service</a></li>
-          <li><a href="#" class="hover:text-blue-400 transition-colors">Cookie Policy</a></li>
+          <li><a href="#" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Privacidad' : 'Privacy Policy' }}</a></li>
+          <li><a href="#" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Términos' : 'Terms of Service' }}</a></li>
+          <li><a href="#" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Cookies' : 'Cookie Policy' }}</a></li>
         </ul>
       </div>
       <div>
-        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">Contact</h3>
+        <h3 class="text-white font-semibold tracking-wider uppercase mb-4">{{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}</h3>
         <ul class="space-y-2">
-            <li><a href="#" class="hover:text-blue-400 transition-colors">Contact Us</a></li>
-            <li><a href="#" class="hover:text-blue-400 transition-colors">Schedule a Meeting</a></li>
+          <li><a href="/contact" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Contáctanos' : 'Contact Us' }}</a></li>
+          <li><a href="/contact" class="hover:text-blue-400 transition-colors">{{ i18n.lang() === 'es' ? 'Agenda una reunión' : 'Schedule a Meeting' }}</a></li>
         </ul>
       </div>
     </div>
     <div class="mt-12 border-t border-gray-700 pt-8 text-center text-sm">
-      <p>&copy; {{ currentYear }} Techne Soluciones. All rights reserved.</p>
-      <p class="mt-2">Empowering technical excellence and innovation.</p>
+      <p>&copy; {{ currentYear }} Techne Soluciones. {{ i18n.lang() === 'es' ? 'Todos los derechos reservados.' : 'All rights reserved.' }}</p>
+      <p class="mt-2">{{ i18n.lang() === 'es' ? 'Impulsando la excelencia técnica y la innovación.' : 'Empowering technical excellence and innovation.' }}</p>
     </div>
   </div>
 </footer>

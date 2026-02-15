@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { LanguageService } from '../../services/language.service';
 
 @Component({
   selector: 'app-header',
@@ -6,4 +8,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  readonly i18n = inject(LanguageService);
+}
