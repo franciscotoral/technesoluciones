@@ -1,8 +1,8 @@
-﻿<header class="border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur-md z-50">
+<header class="border-b border-slate-200 sticky top-0 bg-white/95 backdrop-blur-md z-50">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-20">
       <div class="flex items-center space-x-12">
-        <a href="/" class="flex items-center">
+        <a routerLink="/" class="flex items-center">
           <img
             src="assets/logo.png"
             alt="Techne"
@@ -15,13 +15,13 @@
           <a href="/#services" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Servicios' : 'Services' }}
           </a>
-          <a href="/cases" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+          <a routerLink="/cases" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}
           </a>
           <a href="#" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
           </a>
-          <a href="/contact" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+          <a routerLink="/contact" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}
           </a>
         </nav>
@@ -43,9 +43,34 @@
           >EN</button>
         </div>
 
-        <a href="/login" class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300">
-          {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
-        </a>
+        @if (auth.isAuthenticated()) {
+          <a
+            routerLink="/portal"
+            class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300"
+          >
+            {{ i18n.lang() === 'es' ? 'Portal' : 'Portal' }}
+          </a>
+          <a
+            routerLink="/admin"
+            class="border border-slate-400 text-slate-700 px-4 py-2 rounded-md font-semibold hover:bg-slate-700 hover:text-white transition-colors duration-300"
+          >
+            Admin
+          </a>
+          <button
+            type="button"
+            (click)="onLogout()"
+            class="bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300"
+          >
+            {{ i18n.lang() === 'es' ? 'Salir' : 'Sign out' }}
+          </button>
+        } @else {
+          <a
+            routerLink="/login"
+            class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300"
+          >
+            {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
+          </a>
+        }
       </div>
 
       <div class="md:hidden">

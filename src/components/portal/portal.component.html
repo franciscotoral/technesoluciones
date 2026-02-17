@@ -1,0 +1,118 @@
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow py-16 md:py-24">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+      <div class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              {{ i18n.lang() === 'es' ? 'Portal privado' : 'Private portal' }}
+            </h1>
+            <p class="mt-3 text-gray-400">
+              {{ i18n.lang() === 'es' ? 'Metricas personalizadas de inversion y proyectos privados.' : 'Personalized investment metrics and private projects.' }}
+            </p>
+            <p class="mt-2 text-gray-300 text-sm">
+              <span class="font-semibold text-white">{{ i18n.lang() === 'es' ? 'Usuario:' : 'User:' }}</span>
+              {{ auth.userEmail() || 'N/A' }}
+            </p>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              type="button"
+              (click)="reloadData()"
+              [disabled]="loading()"
+              class="inline-flex items-center justify-center rounded-md border border-blue-500 px-4 py-2 font-semibold text-blue-300 hover:bg-blue-900/30 transition-colors disabled:opacity-60"
+            >
+              {{ i18n.lang() === 'es' ? 'Recargar' : 'Reload' }}
+            </button>
+            <button
+              type="button"
+              (click)="onLogout()"
+              class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition-colors"
+            >
+              {{ i18n.lang() === 'es' ? 'Cerrar sesion' : 'Sign out' }}
+            </button>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <p class="mt-6 text-sm text-gray-400">
+            {{ i18n.lang() === 'es' ? 'Cargando datos privados...' : 'Loading private data...' }}
+          </p>
+        } @else {
+          @if (error()) {
+            <p class="mt-6 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {{ error() }}
+            </p>
+          }
+
+          <section class="mt-8">
+            <h2 class="text-xl font-semibold text-white">
+              {{ i18n.lang() === 'es' ? 'Metricas de inversion' : 'Investment metrics' }}
+            </h2>
+
+            @if (metrics().length === 0) {
+              <p class="mt-3 text-sm text-gray-400">
+                {{ i18n.lang() === 'es' ? 'Aun no hay metricas para tu cuenta.' : 'No metrics available for your account yet.' }}
+              </p>
+            } @else {
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @for (metric of metrics(); track metric.metric_key) {
+                  <article class="rounded-lg border border-slate-700/60 bg-slate-800/60 p-4">
+                    <p class="text-sm text-gray-400">{{ metric.metric_label }}</p>
+                    <p class="mt-2 text-2xl font-bold text-white">{{ formatMoney(metric.metric_value, metric.currency) }}</p>
+                    <div class="mt-2 flex items-center justify-between text-sm">
+                      <span class="text-gray-400">{{ i18n.lang() === 'es' ? 'Tendencia' : 'Trend' }}</span>
+                      <span [class]="(metric.trend_pct ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'">
+                        {{ formatPercent(metric.trend_pct) }}
+                      </span>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="mt-10">
+            <h2 class="text-xl font-semibold text-white">
+              {{ i18n.lang() === 'es' ? 'Proyectos privados' : 'Private projects' }}
+            </h2>
+
+            @if (projects().length === 0) {
+              <p class="mt-3 text-sm text-gray-400">
+                {{ i18n.lang() === 'es' ? 'Aun no hay proyectos privados asignados.' : 'No private projects assigned yet.' }}
+              </p>
+            } @else {
+              <div class="mt-4 overflow-x-auto rounded-lg border border-slate-700/60">
+                <table class="min-w-full text-sm">
+                  <thead class="bg-slate-800/80 text-gray-300">
+                    <tr>
+                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Proyecto' : 'Project' }}</th>
+                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</th>
+                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Presupuesto' : 'Budget' }}</th>
+                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (project of projects(); track project.name) {
+                      <tr class="border-t border-slate-700/60 bg-slate-900/40">
+                        <td class="px-4 py-3 text-white">{{ project.name }}</td>
+                        <td class="px-4 py-3 text-gray-300">{{ project.status }}</td>
+                        <td class="px-4 py-3 text-gray-300">{{ formatMoney(project.budget, 'EUR') }}</td>
+                        <td class="px-4 py-3 text-gray-300">{{ formatPercent(project.progress_pct) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </section>
+        }
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

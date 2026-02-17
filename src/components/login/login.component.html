@@ -1,33 +1,61 @@
-﻿<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
   <app-header></app-header>
 
   <main class="flex-grow py-16 md:py-24">
     <section class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-lg">
       <article class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
-        <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">{{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}</h1>
+        <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">
+          {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
+        </h1>
         <p class="mt-3 text-gray-400">
           {{ i18n.lang() === 'es' ? 'Accede a servicios personalizados y paneles de proyecto.' : 'Access personalized services and project dashboards.' }}
         </p>
 
-        <form class="mt-6 space-y-4" (submit)="onSubmit($event)">
+        @if (!auth.hasConfig()) {
+          <p class="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+            {{ i18n.lang() === 'es' ? 'Falta configurar Supabase en index.html (supabaseUrl y supabaseAnonKey).' : 'Supabase is not configured in index.html (supabaseUrl and supabaseAnonKey).' }}
+          </p>
+        }
+
+        <form class="mt-6 space-y-4" (submit)="onSubmit($event, email.value, password.value)">
           <div>
             <label class="block text-sm text-gray-300 mb-1" for="email">Email</label>
-            <input id="email" type="email" required class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input
+              #email
+              id="email"
+              type="email"
+              required
+              [disabled]="loading()"
+              class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+            />
           </div>
 
           <div>
-            <label class="block text-sm text-gray-300 mb-1" for="password">{{ i18n.lang() === 'es' ? 'Contraseña' : 'Password' }}</label>
-            <input id="password" type="password" required class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-sm text-gray-300 mb-1" for="password">
+              {{ i18n.lang() === 'es' ? 'Contraseña' : 'Password' }}
+            </label>
+            <input
+              #password
+              id="password"
+              type="password"
+              required
+              [disabled]="loading()"
+              class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+            />
           </div>
 
-          <button type="submit" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-500 transition-colors">
-            {{ i18n.lang() === 'es' ? 'Entrar' : 'Login' }}
+          <button
+            type="submit"
+            [disabled]="loading() || !auth.hasConfig()"
+            class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ loading() ? (i18n.lang() === 'es' ? 'Validando...' : 'Signing in...') : (i18n.lang() === 'es' ? 'Entrar' : 'Login') }}
           </button>
         </form>
 
-        @if (submitted()) {
-          <p class="mt-4 text-sm text-amber-300">
-            {{ i18n.lang() === 'es' ? 'Portal de usuarios en activación. Te contactaremos para habilitar tu acceso personalizado.' : 'User portal is being activated. We will contact you to enable your personalized access.' }}
+        @if (errorMessage()) {
+          <p class="mt-4 text-sm text-red-300">
+            {{ errorMessage() }}
           </p>
         }
       </article>
