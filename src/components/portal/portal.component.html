@@ -37,6 +37,18 @@
           </div>
         </div>
 
+        <section class="mt-6 rounded-lg border border-slate-700/60 bg-slate-950/40 p-4">
+          <h2 class="text-sm font-semibold text-white">{{ i18n.lang() === 'es' ? 'Mostrar / ocultar bloques' : 'Show / hide blocks' }}</h2>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs">
+            <button type="button" (click)="toggleBlock('summary')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('summary')" [class.text-cyan-200]="isBlockVisible('summary')" [class.border-slate-700]="!isBlockVisible('summary')" [class.text-slate-400]="!isBlockVisible('summary')">{{ i18n.lang() === 'es' ? 'Resumen' : 'Summary' }}</button>
+            <button type="button" (click)="toggleBlock('model')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('model')" [class.text-cyan-200]="isBlockVisible('model')" [class.border-slate-700]="!isBlockVisible('model')" [class.text-slate-400]="!isBlockVisible('model')">{{ i18n.lang() === 'es' ? 'Metricas' : 'Metrics' }}</button>
+            <button type="button" (click)="toggleBlock('composition')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('composition')" [class.text-cyan-200]="isBlockVisible('composition')" [class.border-slate-700]="!isBlockVisible('composition')" [class.text-slate-400]="!isBlockVisible('composition')">{{ i18n.lang() === 'es' ? 'Composicion' : 'Composition' }}</button>
+            <button type="button" (click)="toggleBlock('rd105')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('rd105')" [class.text-cyan-200]="isBlockVisible('rd105')" [class.border-slate-700]="!isBlockVisible('rd105')" [class.text-slate-400]="!isBlockVisible('rd105')">RD105</button>
+            <button type="button" (click)="toggleBlock('timeline')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('timeline')" [class.text-cyan-200]="isBlockVisible('timeline')" [class.border-slate-700]="!isBlockVisible('timeline')" [class.text-slate-400]="!isBlockVisible('timeline')">{{ i18n.lang() === 'es' ? 'Linea de tiempo' : 'Timeline' }}</button>
+            <button type="button" (click)="toggleBlock('projects')" class="rounded-full border px-3 py-1.5" [class.border-cyan-400]="isBlockVisible('projects')" [class.text-cyan-200]="isBlockVisible('projects')" [class.border-slate-700]="!isBlockVisible('projects')" [class.text-slate-400]="!isBlockVisible('projects')">{{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}</button>
+          </div>
+        </section>
+
         @if (loading()) {
           <p class="mt-6 text-sm text-gray-400">
             {{ i18n.lang() === 'es' ? 'Cargando datos privados...' : 'Loading private data...' }}
@@ -48,67 +60,185 @@
             </p>
           }
 
-          <section class="mt-8">
-            <h2 class="text-xl font-semibold text-white">
-              {{ i18n.lang() === 'es' ? 'Metricas de inversion' : 'Investment metrics' }}
-            </h2>
+          @if (isBlockVisible('summary')) {
+            <section class="mt-8">
+              <h2 class="text-xl font-semibold text-white">
+                {{ i18n.lang() === 'es' ? 'Resumen operativo' : 'Operational summary' }}
+              </h2>
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @if (metricByKey('rcd_total_tn'); as kpiTotal) {
+                  <article class="rounded-lg border border-cyan-700/60 bg-gradient-to-br from-cyan-900/30 to-slate-900 p-4">
+                    <p class="text-sm text-cyan-200">{{ i18n.lang() === 'es' ? 'RCD total esperado' : 'Expected total CDW' }}</p>
+                    <p class="mt-2 text-3xl font-bold text-white">{{ formatMetricValue(kpiTotal) }}</p>
+                  </article>
+                }
+                @if (metricByKey('tierras_tn'); as kpiTierras) {
+                  <article class="rounded-lg border border-amber-700/60 bg-gradient-to-br from-amber-900/30 to-slate-900 p-4">
+                    <p class="text-sm text-amber-200">{{ i18n.lang() === 'es' ? 'Tierras estimadas' : 'Estimated soil' }}</p>
+                    <p class="mt-2 text-3xl font-bold text-white">{{ formatMetricValue(kpiTierras) }}</p>
+                  </article>
+                }
+                @if (metricByKey('rcd_rate_kg_m2'); as kpiIntensidad) {
+                  <article class="rounded-lg border border-violet-700/60 bg-gradient-to-br from-violet-900/30 to-slate-900 p-4">
+                    <p class="text-sm text-violet-200">{{ i18n.lang() === 'es' ? 'Intensidad de residuos' : 'Waste intensity' }}</p>
+                    <p class="mt-2 text-3xl font-bold text-white">{{ formatMetricValue(kpiIntensidad) }}</p>
+                  </article>
+                }
+              </div>
+            </section>
+          }
 
-            @if (metrics().length === 0) {
-              <p class="mt-3 text-sm text-gray-400">
-                {{ i18n.lang() === 'es' ? 'Aun no hay metricas para tu cuenta.' : 'No metrics available for your account yet.' }}
-              </p>
-            } @else {
-              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @for (metric of metrics(); track metric.metric_key) {
-                  <article class="rounded-lg border border-slate-700/60 bg-slate-800/60 p-4">
-                    <p class="text-sm text-gray-400">{{ metric.metric_label }}</p>
-                    <p class="mt-2 text-2xl font-bold text-white">{{ formatMoney(metric.metric_value, metric.currency) }}</p>
-                    <div class="mt-2 flex items-center justify-between text-sm">
-                      <span class="text-gray-400">{{ i18n.lang() === 'es' ? 'Tendencia' : 'Trend' }}</span>
-                      <span [class]="(metric.trend_pct ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'">
-                        {{ formatPercent(metric.trend_pct) }}
-                      </span>
+          @if (isBlockVisible('model')) {
+            <section class="mt-10">
+              <h2 class="text-xl font-semibold text-white">
+                {{ i18n.lang() === 'es' ? 'Metricas del modelo' : 'Model metrics' }}
+              </h2>
+
+              @if (metrics().length === 0) {
+                <p class="mt-3 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'Aun no hay metricas para tu cuenta.' : 'No metrics available for your account yet.' }}
+                </p>
+              } @else {
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  @for (metric of metrics(); track metric.metric_key) {
+                    <article class="rounded-lg border border-slate-700/60 bg-slate-800/60 p-4">
+                      <p class="text-sm text-gray-400">{{ metric.metric_label }}</p>
+                      <p class="mt-2 text-2xl font-bold text-white">{{ formatMetricValue(metric) }}</p>
+                      <div class="mt-2 flex items-center justify-between text-sm">
+                        <span class="text-gray-400">{{ i18n.lang() === 'es' ? 'Tendencia' : 'Trend' }}</span>
+                        <span [class]="(metric.trend_pct ?? 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'">
+                          {{ formatPercent(metric.trend_pct) }}
+                        </span>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          @if (isBlockVisible('composition') && compositionMetrics().length > 0) {
+            <section class="mt-10">
+              <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Composicion RCD' : 'CDW composition' }}</h2>
+              <div class="mt-4 space-y-3">
+                @for (metric of compositionMetrics(); track metric.metric_key) {
+                  <article class="rounded-lg border border-slate-700/60 bg-slate-900/40 p-4">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-gray-200">{{ metric.metric_label }}</span>
+                      <span class="text-cyan-200 font-semibold">{{ formatMetricValue(metric) }}</span>
+                    </div>
+                    <div class="mt-2 h-2 rounded-full bg-slate-700/70 overflow-hidden">
+                      <div class="h-full bg-cyan-500" [style.width]="percentBar(metric.metric_value)"></div>
                     </div>
                   </article>
                 }
               </div>
-            }
-          </section>
+            </section>
+          }
 
-          <section class="mt-10">
-            <h2 class="text-xl font-semibold text-white">
-              {{ i18n.lang() === 'es' ? 'Proyectos privados' : 'Private projects' }}
-            </h2>
-
-            @if (projects().length === 0) {
-              <p class="mt-3 text-sm text-gray-400">
-                {{ i18n.lang() === 'es' ? 'Aun no hay proyectos privados asignados.' : 'No private projects assigned yet.' }}
-              </p>
-            } @else {
-              <div class="mt-4 overflow-x-auto rounded-lg border border-slate-700/60">
-                <table class="min-w-full text-sm">
-                  <thead class="bg-slate-800/80 text-gray-300">
-                    <tr>
-                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Proyecto' : 'Project' }}</th>
-                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</th>
-                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Presupuesto' : 'Budget' }}</th>
-                      <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (project of projects(); track project.name) {
-                      <tr class="border-t border-slate-700/60 bg-slate-900/40">
-                        <td class="px-4 py-3 text-white">{{ project.name }}</td>
-                        <td class="px-4 py-3 text-gray-300">{{ project.status }}</td>
-                        <td class="px-4 py-3 text-gray-300">{{ formatMoney(project.budget, 'EUR') }}</td>
-                        <td class="px-4 py-3 text-gray-300">{{ formatPercent(project.progress_pct) }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
+          @if (isBlockVisible('rd105') && rd105Metrics().length > 0) {
+            <section class="mt-10">
+              <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Cumplimiento RD105' : 'RD105 compliance' }}</h2>
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                @for (metric of rd105Metrics(); track metric.metric_key) {
+                  <article class="rounded-lg border border-emerald-700/50 bg-emerald-950/20 p-4">
+                    <p class="text-sm text-emerald-200">{{ metric.metric_label }}</p>
+                    <p class="mt-2 text-2xl font-bold text-white">{{ formatMetricValue(metric) }}</p>
+                  </article>
+                }
               </div>
-            }
-          </section>
+            </section>
+          }
+
+          @if (isBlockVisible('timeline')) {
+            <section class="mt-10">
+              <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Linea de tiempo por fases' : 'Phase timeline' }}</h2>
+
+              @if (!hasTimeline()) {
+                <p class="mt-3 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'No hay metricas por fase cargadas. Usa claves como l3_m01_total_tn.' : 'No phase metrics loaded. Use keys like l3_m01_total_tn.' }}
+                </p>
+              } @else {
+                <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    @for (phase of timelinePhases(); track phase.month) {
+                      <button
+                        type="button"
+                        (click)="selectPhase(phase.month)"
+                        class="w-full text-left rounded-md border px-3 py-2"
+                        [class.border-cyan-400]="selectedPhaseMonth() === phase.month"
+                        [class.bg-cyan-900/30]="selectedPhaseMonth() === phase.month"
+                        [class.border-slate-700]="selectedPhaseMonth() !== phase.month"
+                      >
+                        <div class="flex items-center justify-between text-sm">
+                          <span class="text-gray-200">{{ i18n.lang() === 'es' ? 'Mes' : 'Month' }} {{ phase.month }}</span>
+                          <span class="text-cyan-200 font-semibold">{{ phase.totalTn | number:'1.1-1' }} tn</span>
+                        </div>
+                        <div class="mt-2 h-2 rounded-full bg-slate-700/70 overflow-hidden">
+                          <div class="h-full bg-cyan-500" [style.width]="timelineBarWidth(phase.totalTn)"></div>
+                        </div>
+                      </button>
+                    }
+                  </div>
+
+                  <div class="rounded-lg border border-slate-700/60 bg-slate-900/40 p-4">
+                    @if (activePhase(); as phaseDetail) {
+                      <p class="text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Fase activa' : 'Active phase' }}</p>
+                      <p class="mt-1 text-2xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Mes' : 'Month' }} {{ phaseDetail.month }}</p>
+                      <p class="mt-2 text-cyan-200">{{ i18n.lang() === 'es' ? 'Total estimado' : 'Estimated total' }}: {{ phaseDetail.totalTn | number:'1.1-1' }} tn</p>
+                      <p class="text-gray-400 text-sm">CI90: {{ phaseDetail.ciLowTn ?? 0 | number:'1.1-1' }} - {{ phaseDetail.ciHighTn ?? 0 | number:'1.1-1' }} tn</p>
+
+                      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        @for (metric of activePhaseMetrics(); track metric.metric_key) {
+                          <article class="rounded-md border border-slate-700 bg-slate-950/40 p-3">
+                            <p class="text-xs text-gray-400">{{ formatPhaseMetricLabel(metric) }}</p>
+                            <p class="text-lg font-semibold text-white">{{ formatMetricValue(metric) }}</p>
+                          </article>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+          }
+
+          @if (isBlockVisible('projects')) {
+            <section class="mt-10">
+              <h2 class="text-xl font-semibold text-white">
+                {{ i18n.lang() === 'es' ? 'Proyectos privados' : 'Private projects' }}
+              </h2>
+
+              @if (projects().length === 0) {
+                <p class="mt-3 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'Aun no hay proyectos privados asignados.' : 'No private projects assigned yet.' }}
+                </p>
+              } @else {
+                <div class="mt-4 overflow-x-auto rounded-lg border border-slate-700/60">
+                  <table class="min-w-full text-sm">
+                    <thead class="bg-slate-800/80 text-gray-300">
+                      <tr>
+                        <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Proyecto' : 'Project' }}</th>
+                        <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</th>
+                        <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Presupuesto' : 'Budget' }}</th>
+                        <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (project of projects(); track project.name) {
+                        <tr class="border-t border-slate-700/60 bg-slate-900/40">
+                          <td class="px-4 py-3 text-white">{{ project.name }}</td>
+                          <td class="px-4 py-3 text-gray-300">{{ project.status }}</td>
+                          <td class="px-4 py-3 text-gray-300">{{ formatMoney(project.budget, 'EUR') }}</td>
+                          <td class="px-4 py-3 text-gray-300">{{ formatPercent(project.progress_pct) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </section>
+          }
         }
       </div>
     </section>
