@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
@@ -19,6 +19,18 @@ interface TimelinePhase {
   ciHighTn: number | null;
 }
 
+declare global {
+  interface Window {
+    echarts?: {
+      init: (el: HTMLElement) => {
+        setOption: (option: unknown, opts?: { notMerge?: boolean }) => void;
+        resize: () => void;
+        dispose: () => void;
+      };
+    };
+  }
+}
+
 @Component({
   selector: 'app-portal',
   templateUrl: './portal.component.html',
@@ -26,7 +38,7 @@ interface TimelinePhase {
   standalone: true,
   imports: [HeaderComponent, FooterComponent, DecimalPipe],
 })
-export class PortalComponent implements OnInit {
+export class PortalComponent implements OnInit, OnDestroy {
   readonly i18n = inject(LanguageService);
   readonly auth = inject(AuthService);
   readonly loading = signal(true);
@@ -88,9 +100,16 @@ export class PortalComponent implements OnInit {
 
   private readonly portalData = inject(PortalDataService);
   private readonly router = inject(Router);
+  private timelineChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
+  private compositionChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
 
   async ngOnInit() {
     await this.reloadData();
+  }
+
+  ngOnDestroy() {
+    this.timelineChart?.dispose();
+    this.compositionChart?.dispose();
   }
 
   async reloadData() {
@@ -101,6 +120,7 @@ export class PortalComponent implements OnInit {
       this.metrics.set(payload.metrics);
       this.projects.set(payload.projects);
       this.ensureSelectedPhase();
+      setTimeout(() => this.renderCharts(), 0);
     } catch {
       this.error.set(
         this.i18n.lang() === 'es'
@@ -125,6 +145,7 @@ export class PortalComponent implements OnInit {
     const next = { ...this.blockVisibility(), [block]: !this.blockVisibility()[block] };
     this.blockVisibility.set(next);
     this.persistBlockVisibility(next);
+    setTimeout(() => this.renderCharts(), 0);
   }
 
   metricByKey(key: string): InvestmentMetric | null {
@@ -278,5 +299,92 @@ export class PortalComponent implements OnInit {
 
   private isCurrencyCode(unit: string): boolean {
     return /^[A-Z]{3}$/.test(unit);
+  }
+
+  private renderCharts() {
+    this.renderTimelineChart();
+    this.renderCompositionChart();
+  }
+
+  private renderTimelineChart() {
+    const container = document.getElementById('timeline-echart');
+    const echarts = window.echarts;
+    if (!container || !echarts || !this.isBlockVisible('timeline')) return;
+
+    const phases = this.timelinePhases();
+    if (!phases.length) return;
+
+    if (!this.timelineChart) {
+      this.timelineChart = echarts.init(container);
+    }
+
+    this.timelineChart.setOption(
+      {
+        backgroundColor: 'transparent',
+        grid: { left: 30, right: 20, top: 30, bottom: 30 },
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+          type: 'category',
+          data: phases.map((p) => `M${p.month}`),
+          axisLabel: { color: '#cbd5e1' },
+          axisLine: { lineStyle: { color: '#334155' } },
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { color: '#cbd5e1' },
+          splitLine: { lineStyle: { color: '#1e293b' } },
+        },
+        series: [
+          {
+            name: 'Total tn',
+            type: 'line',
+            smooth: true,
+            symbolSize: 7,
+            data: phases.map((p) => p.totalTn),
+            lineStyle: { color: '#22d3ee', width: 3 },
+            itemStyle: { color: '#22d3ee' },
+            areaStyle: { color: 'rgba(34, 211, 238, 0.18)' },
+          },
+        ],
+      },
+      { notMerge: true }
+    );
+    this.timelineChart.resize();
+  }
+
+  private renderCompositionChart() {
+    const container = document.getElementById('composition-echart');
+    const echarts = window.echarts;
+    if (!container || !echarts || !this.isBlockVisible('composition')) return;
+
+    const composition = this.compositionMetrics();
+    if (!composition.length) return;
+
+    if (!this.compositionChart) {
+      this.compositionChart = echarts.init(container);
+    }
+
+    this.compositionChart.setOption(
+      {
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item' },
+        legend: {
+          bottom: 0,
+          textStyle: { color: '#cbd5e1' },
+        },
+        series: [
+          {
+            type: 'pie',
+            radius: ['45%', '72%'],
+            center: ['50%', '45%'],
+            itemStyle: { borderColor: '#0f172a', borderWidth: 2 },
+            label: { color: '#e2e8f0' },
+            data: composition.map((m) => ({ name: m.metric_label, value: m.metric_value })),
+          },
+        ],
+      },
+      { notMerge: true }
+    );
+    this.compositionChart.resize();
   }
 }

@@ -28,6 +28,21 @@
         </div>
 
         <article class="mt-10 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8 leading-7 text-gray-300 space-y-8">
+          @if (cs.slug === 'wasteops-optimization-ai-implementation') {
+            <section class="rounded-lg border border-cyan-700/40 bg-cyan-950/20 p-4 md:p-5">
+              <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Resumen operativo (demo)' : 'Operational summary (demo)' }}</h2>
+              <p class="mt-2 text-sm text-gray-300">
+                {{ i18n.lang() === 'es' ? 'Visualización orientativa basada en el caso WasteOps.' : 'Illustrative visualization based on the WasteOps case.' }}
+              </p>
+              <div id="wasteops-summary-chart" class="mt-4 h-80 w-full rounded-lg border border-slate-700/60 bg-slate-900/50"></div>
+            </section>
+
+            <section class="rounded-lg border border-violet-700/40 bg-violet-950/20 p-4 md:p-5">
+              <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Composición de residuos (demo)' : 'Waste composition (demo)' }}</h2>
+              <div id="wasteops-composition-chart" class="mt-4 h-80 w-full rounded-lg border border-slate-700/60 bg-slate-900/50"></div>
+            </section>
+          }
+
           <section>
             <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Contexto' : 'Context' }}</h2>
             <p class="mt-2">{{ i18n.lang() === 'es' ? cs.detailEs.context : cs.detailEn.context }}</p>
