@@ -103,7 +103,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       keyMessage:
         'This is not AI for AI’s sake; it is data-driven operational decision-making with measurable and scalable impact.',
     },
-    imageUrl: 'assets/cases/wasteops.svg',
+    imageUrl: 'assets/cases/wasteop.png',
     tags: [
       'gestión de residuos',
       'construcción',
@@ -204,7 +204,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       keyMessage:
         'We reduce manual effort and CE-Marking/ETA risk by turning the dossier into a traceable system, not a set of loose folders.',
     },
-    imageUrl: 'assets/cases/ce-marking-eta.svg',
+    imageUrl: 'assets/cases/CE.png',
     tags: [
       'CE marking',
       'ETA',
@@ -303,7 +303,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       keyMessage:
         'Integrated environmental penalty is not only about sustainability: it also reveals and reduces margin destruction under high-demand scenarios.',
     },
-    imageUrl: 'assets/industrial.png',
+    imageUrl: 'assets/cases/produccion.png',
     tags: [
       'optimización',
       'penalización ambiental',
