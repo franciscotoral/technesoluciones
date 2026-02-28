@@ -43,6 +43,67 @@
             </section>
           }
 
+          @if (cs.slug === 'optimizacion-penalizacion-ambiental-integrada') {
+            <section class="rounded-lg border border-cyan-700/40 bg-cyan-950/20 p-4 md:p-5">
+              <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Resumen operativo por escenario (demo)' : 'Operational summary by scenario (demo)' }}</h2>
+              <p class="mt-2 text-sm text-gray-300">
+                {{ i18n.lang() === 'es' ? 'Selecciona escenario para comparar baseline (IEO=10) vs optimizado (IEO=25).' : 'Select a scenario to compare baseline (IEO=10) vs optimized (IEO=25).' }}
+              </p>
+
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (s of ecoScenarios; track s.id) {
+                  <button
+                    type="button"
+                    (click)="selectEcoScenario(s.id)"
+                    class="rounded-full border px-3 py-1.5 text-xs"
+                    [class.border-cyan-400]="selectedEcoScenarioId() === s.id"
+                    [class.text-cyan-200]="selectedEcoScenarioId() === s.id"
+                    [class.bg-cyan-900/30]="selectedEcoScenarioId() === s.id"
+                    [class.border-slate-700]="selectedEcoScenarioId() !== s.id"
+                    [class.text-slate-300]="selectedEcoScenarioId() !== s.id"
+                  >
+                    {{ i18n.lang() === 'es' ? s.labelEs : s.labelEn }}
+                  </button>
+                }
+              </div>
+
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                  <p class="text-gray-400">Scenario ID</p>
+                  <p class="text-white font-semibold">{{ selectedEcoScenario().id }}</p>
+                </div>
+                <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                  <p class="text-gray-400">{{ i18n.lang() === 'es' ? 'Demanda' : 'Demand' }}</p>
+                  <p class="text-white font-semibold">{{ selectedEcoScenario().demand }} u/día</p>
+                </div>
+                <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                  <p class="text-gray-400">{{ i18n.lang() === 'es' ? 'Ahorro estimado' : 'Estimated savings' }}</p>
+                  <p class="text-emerald-300 font-semibold">
+                    {{
+                      (selectedEcoScenario().baseline.totalCost - selectedEcoScenario().optimized.totalCost)
+                        | number:'1.2-2'
+                    }} €/día
+                  </p>
+                </div>
+              </div>
+
+              <div id="ecoops-summary-chart" class="mt-4 h-80 w-full rounded-lg border border-slate-700/60 bg-slate-900/50"></div>
+            </section>
+
+            <section class="rounded-lg border border-violet-700/40 bg-violet-950/20 p-4 md:p-5">
+              <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Impacto por componente de coste' : 'Cost component impact' }}</h2>
+              <div id="ecoops-composition-chart" class="mt-4 h-80 w-full rounded-lg border border-slate-700/60 bg-slate-900/50"></div>
+            </section>
+
+            <section class="rounded-lg border border-amber-700/40 bg-amber-950/20 p-4 md:p-5">
+              <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Señal de pérdida evitable' : 'Avoidable loss signal' }}</h2>
+              <p class="mt-2 text-sm text-gray-300">
+                {{ i18n.lang() === 'es' ? 'A partir de S2 se activa fricción operativa (cartón + transshipment) y el baseline empieza a destruir margen.' : 'From S2 onward operational friction appears (cardboard + transshipment), and the baseline starts destroying margin.' }}
+              </p>
+              <div id="ecoops-signal-chart" class="mt-4 h-72 w-full rounded-lg border border-slate-700/60 bg-slate-900/50"></div>
+            </section>
+          }
+
           <section>
             <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Contexto' : 'Context' }}</h2>
             <p class="mt-2">{{ i18n.lang() === 'es' ? cs.detailEs.context : cs.detailEn.context }}</p>
@@ -51,7 +112,7 @@
           <section>
             <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Problemas típicos detectados' : 'Typical problems detected' }}</h2>
             <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
-              @for (item of (i18n.lang() === 'es' ? cs.detailEs.problem : cs.detailEn.problem); track item) {
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.problem : cs.detailEn.problem); track $index) {
                 <li>{{ item }}</li>
               }
             </ul>
@@ -60,7 +121,7 @@
           <section>
             <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Enfoque / solución con IA' : 'AI approach / solution' }}</h2>
             <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
-              @for (item of (i18n.lang() === 'es' ? cs.detailEs.approach : cs.detailEn.approach); track item) {
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.approach : cs.detailEn.approach); track $index) {
                 <li>{{ item }}</li>
               }
             </ul>
@@ -69,7 +130,7 @@
           <section>
             <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Entregables del piloto/servicio' : 'Pilot/service deliverables' }}</h2>
             <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-blue-400">
-              @for (item of (i18n.lang() === 'es' ? cs.detailEs.deliverables : cs.detailEn.deliverables); track item) {
+              @for (item of (i18n.lang() === 'es' ? cs.detailEs.deliverables : cs.detailEn.deliverables); track $index) {
                 <li>{{ item }}</li>
               }
             </ul>
@@ -140,3 +201,4 @@
 
   <app-footer></app-footer>
 </div>
+

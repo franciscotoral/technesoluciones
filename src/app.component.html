@@ -1,1 +1,59 @@
-ï»¿<router-outlet></router-outlet>
+<router-outlet></router-outlet>
+
+<button
+  type="button"
+  (click)="toggleAssistant()"
+  class="fixed bottom-5 right-5 z-[70] rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-900/40 hover:bg-cyan-500"
+>
+  Asistente IA
+</button>
+
+@if (assistantOpen()) {
+  <div class="fixed inset-0 z-[80] bg-black/50" (click)="closeAssistant()"></div>
+
+  <section class="fixed right-4 top-4 bottom-4 z-[90] w-[min(96vw,430px)] rounded-xl border border-slate-700 bg-[#0b1b2d] text-gray-200 shadow-2xl shadow-black/40 flex flex-col overflow-hidden">
+    <header class="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+      <div>
+        <h2 class="text-base font-semibold text-white">Asistente y reservas</h2>
+        <p class="text-xs text-slate-400">OpenClaw + Calendly</p>
+      </div>
+      <button type="button" (click)="closeAssistant()" class="rounded-md border border-slate-600 px-2 py-1 text-xs hover:bg-slate-800">
+        Cerrar
+      </button>
+    </header>
+
+    <div class="p-4 border-b border-slate-700 flex gap-2">
+      <button
+        type="button"
+        (click)="openBooking()"
+        class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+      >
+        Reservar cita
+      </button>
+      @if (assistantConfig().openclawChatUrl) {
+        <button
+          type="button"
+          (click)="openOpenClawExternal()"
+          class="rounded-md border border-cyan-500 px-3 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-900/40"
+        >
+          Abrir chat
+        </button>
+      }
+    </div>
+
+    <div class="flex-1 p-3">
+      @if (assistantConfig().openclawWidgetUrl) {
+        <iframe
+          [src]="assistantConfig().openclawWidgetUrl"
+          title="OpenClaw Assistant"
+          class="h-full w-full rounded-lg border border-slate-700 bg-slate-900"
+        ></iframe>
+      } @else {
+        <div class="h-full rounded-lg border border-dashed border-slate-600 bg-slate-900/50 p-4 text-sm text-slate-300">
+          <p class="font-semibold text-white">Widget OpenClaw no configurado.</p>
+          <p class="mt-2">Añade <code>openclawWidgetUrl</code> o <code>openclawChatUrl</code> en <code>window.__TECHNE_CONFIG__</code> dentro de <code>index.html</code>.</p>
+        </div>
+      }
+    </div>
+  </section>
+}

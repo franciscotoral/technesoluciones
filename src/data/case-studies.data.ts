@@ -225,4 +225,100 @@ export const CASE_STUDIES: CaseStudy[] = [
     iconSvg:
       '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
   },
+  {
+    slug: 'optimizacion-penalizacion-ambiental-integrada',
+    titleEs: 'Optimización con penalización ambiental integrada',
+    titleEn: 'Optimization with Integrated Environmental Penalty',
+    summaryEs:
+      'Caso de optimización logística-operativa donde se integra una penalización ambiental (CO2) en la función de coste para comparar políticas de operación baseline frente a operación optimizada con mayor reutilizable (IEO).',
+    summaryEn:
+      'Logistics/operations optimization case where an environmental penalty (CO2) is integrated into the cost function to compare baseline policy versus optimized policy with higher reusable usage (IEO).',
+    detailEs: {
+      context:
+        'Evaluación comparativa de políticas operativas en distintos escenarios de demanda diaria (200, 250, 320 y 450 u/día), incorporando coste económico y penalización ambiental en una misma visión de decisión.',
+      problem: [
+        'El modelo baseline de baja reutilización empieza a introducir fricción operativa (cartón y transshipment) a medida que sube la demanda.',
+        'La toma de decisiones suele separar coste y sostenibilidad, impidiendo ver el impacto total real por escenario.',
+        'Sin una señal cuantificada de margen destruido, la transición a operación optimizada se retrasa.',
+      ],
+      approach: [
+        'Modelado de escenarios multi-demanda con dos políticas: baseline bajo (IEO=10) y optimizado (IEO=25).',
+        'Descomposición del coste total por componentes (producción, transporte, cartón, transshipment y penalización CO2).',
+        'Comparativa por escenario con dashboards para detectar punto de inflexión y sobrecoste evitable.',
+      ],
+      deliverables: [
+        'Dashboard comparativo baseline vs optimizado por escenario.',
+        'Gráficos de resumen operativo y composición del coste.',
+        'Señal de pérdida evitable (sobrecoste diario) para priorizar decisiones de operación.',
+      ],
+      commercialProposal: [
+        {
+          phase: 'Diagnóstico rápido (1 semana)',
+          description: 'Modelado de escenarios, calibración de inputs y definición de KPIs económico-ambientales.',
+        },
+        {
+          phase: 'Piloto analítico (2-3 semanas)',
+          description: 'Comparativa de políticas, dashboards y validación del punto de inflexión operativo.',
+        },
+        {
+          phase: 'Implantación operativa',
+          description: 'Integración con datos reales de operación y seguimiento continuo de ahorro y emisiones.',
+        },
+      ],
+      keyMessage:
+        'La penalización ambiental integrada no solo mejora sostenibilidad: también revela y reduce destrucción de margen en escenarios de alta demanda.',
+    },
+    detailEn: {
+      context:
+        'Comparative evaluation of operating policies across daily demand scenarios (200, 250, 320, and 450 u/day), combining economic cost and environmental penalty in one decision view.',
+      problem: [
+        'The low-reusable baseline policy introduces operational friction (cardboard and transshipment) as demand increases.',
+        'Decision-making often separates cost and sustainability, hiding total real impact by scenario.',
+        'Without a quantified avoidable-loss signal, the shift toward optimized operations is delayed.',
+      ],
+      approach: [
+        'Multi-demand scenario modeling with two policies: low baseline (IEO=10) and optimized (IEO=25).',
+        'Total-cost decomposition by component (production, transport, cardboard, transshipment, and CO2 penalty).',
+        'Scenario-by-scenario comparison using dashboards to detect inflection point and avoidable overcost.',
+      ],
+      deliverables: [
+        'Baseline vs optimized comparative dashboard by scenario.',
+        'Operational summary and cost-composition charts.',
+        'Avoidable-loss signal (daily overcost) to prioritize operating decisions.',
+      ],
+      commercialProposal: [
+        {
+          phase: 'Rapid assessment (1 week)',
+          description: 'Scenario modeling, input calibration, and economic/environmental KPI definition.',
+        },
+        {
+          phase: 'Analytical pilot (2-3 weeks)',
+          description: 'Policy comparison, dashboards, and validation of the operational inflection point.',
+        },
+        {
+          phase: 'Operational rollout',
+          description: 'Integration with real operational data and continuous savings/emissions monitoring.',
+        },
+      ],
+      keyMessage:
+        'Integrated environmental penalty is not only about sustainability: it also reveals and reduces margin destruction under high-demand scenarios.',
+    },
+    imageUrl: 'assets/industrial.png',
+    tags: [
+      'optimización',
+      'penalización ambiental',
+      'CO2',
+      'logística',
+      'coste total',
+      'escenarios',
+      'IEO',
+      'reutilizables',
+      'transshipment',
+      'dashboard',
+      'analítica',
+      'margen',
+    ],
+    iconSvg:
+      '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17.25V6.75m0 10.5 4.5-4.5 3 3 7.5-7.5M21 6.75h-6v6"/></svg>',
+  },
 ];
