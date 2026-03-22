@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "ostlanken-intelligence",
+    "route": "/ostlanken",
+    "country": "Sweden",
+    "city": "Stockholm - Linkoping",
+    "infrastructure_type": "Ferroviario",
+    "status": "Monitoring",
+    "client": "Trafikverket ecosystem",
+    "fallback_name": "Ostlanken Intelligence System",
+    "source_owner": "Trafikverket",
+    "official_source_url": "https://www.trafikverket.se/vara-projekt/projekt-som-stracker-sig-over-flera-lan/ostlanken-en-ny-dubbelsparig-jarnvag/"
+  },
+  {
+    "slug": "barcelona-health-campus",
+    "route": "/projects/barcelona-health-campus",
+    "country": "Spain",
+    "city": "Barcelona",
+    "infrastructure_type": "Hospitalario",
+    "status": "Pipeline",
+    "client": "Regional health partnership",
+    "fallback_name": "Barcelona Health Campus Expansion",
+    "source_owner": "Hospital Clinic Barcelona",
+    "official_source_url": "https://www.clinicbarcelona.org/noticias/un-master-en-arquitectura-hospitalaria-para-pensar-la-ampliacion-del-clinic-barcelona"
+  },
+  {
+    "slug": "rhine-bridges-upgrade",
+    "route": "/projects/rhine-bridges-upgrade",
+    "country": "Germany",
+    "city": "Cologne",
+    "infrastructure_type": "Puentes",
+    "status": "Tendering",
+    "client": "Regional transport authority",
+    "fallback_name": "Rhine Bridges Upgrade Program",
+    "source_owner": "Die Autobahn GmbH des Bundes",
+    "official_source_url": "https://www.autobahn.de/planen-bauen/projekt/a-bei-lev-rheinbruecke-leverkusen"
+  },
+  {
+    "slug": "iberian-grid-flex",
+    "route": "/projects/iberian-grid-flex",
+    "country": "Spain",
+    "city": "Zaragoza",
+    "infrastructure_type": "Energetico",
+    "status": "Pipeline",
+    "client": "Private utility consortium",
+    "fallback_name": "Iberian Grid Flex Nodes",
+    "source_owner": "Redeia",
+    "official_source_url": "https://www.redeia.com/en/press-office/press-release/2017/12/red-electrica-enlarges-ave-power-substation-zaragoza-after"
+  },
+  {
+    "slug": "copenhagen-port-automation",
+    "route": "/projects/copenhagen-port-automation",
+    "country": "Denmark",
+    "city": "Copenhagen",
+    "infrastructure_type": "Portuario",
+    "status": "Tendering",
+    "client": "Port authority",
+    "fallback_name": "Copenhagen Port Automation",
+    "source_owner": "Copenhagen Malmö Port",
+    "official_source_url": "https://news.cmport.com/pressreleases/cmp-has-fully-phased-in-fossil-free-fuel-at-its-container-terminal-in-copenhagen-3340089"
+  }
+]

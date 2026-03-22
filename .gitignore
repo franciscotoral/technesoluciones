@@ -26,3 +26,13 @@ dist-ssr
 # Angular cache
 .angular/cache
 
+# Local Python environment and caches
+.venv/
+**/__pycache__/
+*.pyc
+
+# Agent local secrets and debug artifacts
+agent/.env
+agent/debug_outputs/
+agent/__pycache__/
+

@@ -9,6 +9,9 @@ import { PortalComponent } from './components/portal/portal.component';
 import { authGuard } from './guards/auth.guard';
 import { AdminComponent } from './components/admin/admin.component';
 import { adminGuard } from './guards/admin.guard';
+import { OstlankenDashboardComponent } from './app/pages/ostlanken-dashboard/ostlanken-dashboard.component';
+import { ProjectsDashboardComponent } from './app/pages/projects-dashboard/projects-dashboard.component';
+import { ProjectDetailComponent } from './app/pages/project-detail/project-detail.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -17,6 +20,9 @@ export const routes: Routes = [
   { path: 'contact', component: ContactComponent },
   { path: 'login', component: LoginComponent },
   { path: 'portal', component: PortalComponent, canActivate: [authGuard] },
+  { path: 'projects', component: ProjectsDashboardComponent },
+  { path: 'projects/:slug', component: ProjectDetailComponent },
+  { path: 'ostlanken', component: OstlankenDashboardComponent },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' },
 ];

@@ -99,9 +99,9 @@
     <section id="cases" class="py-20 md:py-28 bg-slate-800/30">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-3xl mx-auto">
-          <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Casos de estudio' : 'Case Studies' }}</h2>
+          <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Proyectos reales. Resultados medibles.' : 'Real projects. Measurable results.' }}</h2>
           <p class="mt-4 text-lg text-gray-400">
-            {{ i18n.lang() === 'es' ? 'Proyectos reales de empresa con impacto operativo medible.' : 'Company projects with measurable operational impact.' }}
+            {{ i18n.lang() === 'es' ? 'De las industrias más exigentes. Entregados por Techne.' : 'From the most demanding industries. Delivered by Techne.' }}
           </p>
         </div>
 
@@ -131,7 +131,13 @@
                   }
                 </div>
 
-                <div class="mt-6">
+                <div class="mt-6 space-y-4">
+                  @if (cs.cardMetric) {
+                    <div class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1.5 text-sm font-medium text-sky-900">
+                      <span aria-hidden="true">{{ cs.cardMetricIcon || '📊' }}</span>
+                      <span>{{ cs.cardMetric }}</span>
+                    </div>
+                  }
                   @if (cs.link) {
                     <a
                       [href]="cs.link"
@@ -171,22 +177,25 @@
 
     <section class="py-20 md:py-28 bg-slate-800/30">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Sectores clave' : 'Serving Key Industries' }}</h2>
-            <p class="mt-4 text-lg text-gray-400">
-              {{ i18n.lang() === 'es' ? 'Nuestra capacidad multidisciplinar nos permite aportar soluciones a medida en sectores exigentes, asegurando cumplimiento, eficiencia e innovación.' : 'Our multidisciplinary expertise allows us to deliver tailored solutions across a range of demanding sectors, ensuring compliance, efficiency, and innovation.' }}
-            </p>
-            <div class="mt-8 flex flex-wrap gap-4">
-              @for (sector of sectors(); track sector) {
-                <span class="bg-gray-700 text-gray-300 px-4 py-2 rounded-full font-medium">{{ sector }}</span>
-              }
-            </div>
-          </div>
-          <div class="relative h-80 rounded-lg overflow-hidden">
-            <img src="assets/industrial.png" alt="Industrial sector" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#0d1f33] to-transparent"></div>
-          </div>
+        <div class="text-center max-w-3xl mx-auto">
+          <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Sectores clave' : 'Serving Key Industries' }}</h2>
+          <p class="mt-4 text-lg text-gray-400">
+            {{ i18n.lang() === 'es' ? 'Aplicamos la misma disciplina técnica en proyectos donde el riesgo documental, regulatorio y operativo exige trazabilidad y control fino.' : 'We apply the same technical discipline to projects where documentary, regulatory and operational risk requires traceability and tight control.' }}
+          </p>
+        </div>
+
+        <div class="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          @for (sector of sectors(); track sector.nameEn) {
+            <article class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 hover:border-blue-500/40 hover:-translate-y-1 transition-all duration-300">
+              <div class="flex h-12 w-12 items-center justify-center rounded-md bg-blue-600/20 text-blue-400" [innerHTML]="sector.icon"></div>
+              <h3 class="mt-5 text-xl font-semibold text-white">
+                {{ i18n.lang() === 'es' ? sector.nameEs : sector.nameEn }}
+              </h3>
+              <p class="mt-3 text-gray-400">
+                {{ i18n.lang() === 'es' ? sector.descriptionEs : sector.descriptionEn }}
+              </p>
+            </article>
+          }
         </div>
       </div>
     </section>
@@ -199,8 +208,11 @@
         </p>
         <div class="mt-8">
           <a href="/contact" class="bg-blue-600 text-white px-8 py-4 rounded-md font-semibold text-lg hover:bg-blue-500 transition-colors duration-300">
-            {{ i18n.lang() === 'es' ? 'Solicitar propuesta' : 'Request a Proposal' }}
+            {{ i18n.lang() === 'es' ? 'Cuéntanos tu proyecto — sin compromiso' : 'Tell us about your project - no commitment' }}
           </a>
+          <p class="mt-3 text-sm text-gray-400">
+            {{ i18n.lang() === 'es' ? 'Primera consulta gratuita · Respuesta en 24h' : 'First consultation free · Response within 24h' }}
+          </p>
         </div>
       </div>
     </section>

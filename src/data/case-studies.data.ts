@@ -18,6 +18,9 @@ export interface CaseStudy {
   titleEn: string;
   summaryEs: string;
   summaryEn: string;
+  cardMetricEs?: string;
+  cardMetricEn?: string;
+  cardMetricIcon?: string;
   detailEs: CaseStudyDetail;
   detailEn: CaseStudyDetail;
   imageUrl: string;
@@ -29,12 +32,15 @@ export interface CaseStudy {
 export const CASE_STUDIES: CaseStudy[] = [
   {
     slug: 'wasteops-optimization-ai-implementation',
-    titleEs: 'WasteOps en obra: optimización de recursos de residuos con algoritmos + base de datos propia',
-    titleEn: 'WasteOps on Site: Waste Resource Optimization with Algorithms + Proprietary Database',
+    titleEs: 'WasteOps: Reducción de Residuos con IA en Obra',
+    titleEn: 'WasteOps: AI-Driven Waste Reduction on Site',
     summaryEs:
-      'Desarrollamos con éxito una aplicación para una empresa grande del sector construcción que permite analizar datos reales de obra y optimizar la gestión de residuos (planificación, logística y control), apoyándose en algoritmos de optimización y una base de datos controlada. Ahora lo convertimos en un caso de estudio y gancho comercial para ofrecer un servicio de diagnóstico + implementación de IA en constructoras con fallos detectados y datos disponibles.',
+      'Desarrollamos una aplicación de IA a medida para una gran constructora que analiza datos reales de obra y optimiza la gestión de residuos en las fases de planificación, logística y control. Combinando algoritmos de optimización con una base de datos propia, el cliente obtuvo trazabilidad completa y una reducción medible de residuos operativos.',
     summaryEn:
-      'We successfully developed an application for a large construction company that analyzes real jobsite data and optimizes waste management (planning, logistics, and control), using optimization algorithms and a controlled database. We are now turning it into a case study and commercial hook to offer a diagnostics + AI implementation service for construction companies with identified issues and available data.',
+      'We developed a tailored AI application for a major contractor that analyzes real site data and optimizes waste management across planning, logistics, and control. By combining optimization algorithms with a proprietary database, the client achieved full traceability and a measurable reduction in operational waste.',
+    cardMetricEs: 'Trazabilidad total de residuos · Escalable a producción',
+    cardMetricEn: 'Full waste traceability · Ready to scale to production',
+    cardMetricIcon: '📊',
     detailEs: {
       context:
         'Proyecto aplicado a gestión de residuos en obra para una compañía de gran tamaño, con foco en convertir datos operativos en decisiones.',
@@ -104,32 +110,21 @@ export const CASE_STUDIES: CaseStudy[] = [
         'This is not AI for AI’s sake; it is data-driven operational decision-making with measurable and scalable impact.',
     },
     imageUrl: 'assets/cases/wasteop.png',
-    tags: [
-      'gestión de residuos',
-      'construcción',
-      'optimización de recursos',
-      'logística',
-      'algoritmos',
-      'IA aplicada',
-      'data engineering',
-      'base de datos propia',
-      'trazabilidad',
-      'circularidad',
-      'KPIs',
-      'pilotos',
-      'escalado a producción',
-    ],
+    tags: ['Optimización IA', 'Gestión de residuos', 'Construcción', 'Data engineering', 'Trazabilidad'],
     iconSvg:
       '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75 13.5 13.5m0 0a3 3 0 10-4.243-4.243A3 3 0 0013.5 13.5zM3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>',
   },
   {
     slug: 'ce-marking-eta-acelerado-ia',
-    titleEs: 'CE-Marking (ETA) acelerado con IA: automatización documental y optimización del proceso para productos de construcción',
-    titleEn: 'AI-Accelerated CE-Marking (ETA): Document Automation and Process Optimization for Construction Products',
+    titleEs: 'CE-Marking Acelerado: Certificación ETA con IA para Productos de Construcción',
+    titleEn: 'Accelerated CE-Marking: AI-Powered ETA Certification for Construction Products',
     summaryEs:
-      'Implementamos un enfoque basado en IA para acelerar y robustecer proyectos de marcado CE en construcción, especialmente ETA (Evaluación Técnica Europea) para productos de construcción. El sistema reduce tiempos y retrabajos mediante automatización documental, extracción y verificación de requisitos, generación de evidencias y optimización del flujo de trabajo (recursos, hitos y coordinación con laboratorio/notified body). Resultado: procesos más rápidos, trazables y con menor riesgo de no conformidades.',
+      'Implementamos un sistema basado en IA para acelerar proyectos de marcado CE y ETA (Evaluación Técnica Europea) para fabricantes de productos de construcción. La plataforma automatiza la generación documental, la extracción de requisitos y la verificación de evidencias, reduciendo retrabajos y asegurando la coordinación con el organismo notificado. Resultado: certificación más rápida, trazable y con menor riesgo de no conformidades.',
     summaryEn:
-      'We implemented an AI-based approach to accelerate and strengthen CE-marking projects in construction, especially ETA (European Technical Assessment) for construction products. The system reduces time and rework through document automation, requirement extraction and verification, evidence generation, and workflow optimization (resources, milestones, and coordination with lab/notified body). Result: faster, traceable processes with lower non-conformity risk.',
+      'We implemented an AI-based system to accelerate CE-marking and ETA (European Technical Assessment) projects for construction product manufacturers. The platform automates document generation, requirement extraction, and evidence verification, reducing rework and ensuring coordination with the notified body. Result: faster, more traceable certification with lower non-conformity risk.',
+    cardMetricEs: 'Ciclos de certificación más cortos · Menor riesgo de no conformidad · Trazabilidad completa',
+    cardMetricEn: 'Shorter certification cycles · Lower non-conformity risk · Full traceability',
+    cardMetricIcon: '✅',
     detailEs: {
       context:
         'Proyectos de marcado CE y obtención de ETA para productos de construcción, donde la carga documental, el control de versiones y la consistencia entre ensayos, EAD/ETAG, FPC y DoP suele ser el cuello de botella.',
@@ -205,34 +200,21 @@ export const CASE_STUDIES: CaseStudy[] = [
         'We reduce manual effort and CE-Marking/ETA risk by turning the dossier into a traceable system, not a set of loose folders.',
     },
     imageUrl: 'assets/cases/CE.png',
-    tags: [
-      'CE marking',
-      'ETA',
-      'productos de construcción',
-      'documentación técnica',
-      'cumplimiento normativo',
-      'automatización',
-      'IA aplicada',
-      'optimización de procesos',
-      'gestión documental',
-      'trazabilidad',
-      'EAD/ETAG',
-      'FPC',
-      'DoP',
-      'calidad',
-      'estandarización',
-    ],
+    tags: ['CE Marking', 'ETA', 'Automatización documental', 'IA aplicada', 'Cumplimiento normativo'],
     iconSvg:
       '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
   },
   {
     slug: 'optimizacion-penalizacion-ambiental-integrada',
-    titleEs: 'Optimización con penalización ambiental integrada',
-    titleEn: 'Optimization with Integrated Environmental Penalty',
+    titleEs: 'Optimizador Logístico Verde: Función de Coste con Penalización CO₂',
+    titleEn: 'Green Logistics Optimizer: Cost Function with CO₂ Penalty',
     summaryEs:
-      'Caso de optimización logística-operativa donde se integra una penalización ambiental (CO2) en la función de coste para comparar políticas de operación baseline frente a operación optimizada con mayor reutilizable (IEO).',
+      'Diseñamos un modelo de optimización logístico-operativa que integra una penalización ambiental (emisiones CO₂) directamente en la función de coste. El sistema permite comparar en tiempo real políticas de operación baseline frente a políticas optimizadas, priorizando activos reutilizables (IEO) mientras minimiza el coste total. Entregado como dashboard interactivo para la toma de decisiones operativas.',
     summaryEn:
-      'Logistics/operations optimization case where an environmental penalty (CO2) is integrated into the cost function to compare baseline policy versus optimized policy with higher reusable usage (IEO).',
+      'We designed a logistics-operations optimization model that integrates an environmental penalty (CO₂ emissions) directly into the cost function. The system compares baseline operating policies against optimized policies in real time, prioritizing reusable assets (IEO) while minimizing total cost. It was delivered as an interactive dashboard for operational decision-making.',
+    cardMetricEs: 'CO₂ integrado en coste · Comparativa de escenarios · Dashboard accionable',
+    cardMetricEn: 'CO₂ built into cost · Scenario comparison · Actionable dashboard',
+    cardMetricIcon: '🌱',
     detailEs: {
       context:
         'Evaluación comparativa de políticas operativas en distintos escenarios de demanda diaria (200, 250, 320 y 450 u/día), incorporando coste económico y penalización ambiental en una misma visión de decisión.',
@@ -304,20 +286,7 @@ export const CASE_STUDIES: CaseStudy[] = [
         'Integrated environmental penalty is not only about sustainability: it also reveals and reduces margin destruction under high-demand scenarios.',
     },
     imageUrl: 'assets/cases/produccion.png',
-    tags: [
-      'optimización',
-      'penalización ambiental',
-      'CO2',
-      'logística',
-      'coste total',
-      'escenarios',
-      'IEO',
-      'reutilizables',
-      'transshipment',
-      'dashboard',
-      'analítica',
-      'margen',
-    ],
+    tags: ['Optimización logística', 'Penalización CO₂', 'Investigación operativa', 'Dashboard', 'Sostenibilidad'],
     iconSvg:
       '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17.25V6.75m0 10.5 4.5-4.5 3 3 7.5-7.5M21 6.75h-6v6"/></svg>',
   },

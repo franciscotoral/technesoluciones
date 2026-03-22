@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -14,6 +15,7 @@ import { LanguageService } from '../../services/language.service';
 export class HeaderComponent {
   readonly i18n = inject(LanguageService);
   readonly auth = inject(AuthService);
+  readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
 
   onLogout() {

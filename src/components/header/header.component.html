@@ -18,6 +18,9 @@
           <a routerLink="/cases" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}
           </a>
+          <a routerLink="/projects" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
+          </a>
           <a href="#" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
           </a>
@@ -28,6 +31,21 @@
       </div>
 
       <div class="hidden md:flex items-center space-x-4">
+        <div class="inline-flex rounded-md border border-slate-300 overflow-hidden">
+          <button
+            type="button"
+            (click)="theme.setTheme('dark')"
+            class="px-3 py-1 text-xs font-semibold"
+            [class]="theme.theme() === 'dark' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+          >Dark</button>
+          <button
+            type="button"
+            (click)="theme.setTheme('light')"
+            class="px-3 py-1 text-xs font-semibold"
+            [class]="theme.theme() === 'light' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+          >Light</button>
+        </div>
+
         <div class="inline-flex rounded-md border border-slate-300 overflow-hidden">
           <button
             type="button"

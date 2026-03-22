@@ -1,0 +1,132 @@
+<div class="min-h-screen flex flex-col bg-[#0b1428] text-slate-100">
+  <app-header></app-header>
+
+  <main class="flex-1 py-14">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8">
+      @if (project(); as current) {
+        <a [routerLink]="['/projects']" class="inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-200">
+          <span aria-hidden="true">&larr;</span>
+          {{ i18n.lang() === 'es' ? 'Volver al dashboard de proyectos' : 'Back to projects dashboard' }}
+        </a>
+
+        <div class="project-detail-hero mt-6 rounded-[28px] border border-slate-800 p-6 md:p-10">
+          <div class="grid gap-8 lg:grid-cols-[1.45fr_0.95fr]">
+            <div>
+              <p class="project-detail-kicker text-xs uppercase tracking-[0.26em]">{{ displayTypeLabel(current.infrastructureType) }}</p>
+              <h1 class="project-detail-title mt-3 text-4xl font-semibold md:text-5xl">{{ current.name }}</h1>
+              <p class="project-detail-summary mt-4 max-w-3xl text-base leading-7">{{ current.summary }}</p>
+
+              <div class="mt-6">
+                <p class="project-detail-meta-label text-xs uppercase tracking-[0.22em]">
+                  {{ i18n.lang() === 'es' ? 'Servicios requeridos' : 'Required services' }}
+                </p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @for (service of current.requiredServices; track service) {
+                    <span class="rounded-full border px-3 py-1.5 text-sm font-medium" [ngClass]="serviceBadgeClass(service)">
+                      {{ service }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div class="mt-6 flex flex-wrap gap-2">
+                @for (focus of current.keyFocus; track focus) {
+                  <span class="project-detail-tag rounded-full border px-3 py-1.5 text-sm">
+                    {{ focus }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <aside class="project-detail-panel rounded-2xl border p-5">
+              <dl class="space-y-4 text-sm">
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Pais / ciudad' : 'Country / city' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ current.country }} · {{ current.city }}</dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Cliente' : 'Client' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ current.client }}</dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ current.status }}</dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Horizonte' : 'Timeframe' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ current.timeframe }}</dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'CAPEX estimado' : 'Estimated CAPEX' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ formatCapex(current.budgetEurM) }}M</dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Fuente oficial' : 'Official source' }}</dt>
+                  <dd class="project-detail-value mt-1">
+                    {{ current.sourceOwner || (i18n.lang() === 'es' ? 'Fuente no indicada' : 'Source not specified') }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="project-detail-label">{{ i18n.lang() === 'es' ? 'Ultima verificacion' : 'Last checked' }}</dt>
+                  <dd class="project-detail-value mt-1">{{ formatCheckedAt(current.sourceLastCheckedAt) }}</dd>
+                </div>
+                @if (current.officialSourceUrl) {
+                  <div>
+                    <a
+                      [href]="current.officialSourceUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-200"
+                    >
+                      {{ i18n.lang() === 'es' ? 'Abrir fuente oficial' : 'Open official source' }}
+                      <span aria-hidden="true">&rarr;</span>
+                    </a>
+                  </div>
+                }
+              </dl>
+            </aside>
+          </div>
+        </div>
+
+        <div class="mt-8 grid gap-6 lg:grid-cols-3">
+          <article class="project-detail-card rounded-2xl border p-5">
+            <h2 class="project-detail-card-title text-lg font-semibold">{{ projectLens(current).title }}</h2>
+            <p class="project-detail-card-copy mt-3 text-sm leading-6">
+              {{ projectLens(current).body }}
+            </p>
+          </article>
+          <article class="project-detail-card rounded-2xl border p-5">
+            <h2 class="project-detail-card-title text-lg font-semibold">{{ i18n.lang() === 'es' ? 'Oportunidad Techne' : 'Techne opportunity' }}</h2>
+            <p class="project-detail-card-copy mt-3 text-sm leading-6">
+              {{
+                i18n.lang() === 'es'
+                  ? 'La entrada comercial mas natural es combinar servicios requeridos, trazabilidad documental y una capa de control ejecutivo para convertir seguimiento en decisiones accionables.'
+                  : 'The most natural commercial entry point is to combine required services, document traceability and an executive control layer that turns monitoring into actionable decisions.'
+              }}
+            </p>
+          </article>
+          <article class="project-detail-card rounded-2xl border p-5">
+            <h2 class="project-detail-card-title text-lg font-semibold">{{ i18n.lang() === 'es' ? 'Siguiente paso' : 'Next step' }}</h2>
+            <p class="project-detail-card-copy mt-3 text-sm leading-6">
+              {{
+                i18n.lang() === 'es'
+                  ? 'Esta ficha ya esta alimentada por fuentes oficiales y puede evolucionar a un workspace mas profundo con procurement, cambios y alertas por paquete cuando definamos esa integracion.'
+                  : 'This dossier is already fed by official sources and can evolve into a deeper workspace with procurement, changes and package alerts once we define that integration.'
+              }}
+            </p>
+          </article>
+        </div>
+      } @else {
+        <div class="project-detail-card rounded-2xl border p-8">
+          <h1 class="project-detail-card-title text-3xl font-semibold">{{ i18n.lang() === 'es' ? 'Proyecto no encontrado' : 'Project not found' }}</h1>
+          <a [routerLink]="['/projects']" class="mt-4 inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-200">
+            <span aria-hidden="true">&larr;</span>
+            {{ i18n.lang() === 'es' ? 'Volver a proyectos' : 'Back to projects' }}
+          </a>
+        </div>
+      }
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

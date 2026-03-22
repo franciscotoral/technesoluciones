@@ -11,6 +11,8 @@ interface UiCaseStudy {
   slug: string;
   title: string;
   summary: string;
+  cardMetric?: string;
+  cardMetricIcon?: string;
   imageUrl: string;
   icon: SafeHtml;
   tags?: string[];
@@ -33,6 +35,8 @@ export class CaseListComponent {
       slug: item.slug,
       title: this.i18n.lang() === 'es' ? item.titleEs : item.titleEn,
       summary: this.i18n.lang() === 'es' ? item.summaryEs : item.summaryEn,
+      cardMetric: this.i18n.lang() === 'es' ? item.cardMetricEs : item.cardMetricEn,
+      cardMetricIcon: item.cardMetricIcon,
       imageUrl: item.imageUrl,
       tags: item.tags,
       link: item.link,

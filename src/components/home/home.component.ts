@@ -26,10 +26,20 @@ interface Partner {
   logoUrl: string;
 }
 
+interface SectorCard {
+  nameEs: string;
+  nameEn: string;
+  descriptionEs: string;
+  descriptionEn: string;
+  icon: SafeHtml;
+}
+
 interface UiCaseStudy {
   slug: string;
   title: string;
   summary: string;
+  cardMetric?: string;
+  cardMetricIcon?: string;
   imageUrl: string;
   icon: SafeHtml;
   tags?: string[];
@@ -108,7 +118,36 @@ export class HomeComponent {
     { name: 'FLC', logoUrl: 'assets/partners/flc.png' },
   ]);
 
-  readonly sectors = signal<string[]>(['Residential', 'Industrial', 'Healthcare', 'Energy']);
+  readonly sectors = signal<SectorCard[]>([
+    {
+      nameEs: 'Infraestructura ferroviaria',
+      nameEn: 'Rail infrastructure',
+      descriptionEs: 'BIM, QA, control documental y vigilancia de paquetes para corredores, estaciones y sistemas asociados.',
+      descriptionEn: 'BIM, QA, document control and package monitoring for corridors, stations and related systems.',
+      icon: this.sanitizer.bypassSecurityTrustHtml('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 15.75v-7.5A2.25 2.25 0 0 1 6 6h12a2.25 2.25 0 0 1 2.25 2.25v7.5M4.5 18.75h15m-12-3 1.125 3m6.75-3 1.125 3M8.25 6V4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V6" /></svg>')
+    },
+    {
+      nameEs: 'Industrial y manufactura',
+      nameEn: 'Industrial and manufacturing',
+      descriptionEs: 'Due diligence técnica, automatización, gemelos digitales y cuadros de mando operativos para plantas complejas.',
+      descriptionEn: 'Technical due diligence, automation, digital twins and operational dashboards for complex plants.',
+      icon: this.sanitizer.bypassSecurityTrustHtml('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 21V8.25m0 0L9 12V8.25m-4.5 0 4.5-4.5m0 0v16.5m0-16.5 4.5 4.5m0 0v12.75m0-12.75 4.5-4.5m-4.5 4.5 4.5 3.75V21" /></svg>')
+    },
+    {
+      nameEs: 'Hospitalario y sanitario',
+      nameEn: 'Healthcare facilities',
+      descriptionEs: 'Coordinación técnica, cumplimiento y puesta en marcha para entornos hospitalarios con alta exigencia regulatoria.',
+      descriptionEn: 'Technical coordination, compliance and commissioning for healthcare environments with strict regulation.',
+      icon: this.sanitizer.bypassSecurityTrustHtml('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6m15 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>')
+    },
+    {
+      nameEs: 'Energía y utilities',
+      nameEn: 'Energy and utilities',
+      descriptionEs: 'Ingeniería de costes, aseguramiento de calidad y reporting para redes, nodos energéticos e integración industrial.',
+      descriptionEn: 'Cost engineering, quality assurance and reporting for grids, energy nodes and industrial integration.',
+      icon: this.sanitizer.bypassSecurityTrustHtml('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3 4.97 13.5h4.78L8.999 21 16.03 10.5h-4.78L12 3Z" /></svg>')
+    },
+  ]);
   readonly heroMuted = signal(true);
 
   readonly caseStudies = computed<UiCaseStudy[]>(() =>
@@ -116,6 +155,8 @@ export class HomeComponent {
       slug: item.slug,
       title: this.i18n.lang() === 'es' ? item.titleEs : item.titleEn,
       summary: this.i18n.lang() === 'es' ? item.summaryEs : item.summaryEn,
+      cardMetric: this.i18n.lang() === 'es' ? item.cardMetricEs : item.cardMetricEn,
+      cardMetricIcon: item.cardMetricIcon,
       imageUrl: item.imageUrl,
       tags: item.tags,
       link: item.link,
