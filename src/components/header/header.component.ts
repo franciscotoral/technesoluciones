@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
@@ -17,8 +17,18 @@ export class HeaderComponent {
   readonly auth = inject(AuthService);
   readonly theme = inject(ThemeService);
   private readonly router = inject(Router);
+  readonly menuOpen = signal(false);
+
+  toggleMenu() {
+    this.menuOpen.update((value) => !value);
+  }
+
+  closeMenu() {
+    this.menuOpen.set(false);
+  }
 
   onLogout() {
+    this.closeMenu();
     this.auth.logout();
     this.router.navigateByUrl('/');
   }
