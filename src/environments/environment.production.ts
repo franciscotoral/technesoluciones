@@ -1,6 +1,6 @@
 export const environment = {
-  production: false,
+  production: true,
   supabaseUrl: '',
   supabaseAnonKey: '',
-  apiUrl: 'http://localhost:8000',
+  apiUrl: 'https://api.technesoluciones.com'
 };

@@ -24,5 +24,12 @@ export const routes: Routes = [
   { path: 'projects/:slug', component: ProjectDetailComponent },
   { path: 'ostlanken', component: OstlankenDashboardComponent },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
+  {
+    path: 'diagnostico',
+    loadComponent: () =>
+      import('./app/pages/diagnostico/diagnostico.component').then(
+        m => m.DiagnosticoComponent
+      ),
+  },
   { path: '**', redirectTo: '' },
 ];

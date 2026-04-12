@@ -1,0 +1,270 @@
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow py-16 md:py-20">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl">
+      <div [ngSwitch]="screen()">
+
+        <!-- ══ INTRO ══════════════════════════════════════════════════ -->
+        <ng-container *ngSwitchCase="'intro'">
+          <div class="text-center py-8">
+            <span class="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1 text-sm text-cyan-300">
+              Diagnóstico gratuito · 3 minutos
+            </span>
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mt-6">
+              ¿Tu empresa cumple la normativa aplicable?
+            </h1>
+            <p class="mt-5 text-lg text-gray-400 max-w-xl mx-auto">
+              Responde 3 bloques de preguntas y obtén un análisis personalizado:
+              normas aplicables, brechas detectadas y plan de acción.
+            </p>
+            <button (click)="goTo('step1')" class="diag-btn-primary mt-10">
+              Comenzar diagnóstico →
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- ══ STEP 1: Sector + Actividad ════════════════════════════ -->
+        <ng-container *ngSwitchCase="'step1'">
+          <div class="diag-progress"><div class="diag-progress-bar" style="width:33%"></div></div>
+          <p class="diag-step-label">Paso 1 de 3 · Perfil de empresa</p>
+
+          <h2 class="diag-step-title">¿A qué sector pertenece tu empresa?</h2>
+          <div class="chip-grid mt-5">
+            <button *ngFor="let s of sectores"
+              class="chip"
+              [class.selected]="isSelected('sector', s.val)"
+              (click)="selectSingle('sector', s.val)">
+              {{ s.label }}
+            </button>
+          </div>
+          <div *ngIf="form.sector === 'otro'" class="mt-3">
+            <input [(ngModel)]="form.sectorCustom"
+              placeholder="Describe tu sector..."
+              class="diag-input" />
+          </div>
+
+          <h2 class="diag-step-title mt-8">¿Cuál es la actividad principal?</h2>
+          <textarea [(ngModel)]="form.actividad" rows="3"
+            placeholder="Ej: Fabricación de perfiles de aluminio para la construcción..."
+            class="diag-input mt-2"></textarea>
+
+          <h2 class="diag-step-title mt-8">
+            Nombre de empresa
+            <span class="text-gray-500 text-sm font-normal">(opcional)</span>
+          </h2>
+          <input [(ngModel)]="form.empresa"
+            placeholder="Ej: Techne Soluciones S.L."
+            class="diag-input mt-2" />
+
+          <div class="diag-nav mt-10">
+            <span></span>
+            <button (click)="goTo('step2')" [disabled]="!step1Valid()" class="diag-btn-primary">
+              Siguiente →
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- ══ STEP 2: Empleados + Certs + Doc ═══════════════════════ -->
+        <ng-container *ngSwitchCase="'step2'">
+          <div class="diag-progress"><div class="diag-progress-bar" style="width:66%"></div></div>
+          <p class="diag-step-label">Paso 2 de 3 · Situación actual</p>
+
+          <h2 class="diag-step-title">¿Cuántos empleados tiene la empresa?</h2>
+          <div class="chip-grid mt-5">
+            <button *ngFor="let e of empleadosOpts"
+              class="chip"
+              [class.selected]="isSelected('empleados', e)"
+              (click)="selectSingle('empleados', e)">
+              {{ e }}
+            </button>
+          </div>
+
+          <h2 class="diag-step-title mt-8">¿Qué certificaciones tiene actualmente?</h2>
+          <p class="text-sm text-gray-500 mb-3">Selecciona todas las que apliquen</p>
+          <div class="chip-grid">
+            <button *ngFor="let c of certOpts"
+              class="chip"
+              [class.selected]="isSelected('certs', c.val)"
+              (click)="toggleMulti('certs', c.val)">
+              {{ c.label }}
+            </button>
+          </div>
+
+          <h2 class="diag-step-title mt-8">¿Cómo es tu sistema de gestión documental?</h2>
+          <div class="chip-grid chip-col mt-3">
+            <button *ngFor="let d of docOpts"
+              class="chip chip-wide"
+              [class.selected]="isSelected('docState', d.val)"
+              (click)="selectSingle('docState', d.val)">
+              {{ d.label }}
+            </button>
+          </div>
+
+          <div class="diag-nav mt-10">
+            <button (click)="goTo('step1')" class="diag-btn-ghost">← Atrás</button>
+            <button (click)="goTo('step3')" [disabled]="!step2Valid()" class="diag-btn-primary">
+              Siguiente →
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- ══ STEP 3: Problemas + Urgencia ══════════════════════════ -->
+        <ng-container *ngSwitchCase="'step3'">
+          <div class="diag-progress"><div class="diag-progress-bar" style="width:100%"></div></div>
+          <p class="diag-step-label">Paso 3 de 3 · Necesidades concretas</p>
+
+          <h2 class="diag-step-title">¿Qué problemas o riesgos identificas?</h2>
+          <p class="text-sm text-gray-500 mb-3">Selecciona todos los que apliquen</p>
+          <div class="chip-grid mt-4">
+            <button *ngFor="let p of problemaOpts"
+              class="chip"
+              [class.selected]="isSelected('problemas', p.val)"
+              (click)="toggleMulti('problemas', p.val)">
+              {{ p.label }}
+            </button>
+          </div>
+
+          <h2 class="diag-step-title mt-8">Urgencia percibida</h2>
+          <div class="urgencia-row mt-4">
+            <span class="text-sm text-gray-500">Muy baja</span>
+            <input type="range" min="1" max="5"
+              [(ngModel)]="form.urgencia"
+              class="diag-range" />
+            <span class="text-sm text-gray-500">Crítica</span>
+          </div>
+          <p class="text-center text-cyan-300 font-semibold mt-2">{{ urgenciaLabel() }}</p>
+
+          <h2 class="diag-step-title mt-8">
+            ¿Algo más que debamos saber?
+            <span class="text-gray-500 text-sm font-normal">(opcional)</span>
+          </h2>
+          <textarea [(ngModel)]="form.extra" rows="3"
+            placeholder="Plazos, requisitos de clientes, contexto adicional..."
+            class="diag-input mt-2"></textarea>
+
+          @if (error()) {
+            <p class="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              {{ error() }}
+            </p>
+          }
+
+          <div class="diag-nav mt-10">
+            <button (click)="goTo('step2')" class="diag-btn-ghost">← Atrás</button>
+            <button (click)="generate()" class="diag-btn-primary">Generar diagnóstico</button>
+          </div>
+        </ng-container>
+
+        <!-- ══ LOADING ════════════════════════════════════════════════ -->
+        <ng-container *ngSwitchCase="'loading'">
+          <div class="text-center py-28">
+            <div class="diag-spinner mx-auto"></div>
+            <p class="mt-6 text-lg text-gray-300">Analizando normativa aplicable…</p>
+            <p class="mt-2 text-sm text-gray-500">Esto puede tardar unos segundos</p>
+          </div>
+        </ng-container>
+
+        <!-- ══ REPORT ══════════════════════════════════════════════════ -->
+        <ng-container *ngSwitchCase="'report'">
+          <div class="flex items-start justify-between mb-8 gap-4 flex-wrap">
+            <div>
+              <p class="text-sm font-medium tracking-widest uppercase text-cyan-300">
+                Diagnóstico normativo
+              </p>
+              <h1 class="text-3xl md:text-4xl font-bold text-white mt-1">
+                Tu informe personalizado
+              </h1>
+            </div>
+            <button (click)="restart()" class="diag-btn-ghost shrink-0">
+              Nuevo diagnóstico
+            </button>
+          </div>
+
+          <!-- Resumen ejecutivo -->
+          <article class="diag-card mb-5">
+            <h2 class="diag-card-title">Resumen ejecutivo</h2>
+            <p class="mt-3 text-gray-300 leading-relaxed text-sm">{{ result()?.resumen }}</p>
+          </article>
+
+          <!-- Normas aplicables -->
+          <article class="diag-card mb-5">
+            <h2 class="diag-card-title">Normativa aplicable</h2>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <span *ngFor="let n of normasArray()" class="norm-badge">{{ n }}</span>
+            </div>
+          </article>
+
+          <!-- Brechas detectadas -->
+          <article class="diag-card mb-5">
+            <h2 class="diag-card-title">Brechas detectadas</h2>
+            <ul class="mt-3 space-y-2">
+              <li *ngFor="let b of brechasArray()"
+                class="flex items-start gap-2 text-gray-300 text-sm">
+                <span class="text-red-400 mt-px shrink-0">✗</span>
+                <span>{{ b }}</span>
+              </li>
+            </ul>
+          </article>
+
+          <!-- Plan + precio con email gate -->
+          <div class="relative mb-5">
+            <article class="diag-card" [class.report-blurred]="!emailSent()">
+              <h2 class="diag-card-title">Plan de acción recomendado</h2>
+              <ol class="mt-3 space-y-3">
+                <li *ngFor="let f of flujoArray(); let i = index"
+                  class="flex items-start gap-3 text-gray-300 text-sm">
+                  <span class="step-num shrink-0">{{ i + 1 }}</span>
+                  <span>{{ f }}</span>
+                </li>
+              </ol>
+              <div class="mt-6 pt-5 border-t border-gray-700/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-wider">Inversión estimada</p>
+                  <p class="text-xl font-bold text-white mt-1">{{ result()?.precio_rango }}</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500 uppercase tracking-wider">Retainer mensual</p>
+                  <p class="text-xl font-bold text-white mt-1">{{ result()?.retainer }}</p>
+                </div>
+              </div>
+            </article>
+
+            <!-- Overlay de email gate -->
+            <div *ngIf="!emailSent()" class="email-gate">
+              <div class="email-gate-card">
+                <p class="text-white font-semibold text-lg mb-1">
+                  Desbloquea el plan completo
+                </p>
+                <p class="text-gray-400 text-sm mb-4">
+                  Introduce tu email para ver el plan de acción detallado y los rangos de precio.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input [(ngModel)]="email" type="email"
+                    placeholder="tu@empresa.com"
+                    class="diag-input flex-1" />
+                  <button (click)="submitEmail()" class="diag-btn-primary whitespace-nowrap">
+                    Desbloquear →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA post-unlock -->
+          <div *ngIf="emailSent()" class="diag-card text-center py-8">
+            <p class="text-xl font-bold text-white">¿Quieres que empecemos?</p>
+            <p class="text-gray-400 mt-2 text-sm">
+              Te contactaremos en menos de 24 horas con una propuesta inicial.
+            </p>
+            <a href="/contact" class="diag-btn-primary inline-block mt-5">
+              Hablar con un consultor →
+            </a>
+          </div>
+        </ng-container>
+
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

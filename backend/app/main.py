@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+import anthropic
+from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+load_dotenv()
 
 
 def utc_now_iso() -> str:
@@ -293,6 +298,139 @@ def deploy_model(tenant_id: str, model_id: str, authorization: Optional[str] = H
   model['deployed_at'] = utc_now_iso()
   return {'ok': True, 'endpoint': '/portal/inference'}
 
+
+# ══ Diagnóstico normativo ══════════════════════════════════════════════════
+
+class DiagnosticoRequest(BaseModel):
+  empresa: str = ''
+  sector: str
+  sector_custom: str = ''
+  actividad: str
+  empleados: str
+  certs: List[str] = []
+  doc_state: str
+  urgencia: int
+  problemas: List[str] = []
+  extra: str = ''
+
+
+class DiagnosticoResult(BaseModel):
+  normas: str
+  brechas: str
+  resumen: str
+  flujo: str
+  precio_rango: str
+  retainer: str
+
+
+class DiagnosticoResponse(BaseModel):
+  ok: bool
+  result: DiagnosticoResult
+
+
+class LeadRequest(BaseModel):
+  empresa: str = ''
+  sector: str = ''
+  sector_custom: str = ''
+  actividad: str = ''
+  empleados: str = ''
+  certs: List[str] = []
+  doc_state: str = ''
+  urgencia: int = 2
+  problemas: List[str] = []
+  extra: str = ''
+  email: str
+  diagnostico_json: Dict[str, Any] = {}
+
+
+_SYSTEM_PROMPT = """Eres un consultor experto en normativa técnica y sistemas de gestión para empresas industriales españolas.
+Tu tarea es analizar el perfil de una empresa y generar un diagnóstico normativo estructurado.
+
+Devuelve EXCLUSIVAMENTE un JSON con exactamente estas claves (sin texto adicional):
+{
+  "normas": "lista de normas aplicables separadas por |",
+  "brechas": "lista de brechas, una por línea",
+  "resumen": "párrafo ejecutivo de 2-3 frases",
+  "flujo": "pasos del plan de acción, uno por línea",
+  "precio_rango": "rango de precio del proyecto (ej: 4.500 € – 9.000 €)",
+  "retainer": "coste mensual de mantenimiento (ej: 350 €/mes)"
+}"""
+
+
+def _build_user_prompt(req: DiagnosticoRequest) -> str:
+  sector_label = req.sector_custom if req.sector == 'otro' and req.sector_custom else req.sector
+  certs = ', '.join(req.certs) if req.certs else 'ninguna'
+  problemas = ', '.join(req.problemas) if req.problemas else 'no especificados'
+  urgencia_map = {1: 'muy baja', 2: 'baja', 3: 'media', 4: 'alta', 5: 'crítica'}
+  return (
+    f"Empresa: {req.empresa or 'no especificada'}\n"
+    f"Sector: {sector_label}\n"
+    f"Actividad principal: {req.actividad}\n"
+    f"Número de empleados: {req.empleados}\n"
+    f"Certificaciones actuales: {certs}\n"
+    f"Estado documental: {req.doc_state}\n"
+    f"Urgencia: {urgencia_map.get(req.urgencia, 'media')}\n"
+    f"Problemas identificados: {problemas}\n"
+    f"Contexto adicional: {req.extra or 'ninguno'}"
+  )
+
+
+@app.post('/api/diagnostico', response_model=DiagnosticoResponse)
+def generar_diagnostico(payload: DiagnosticoRequest) -> DiagnosticoResponse:
+  api_key = os.getenv('ANTHROPIC_API_KEY')
+  if not api_key:
+    raise HTTPException(status_code=500, detail='ANTHROPIC_API_KEY no configurada.')
+
+  client = anthropic.Anthropic(api_key=api_key)
+  model = os.getenv('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514')
+  message = client.messages.create(
+    model=model,
+    max_tokens=2048,
+    system=_SYSTEM_PROMPT,
+    messages=[{'role': 'user', 'content': _build_user_prompt(payload)}],
+  )
+
+  import json
+  raw = message.content[0].text.strip()
+  # Extraer JSON — Claude a veces envuelve en ```json ... ```
+  start = raw.find('{')
+  end = raw.rfind('}') + 1
+  if start == -1 or end == 0:
+    raise HTTPException(status_code=500, detail='Respuesta inesperada del modelo.')
+  try:
+    data = json.loads(raw[start:end])
+  except json.JSONDecodeError as e:
+    raise HTTPException(status_code=500, detail=f'JSON inválido: {e}')
+
+  return DiagnosticoResponse(ok=True, result=DiagnosticoResult(**data))
+
+
+@app.post('/api/lead')
+def guardar_lead(payload: LeadRequest) -> Dict[str, bool]:
+  supabase_url = os.getenv('SUPABASE_URL')
+  supabase_key = os.getenv('SUPABASE_SERVICE_KEY')
+
+  if supabase_url and supabase_key:
+    from supabase import create_client
+    sb = create_client(supabase_url, supabase_key)
+    sb.table('diagnostico_leads').insert({
+      'email': payload.email,
+      'empresa': payload.empresa,
+      'sector': payload.sector,
+      'actividad': payload.actividad,
+      'empleados': payload.empleados,
+      'certs': payload.certs,
+      'doc_state': payload.doc_state,
+      'urgencia': payload.urgencia,
+      'problemas': payload.problemas,
+      'diagnostico_json': payload.diagnostico_json,
+      'created_at': utc_now_iso(),
+    }).execute()
+
+  return {'ok': True}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 
 def ensure_tenant_exists(tenant_id: str) -> None:
   if not any(t['id'] == tenant_id for t in TENANTS):
