@@ -1,17 +1,73 @@
-/* ── Progress bar ──────────────────────────────────────────── */
-.diag-progress {
-  height: 4px;
-  background: rgba(51, 65, 85, 0.6);
-  border-radius: 9999px;
+/* ── Step chain (replaces flat progress bar) ────────────────── */
+.step-chain {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+.node-circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid rgba(71, 85, 105, 0.5);
+  background: rgba(15, 23, 42, 0.5);
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  transition: border-color 0.35s ease, background 0.35s ease,
+              color 0.35s ease, box-shadow 0.35s ease;
+}
+.node-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  transition: color 0.35s ease;
+  white-space: nowrap;
+}
+.step-node.done .node-circle {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
+}
+.step-node.done .node-label { color: #22d3ee; }
+
+.step-node.active .node-circle {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.18);
+  color: #67e8f9;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
+}
+.step-node.active .node-label { color: #67e8f9; }
+
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(51, 65, 85, 0.55);
+  position: relative;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  margin: 0 0.375rem;
+  margin-bottom: 1.25rem; /* align with circles */
 }
-.diag-progress-bar {
-  height: 100%;
+.step-connector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: linear-gradient(90deg, #22d3ee, #818cf8);
-  border-radius: 9999px;
-  transition: width 0.4s ease;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.step-connector.filled::after { transform: scaleX(1); }
 
 /* ── Typography helpers ────────────────────────────────────── */
 .diag-step-label {
@@ -97,6 +153,9 @@
 .chip-col  { flex-direction: column; }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   border: 1px solid rgba(71, 85, 105, 0.6);
@@ -104,15 +163,36 @@
   color: #94a3b8;
   font-size: 0.875rem;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
 }
-.chip:hover { border-color: rgba(34, 211, 238, 0.5); color: #e2e8f0; }
+.chip:hover:not(.selected) {
+  border-color: rgba(34, 211, 238, 0.5);
+  color: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 .chip.selected {
   border-color: #22d3ee;
   background: rgba(34, 211, 238, 0.1);
   color: #67e8f9;
+  transform: scale(1.04);
 }
+
+/* Checkmark SVG inside chip */
+.chip-check {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chip.selected .chip-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .chip-wide {
   border-radius: 0.5rem;
   white-space: normal;
@@ -186,16 +266,70 @@
   backdrop-filter: blur(8px);
 }
 
-/* ── Spinner ───────────────────────────────────────────────── */
-.diag-spinner {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 9999px;
-  border: 3px solid rgba(51, 65, 85, 0.5);
-  border-top-color: #22d3ee;
-  animation: diag-spin 0.8s linear infinite;
+/* ── Narrative loader ──────────────────────────────────────── */
+.loader-wrap {
+  padding: 4rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
 }
-@keyframes diag-spin { to { transform: rotate(360deg); } }
+.loader-progress-track {
+  width: 100%;
+  max-width: 28rem;
+  height: 5px;
+  border-radius: 9999px;
+  background: rgba(51, 65, 85, 0.55);
+  overflow: hidden;
+}
+.loader-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22d3ee, #818cf8);
+  transition: width 0.3s ease-out;
+}
+.loader-pct {
+  font-size: 0.8125rem;
+  color: #67e8f9;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: -1rem;
+}
+.loader-steps-list {
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.loader-step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  opacity: 0.22;
+  transform: translateX(-6px);
+  transition: opacity 0.4s ease, transform 0.4s ease, background 0.3s ease;
+}
+.loader-step-item.step-done {
+  opacity: 0.45;
+  transform: translateX(0);
+}
+.loader-step-item.step-active {
+  opacity: 1;
+  transform: translateX(0);
+  background: rgba(34, 211, 238, 0.07);
+}
+.loader-step-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.loader-step-msg {
+  font-size: 0.9375rem;
+  color: #e2e8f0;
+}
+.loader-step-item.step-done .loader-step-msg { color: #64748b; }
 
 /* ── Light theme overrides ─────────────────────────────────── */
 :host-context(body.theme-light) .diag-card {
@@ -212,6 +346,9 @@
   border-color: rgba(148, 163, 184, 0.6);
   color: #475569;
 }
+:host-context(body.theme-light) .chip:hover:not(.selected) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
 :host-context(body.theme-light) .chip.selected {
   background: #ecfeff;
   border-color: #0891b2;
@@ -226,3 +363,17 @@
   background: rgba(248, 250, 252, 0.98);
   border-color: rgba(148, 163, 184, 0.6);
 }
+:host-context(body.theme-light) .node-circle {
+  background: #f1f5f9;
+  border-color: rgba(148, 163, 184, 0.6);
+  color: #94a3b8;
+}
+:host-context(body.theme-light) .node-label { color: #94a3b8; }
+:host-context(body.theme-light) .step-connector {
+  background: rgba(148, 163, 184, 0.35);
+}
+:host-context(body.theme-light) .loader-step-item.step-active {
+  background: rgba(8, 145, 178, 0.06);
+}
+:host-context(body.theme-light) .loader-step-msg { color: #1e293b; }
+:host-context(body.theme-light) .loader-step-item.step-done .loader-step-msg { color: #94a3b8; }
