@@ -5,6 +5,7 @@ import { DiagnosticoService } from './diagnostico.service';
 import { DiagnosticoForm, DiagnosticoResult, Screen } from './diagnostico.model';
 import { HeaderComponent } from '../../../components/header/header.component';
 import { FooterComponent } from '../../../components/footer/footer.component';
+import { LanguageService } from '../../../services/language.service';
 
 @Component({
   selector: 'app-diagnostico',
@@ -15,6 +16,7 @@ import { FooterComponent } from '../../../components/footer/footer.component';
 })
 export class DiagnosticoComponent {
   private svc = inject(DiagnosticoService);
+  readonly i18n = inject(LanguageService);
 
   screen = signal<Screen>('intro');
   emailSent = signal(false);
@@ -29,51 +31,59 @@ export class DiagnosticoComponent {
   };
 
   sectores = [
-    { val: 'construccion', label: 'Construcción' },
-    { val: 'fabricacion', label: 'Fabricación industrial' },
-    { val: 'quimica', label: 'Química / farmacéutica' },
-    { val: 'seguridad', label: 'Seguridad privada / defensa' },
-    { val: 'alimentacion', label: 'Alimentación' },
-    { val: 'logistica', label: 'Logística / transporte' },
-    { val: 'tratamiento_superficies', label: 'Tratamiento de superficies' },
-    { val: 'residuos', label: 'Gestión de residuos' },
-    { val: 'otro', label: 'Otro' }
+    { val: 'construccion',          es: 'Construcción',                  en: 'Construction' },
+    { val: 'fabricacion',           es: 'Fabricación industrial',        en: 'Industrial manufacturing' },
+    { val: 'quimica',               es: 'Química / farmacéutica',        en: 'Chemical / pharmaceutical' },
+    { val: 'seguridad',             es: 'Seguridad privada / defensa',   en: 'Private security / defense' },
+    { val: 'alimentacion',          es: 'Alimentación',                  en: 'Food industry' },
+    { val: 'logistica',             es: 'Logística / transporte',        en: 'Logistics / transport' },
+    { val: 'tratamiento_superficies', es: 'Tratamiento de superficies', en: 'Surface treatment' },
+    { val: 'residuos',              es: 'Gestión de residuos',           en: 'Waste management' },
+    { val: 'otro',                  es: 'Otro',                          en: 'Other' }
   ];
 
-  empleadosOpts = ['1–5', '6–25', '26–100', 'Más de 100'];
+  empleadosOpts = [
+    { val: '1–5',         en: '1–5' },
+    { val: '6–25',        en: '6–25' },
+    { val: '26–100',      en: '26–100' },
+    { val: 'Más de 100',  en: 'More than 100' }
+  ];
 
   certOpts = [
-    { val: 'ninguna', label: 'Ninguna' },
-    { val: 'iso9001', label: 'ISO 9001' },
-    { val: 'iso14001', label: 'ISO 14001' },
-    { val: 'ce', label: 'Marcado CE' },
-    { val: 'otras', label: 'Otras' }
+    { val: 'ninguna',  es: 'Ninguna',    en: 'None' },
+    { val: 'iso9001',  es: 'ISO 9001',   en: 'ISO 9001' },
+    { val: 'iso14001', es: 'ISO 14001',  en: 'ISO 14001' },
+    { val: 'ce',       es: 'Marcado CE', en: 'CE Marking' },
+    { val: 'otras',    es: 'Otras',      en: 'Others' }
   ];
 
   docOpts = [
-    { val: 'nada', label: 'Sin documentación formal' },
-    { val: 'basica', label: 'Documentación básica' },
-    { val: 'parcial', label: 'Sistema parcialmente implantado' },
-    { val: 'madura', label: 'Sistema maduro, necesito actualizar' }
+    { val: 'nada',    es: 'Sin documentación formal',              en: 'No formal documentation' },
+    { val: 'basica',  es: 'Documentación básica',                  en: 'Basic documentation' },
+    { val: 'parcial', es: 'Sistema parcialmente implantado',       en: 'Partially implemented system' },
+    { val: 'madura',  es: 'Sistema maduro, necesito actualizar',   en: 'Mature system, needs updating' }
   ];
 
   problemaOpts = [
-    { val: 'clientes_exigen', label: 'Clientes exigen certificación' },
-    { val: 'residuos', label: 'Gestión de residuos sin protocolo' },
-    { val: 'producto_ce', label: 'Producto sin marcado CE' },
-    { val: 'dop', label: 'Sin Declaración de Prestaciones' },
-    { val: 'multas', label: 'Riesgo de multas por inspección' },
-    { val: 'auditoria', label: 'Auditoría próxima' },
-    { val: 'proveedores', label: 'Proveedores no cumplen requisitos' },
-    { val: 'medioambiente', label: 'Obligaciones medioambientales' },
-    { val: 'epi', label: 'Equipos de protección al fin de vida' }
+    { val: 'clientes_exigen', es: 'Clientes exigen certificación',       en: 'Clients require certification' },
+    { val: 'residuos',        es: 'Gestión de residuos sin protocolo',   en: 'Waste management without protocol' },
+    { val: 'producto_ce',     es: 'Producto sin marcado CE',             en: 'Product without CE marking' },
+    { val: 'dop',             es: 'Sin Declaración de Prestaciones',     en: 'No Declaration of Performance' },
+    { val: 'multas',          es: 'Riesgo de multas por inspección',     en: 'Risk of fines from inspection' },
+    { val: 'auditoria',       es: 'Auditoría próxima',                   en: 'Upcoming audit' },
+    { val: 'proveedores',     es: 'Proveedores no cumplen requisitos',   en: 'Suppliers not meeting requirements' },
+    { val: 'medioambiente',   es: 'Obligaciones medioambientales',       en: 'Environmental obligations' },
+    { val: 'epi',             es: 'Equipos de protección al fin de vida', en: 'End-of-life protective equipment' }
   ];
 
   urgenciaLabel(): string {
-    const labels: Record<number, string> = {
+    const es: Record<number, string> = {
       1: 'Muy baja', 2: 'Baja', 3: 'Media', 4: 'Alta', 5: 'Crítica'
     };
-    return labels[this.form.urgencia];
+    const en: Record<number, string> = {
+      1: 'Very low', 2: 'Low', 3: 'Medium', 4: 'High', 5: 'Critical'
+    };
+    return this.i18n.lang() === 'es' ? es[this.form.urgencia] : en[this.form.urgencia];
   }
 
   selectSingle(field: keyof DiagnosticoForm, val: string) {
@@ -104,13 +114,17 @@ export class DiagnosticoComponent {
   generate() {
     this.screen.set('loading');
     this.error.set('');
-    this.svc.generar(this.form).subscribe({
+    this.svc.generar(this.form, this.i18n.lang()).subscribe({
       next: (result) => {
         this.result.set(result);
         this.screen.set('report');
       },
       error: () => {
-        this.error.set('Error al generar el diagnóstico. Inténtalo de nuevo.');
+        this.error.set(
+          this.i18n.lang() === 'es'
+            ? 'Error al generar el diagnóstico. Inténtalo de nuevo.'
+            : 'Error generating the assessment. Please try again.'
+        );
         this.screen.set('step3');
       }
     });

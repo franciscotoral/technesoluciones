@@ -10,11 +10,11 @@ export class DiagnosticoService {
   private http = inject(HttpClient);
   private base = environment.apiUrl;
 
-  generar(form: DiagnosticoForm): Observable<DiagnosticoResult> {
+  generar(form: DiagnosticoForm, lang: string): Observable<DiagnosticoResult> {
     return this.http
       .post<{ ok: boolean; result: DiagnosticoResult }>(
         `${this.base}/api/diagnostico`,
-        this.toSnakeCase(form)
+        { ...this.toSnakeCase(form), lang }
       )
       .pipe(map(r => r.result));
   }

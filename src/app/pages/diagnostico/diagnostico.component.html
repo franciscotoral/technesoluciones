@@ -9,17 +9,18 @@
         <ng-container *ngSwitchCase="'intro'">
           <div class="text-center py-8">
             <span class="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1 text-sm text-cyan-300">
-              Diagnóstico gratuito · 3 minutos
+              {{ i18n.lang() === 'es' ? 'Diagnóstico gratuito · 3 minutos' : 'Free assessment · 3 minutes' }}
             </span>
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mt-6">
-              ¿Tu empresa cumple la normativa aplicable?
+              {{ i18n.lang() === 'es' ? '¿Qué normativa le aplica a tu empresa?' : 'What regulations apply to your company?' }}
             </h1>
             <p class="mt-5 text-lg text-gray-400 max-w-xl mx-auto">
-              Responde 3 bloques de preguntas y obtén un análisis personalizado:
-              normas aplicables, brechas detectadas y plan de acción.
+              {{ i18n.lang() === 'es'
+                ? 'Responde 4 preguntas rápidas y la IA analiza las normas aplicables, brechas y plan de acción.'
+                : 'Answer 4 quick questions and the AI analyzes applicable regulations, gaps, and action plan.' }}
             </p>
             <button (click)="goTo('step1')" class="diag-btn-primary mt-10">
-              Comenzar diagnóstico →
+              {{ i18n.lang() === 'es' ? 'Iniciar diagnóstico →' : 'Start assessment →' }}
             </button>
           </div>
         </ng-container>
@@ -27,31 +28,39 @@
         <!-- ══ STEP 1: Sector + Actividad ════════════════════════════ -->
         <ng-container *ngSwitchCase="'step1'">
           <div class="diag-progress"><div class="diag-progress-bar" style="width:33%"></div></div>
-          <p class="diag-step-label">Paso 1 de 3 · Perfil de empresa</p>
+          <p class="diag-step-label">
+            {{ i18n.lang() === 'es' ? 'Paso 1 de 3 · Sector e identidad de la empresa' : 'Step 1 of 3 · Company sector and identity' }}
+          </p>
 
-          <h2 class="diag-step-title">¿A qué sector pertenece tu empresa?</h2>
+          <h2 class="diag-step-title">
+            {{ i18n.lang() === 'es' ? '¿A qué sector pertenece tu empresa?' : 'What sector does your company belong to?' }}
+          </h2>
           <div class="chip-grid mt-5">
             <button *ngFor="let s of sectores"
               class="chip"
               [class.selected]="isSelected('sector', s.val)"
               (click)="selectSingle('sector', s.val)">
-              {{ s.label }}
+              {{ i18n.lang() === 'es' ? s.es : s.en }}
             </button>
           </div>
           <div *ngIf="form.sector === 'otro'" class="mt-3">
             <input [(ngModel)]="form.sectorCustom"
-              placeholder="Describe tu sector..."
+              [placeholder]="i18n.lang() === 'es' ? 'Describe tu sector...' : 'Describe your sector...'"
               class="diag-input" />
           </div>
 
-          <h2 class="diag-step-title mt-8">¿Cuál es la actividad principal?</h2>
+          <h2 class="diag-step-title mt-8">
+            {{ i18n.lang() === 'es' ? 'Actividad principal' : 'Main activity' }}
+          </h2>
           <textarea [(ngModel)]="form.actividad" rows="3"
-            placeholder="Ej: Fabricación de perfiles de aluminio para la construcción..."
+            [placeholder]="i18n.lang() === 'es'
+              ? 'Ej: Fabricación de perfiles de aluminio para la construcción...'
+              : 'E.g.: Manufacturing aluminium profiles for construction...'"
             class="diag-input mt-2"></textarea>
 
           <h2 class="diag-step-title mt-8">
-            Nombre de empresa
-            <span class="text-gray-500 text-sm font-normal">(opcional)</span>
+            {{ i18n.lang() === 'es' ? 'Nombre de la empresa' : 'Company name' }}
+            <span class="text-gray-500 text-sm font-normal">({{ i18n.lang() === 'es' ? 'opcional' : 'optional' }})</span>
           </h2>
           <input [(ngModel)]="form.empresa"
             placeholder="Ej: Techne Soluciones S.L."
@@ -60,7 +69,7 @@
           <div class="diag-nav mt-10">
             <span></span>
             <button (click)="goTo('step2')" [disabled]="!step1Valid()" class="diag-btn-primary">
-              Siguiente →
+              {{ i18n.lang() === 'es' ? 'Siguiente →' : 'Next →' }}
             </button>
           </div>
         </ng-container>
@@ -68,43 +77,55 @@
         <!-- ══ STEP 2: Empleados + Certs + Doc ═══════════════════════ -->
         <ng-container *ngSwitchCase="'step2'">
           <div class="diag-progress"><div class="diag-progress-bar" style="width:66%"></div></div>
-          <p class="diag-step-label">Paso 2 de 3 · Situación actual</p>
+          <p class="diag-step-label">
+            {{ i18n.lang() === 'es' ? 'Paso 2 de 3 · Tamaño y situación normativa actual' : 'Step 2 of 3 · Size and current regulatory status' }}
+          </p>
 
-          <h2 class="diag-step-title">¿Cuántos empleados tiene la empresa?</h2>
+          <h2 class="diag-step-title">
+            {{ i18n.lang() === 'es' ? 'Número de empleados' : 'Number of employees' }}
+          </h2>
           <div class="chip-grid mt-5">
             <button *ngFor="let e of empleadosOpts"
               class="chip"
-              [class.selected]="isSelected('empleados', e)"
-              (click)="selectSingle('empleados', e)">
-              {{ e }}
+              [class.selected]="isSelected('empleados', e.val)"
+              (click)="selectSingle('empleados', e.val)">
+              {{ i18n.lang() === 'es' ? e.val : e.en }}
             </button>
           </div>
 
-          <h2 class="diag-step-title mt-8">¿Qué certificaciones tiene actualmente?</h2>
-          <p class="text-sm text-gray-500 mb-3">Selecciona todas las que apliquen</p>
+          <h2 class="diag-step-title mt-8">
+            {{ i18n.lang() === 'es' ? '¿Tiene alguna certificación activa?' : 'Do you have any active certification?' }}
+          </h2>
+          <p class="text-sm text-gray-500 mb-3">
+            {{ i18n.lang() === 'es' ? 'Selecciona todas las que apliquen' : 'Select all that apply' }}
+          </p>
           <div class="chip-grid">
             <button *ngFor="let c of certOpts"
               class="chip"
               [class.selected]="isSelected('certs', c.val)"
               (click)="toggleMulti('certs', c.val)">
-              {{ c.label }}
+              {{ i18n.lang() === 'es' ? c.es : c.en }}
             </button>
           </div>
 
-          <h2 class="diag-step-title mt-8">¿Cómo es tu sistema de gestión documental?</h2>
+          <h2 class="diag-step-title mt-8">
+            {{ i18n.lang() === 'es' ? 'Situación documental actual' : 'Current documentation status' }}
+          </h2>
           <div class="chip-grid chip-col mt-3">
             <button *ngFor="let d of docOpts"
               class="chip chip-wide"
               [class.selected]="isSelected('docState', d.val)"
               (click)="selectSingle('docState', d.val)">
-              {{ d.label }}
+              {{ i18n.lang() === 'es' ? d.es : d.en }}
             </button>
           </div>
 
           <div class="diag-nav mt-10">
-            <button (click)="goTo('step1')" class="diag-btn-ghost">← Atrás</button>
+            <button (click)="goTo('step1')" class="diag-btn-ghost">
+              {{ i18n.lang() === 'es' ? '← Atrás' : '← Back' }}
+            </button>
             <button (click)="goTo('step3')" [disabled]="!step2Valid()" class="diag-btn-primary">
-              Siguiente →
+              {{ i18n.lang() === 'es' ? 'Siguiente →' : 'Next →' }}
             </button>
           </div>
         </ng-container>
@@ -112,35 +133,45 @@
         <!-- ══ STEP 3: Problemas + Urgencia ══════════════════════════ -->
         <ng-container *ngSwitchCase="'step3'">
           <div class="diag-progress"><div class="diag-progress-bar" style="width:100%"></div></div>
-          <p class="diag-step-label">Paso 3 de 3 · Necesidades concretas</p>
+          <p class="diag-step-label">
+            {{ i18n.lang() === 'es' ? 'Paso 3 de 3 · Necesidades concretas' : 'Step 3 of 3 · Specific needs' }}
+          </p>
 
-          <h2 class="diag-step-title">¿Qué problemas o riesgos identificas?</h2>
-          <p class="text-sm text-gray-500 mb-3">Selecciona todos los que apliquen</p>
+          <h2 class="diag-step-title">
+            {{ i18n.lang() === 'es' ? 'Problemáticas específicas detectadas' : 'Specific detected issues' }}
+          </h2>
+          <p class="text-sm text-gray-500 mb-3">
+            {{ i18n.lang() === 'es' ? 'Selecciona todos los que apliquen' : 'Select all that apply' }}
+          </p>
           <div class="chip-grid mt-4">
             <button *ngFor="let p of problemaOpts"
               class="chip"
               [class.selected]="isSelected('problemas', p.val)"
               (click)="toggleMulti('problemas', p.val)">
-              {{ p.label }}
+              {{ i18n.lang() === 'es' ? p.es : p.en }}
             </button>
           </div>
 
-          <h2 class="diag-step-title mt-8">Urgencia percibida</h2>
+          <h2 class="diag-step-title mt-8">
+            {{ i18n.lang() === 'es' ? 'Urgencia regulatoria' : 'Regulatory urgency' }}
+          </h2>
           <div class="urgencia-row mt-4">
-            <span class="text-sm text-gray-500">Muy baja</span>
+            <span class="text-sm text-gray-500">{{ i18n.lang() === 'es' ? 'Muy baja' : 'Very low' }}</span>
             <input type="range" min="1" max="5"
               [(ngModel)]="form.urgencia"
               class="diag-range" />
-            <span class="text-sm text-gray-500">Crítica</span>
+            <span class="text-sm text-gray-500">{{ i18n.lang() === 'es' ? 'Crítica' : 'Critical' }}</span>
           </div>
           <p class="text-center text-cyan-300 font-semibold mt-2">{{ urgenciaLabel() }}</p>
 
           <h2 class="diag-step-title mt-8">
-            ¿Algo más que debamos saber?
-            <span class="text-gray-500 text-sm font-normal">(opcional)</span>
+            {{ i18n.lang() === 'es' ? '¿Algo más que deba saber?' : 'Anything else we should know?' }}
+            <span class="text-gray-500 text-sm font-normal">({{ i18n.lang() === 'es' ? 'opcional' : 'optional' }})</span>
           </h2>
           <textarea [(ngModel)]="form.extra" rows="3"
-            placeholder="Plazos, requisitos de clientes, contexto adicional..."
+            [placeholder]="i18n.lang() === 'es'
+              ? 'Plazos, requisitos de clientes, contexto adicional...'
+              : 'Deadlines, client requirements, additional context...'"
             class="diag-input mt-2"></textarea>
 
           @if (error()) {
@@ -150,8 +181,12 @@
           }
 
           <div class="diag-nav mt-10">
-            <button (click)="goTo('step2')" class="diag-btn-ghost">← Atrás</button>
-            <button (click)="generate()" class="diag-btn-primary">Generar diagnóstico</button>
+            <button (click)="goTo('step2')" class="diag-btn-ghost">
+              {{ i18n.lang() === 'es' ? '← Atrás' : '← Back' }}
+            </button>
+            <button (click)="generate()" class="diag-btn-primary">
+              {{ i18n.lang() === 'es' ? 'Generar diagnóstico' : 'Generate assessment' }}
+            </button>
           </div>
         </ng-container>
 
@@ -159,8 +194,12 @@
         <ng-container *ngSwitchCase="'loading'">
           <div class="text-center py-28">
             <div class="diag-spinner mx-auto"></div>
-            <p class="mt-6 text-lg text-gray-300">Analizando normativa aplicable…</p>
-            <p class="mt-2 text-sm text-gray-500">Esto puede tardar unos segundos</p>
+            <p class="mt-6 text-lg text-gray-300">
+              {{ i18n.lang() === 'es' ? 'Analizando normativa aplicable…' : 'Analyzing applicable regulations…' }}
+            </p>
+            <p class="mt-2 text-sm text-gray-500">
+              {{ i18n.lang() === 'es' ? 'Esto puede tardar unos segundos' : 'This may take a few seconds' }}
+            </p>
           </div>
         </ng-container>
 
@@ -169,26 +208,26 @@
           <div class="flex items-start justify-between mb-8 gap-4 flex-wrap">
             <div>
               <p class="text-sm font-medium tracking-widest uppercase text-cyan-300">
-                Diagnóstico normativo
+                {{ i18n.lang() === 'es' ? 'Diagnóstico normativo' : 'Regulatory assessment' }}
               </p>
               <h1 class="text-3xl md:text-4xl font-bold text-white mt-1">
-                Tu informe personalizado
+                {{ i18n.lang() === 'es' ? 'Tu informe personalizado' : 'Your personalized report' }}
               </h1>
             </div>
             <button (click)="restart()" class="diag-btn-ghost shrink-0">
-              Nuevo diagnóstico
+              {{ i18n.lang() === 'es' ? 'Nuevo diagnóstico' : 'New assessment' }}
             </button>
           </div>
 
           <!-- Resumen ejecutivo -->
           <article class="diag-card mb-5">
-            <h2 class="diag-card-title">Resumen ejecutivo</h2>
+            <h2 class="diag-card-title">{{ i18n.lang() === 'es' ? 'Resumen ejecutivo' : 'Executive summary' }}</h2>
             <p class="mt-3 text-gray-300 leading-relaxed text-sm">{{ result()?.resumen }}</p>
           </article>
 
           <!-- Normas aplicables -->
           <article class="diag-card mb-5">
-            <h2 class="diag-card-title">Normativa aplicable</h2>
+            <h2 class="diag-card-title">{{ i18n.lang() === 'es' ? 'Normativa aplicable detectada' : 'Applicable regulations detected' }}</h2>
             <div class="flex flex-wrap gap-2 mt-4">
               <span *ngFor="let n of normasArray()" class="norm-badge">{{ n }}</span>
             </div>
@@ -196,7 +235,7 @@
 
           <!-- Brechas detectadas -->
           <article class="diag-card mb-5">
-            <h2 class="diag-card-title">Brechas detectadas</h2>
+            <h2 class="diag-card-title">{{ i18n.lang() === 'es' ? 'Brechas identificadas' : 'Identified gaps' }}</h2>
             <ul class="mt-3 space-y-2">
               <li *ngFor="let b of brechasArray()"
                 class="flex items-start gap-2 text-gray-300 text-sm">
@@ -209,7 +248,7 @@
           <!-- Plan + precio con email gate -->
           <div class="relative mb-5">
             <article class="diag-card" [class.report-blurred]="!emailSent()">
-              <h2 class="diag-card-title">Plan de acción recomendado</h2>
+              <h2 class="diag-card-title">{{ i18n.lang() === 'es' ? 'Flujo documental propuesto' : 'Proposed document workflow' }}</h2>
               <ol class="mt-3 space-y-3">
                 <li *ngFor="let f of flujoArray(); let i = index"
                   class="flex items-start gap-3 text-gray-300 text-sm">
@@ -219,11 +258,15 @@
               </ol>
               <div class="mt-6 pt-5 border-t border-gray-700/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p class="text-xs text-gray-500 uppercase tracking-wider">Inversión estimada</p>
+                  <p class="text-xs text-gray-500 uppercase tracking-wider">
+                    {{ i18n.lang() === 'es' ? 'Inversión estimada' : 'Estimated investment' }}
+                  </p>
                   <p class="text-xl font-bold text-white mt-1">{{ result()?.precio_rango }}</p>
                 </div>
                 <div>
-                  <p class="text-xs text-gray-500 uppercase tracking-wider">Retainer mensual</p>
+                  <p class="text-xs text-gray-500 uppercase tracking-wider">
+                    {{ i18n.lang() === 'es' ? 'Retainer mensual' : 'Monthly retainer' }}
+                  </p>
                   <p class="text-xl font-bold text-white mt-1">{{ result()?.retainer }}</p>
                 </div>
               </div>
@@ -233,17 +276,19 @@
             <div *ngIf="!emailSent()" class="email-gate">
               <div class="email-gate-card">
                 <p class="text-white font-semibold text-lg mb-1">
-                  Desbloquea el plan completo
+                  {{ i18n.lang() === 'es' ? 'Recibe el informe completo' : 'Receive the full report' }}
                 </p>
                 <p class="text-gray-400 text-sm mb-4">
-                  Introduce tu email para ver el plan de acción detallado y los rangos de precio.
+                  {{ i18n.lang() === 'es'
+                    ? 'Introduce tu email para ver el plan de acción detallado y los rangos de precio.'
+                    : 'Enter your email to view the detailed action plan and price ranges.' }}
                 </p>
                 <div class="flex flex-col sm:flex-row gap-2">
                   <input [(ngModel)]="email" type="email"
                     placeholder="tu@empresa.com"
                     class="diag-input flex-1" />
                   <button (click)="submitEmail()" class="diag-btn-primary whitespace-nowrap">
-                    Desbloquear →
+                    {{ i18n.lang() === 'es' ? 'Desbloquear →' : 'Unlock →' }}
                   </button>
                 </div>
               </div>
@@ -252,12 +297,16 @@
 
           <!-- CTA post-unlock -->
           <div *ngIf="emailSent()" class="diag-card text-center py-8">
-            <p class="text-xl font-bold text-white">¿Quieres que empecemos?</p>
+            <p class="text-xl font-bold text-white">
+              {{ i18n.lang() === 'es' ? '¿Quieres que empecemos?' : 'Ready to get started?' }}
+            </p>
             <p class="text-gray-400 mt-2 text-sm">
-              Te contactaremos en menos de 24 horas con una propuesta inicial.
+              {{ i18n.lang() === 'es'
+                ? 'Te contactaremos en menos de 24 horas con una propuesta inicial.'
+                : 'We will contact you within 24 hours with an initial proposal.' }}
             </p>
             <a href="/contact" class="diag-btn-primary inline-block mt-5">
-              Hablar con un consultor →
+              {{ i18n.lang() === 'es' ? 'Hablar con un consultor →' : 'Talk to a consultant →' }}
             </a>
           </div>
         </ng-container>
