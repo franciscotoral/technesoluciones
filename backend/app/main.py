@@ -312,6 +312,8 @@ class DiagnosticoRequest(BaseModel):
   urgencia: int
   problemas: List[str] = []
   extra: str = ''
+  lang: Optional[str] = "es"
+  pais: Optional[str] = "es"
 
 
 class DiagnosticoResult(BaseModel):
@@ -357,6 +359,67 @@ Devuelve EXCLUSIVAMENTE un JSON con exactamente estas claves (sin texto adiciona
 }"""
 
 
+NORMATIVA_NACIONAL: dict[str, str] = {
+    "es": """
+NORMATIVA NACIONAL APLICABLE - ESPAÑA:
+- Ley 7/2022 de Residuos y Suelo Contaminado
+- RD 553/2020 de traslado de residuos
+- RD 833/1988 de residuos peligrosos
+- Ley 31/1995 de Prevención de Riesgos Laborales
+- RD 1215/1997 de equipos de trabajo
+- Legislación autonómica de la CCAA correspondiente
+- Código Técnico de la Edificación (CTE) si aplica
+- RITE (Reglamento de Instalaciones Térmicas) si aplica
+""",
+    "de": """
+NORMATIVA NACIONAL APLICABLE - ALEMANIA:
+- Produktsicherheitsgesetz (ProdSG) - Ley de Seguridad de Productos
+- Betriebssicherheitsverordnung (BetrSichV) - Seguridad de equipos
+- Bundesimmissionsschutzgesetz (BImSchG) - Control de emisiones
+- Kreislaufwirtschaftsgesetz (KrWG) - Gestión de residuos
+- Arbeitsstättenverordnung (ArbStättV) - Seguridad en el trabajo
+- TRGS (Reglas técnicas para sustancias peligrosas) si aplica
+""",
+    "fr": """
+NORMATIVA NACIONAL APLICABLE - FRANCIA:
+- Code de l'environnement - residuos e impacto ambiental
+- Code du travail - seguridad laboral
+- Décret n°2002-540 - clasificación de residuos
+- Installations Classées pour la Protection de l'Environnement (ICPE)
+- NF standards aplicables al sector
+- Réglementation thermique (RT) si aplica construcción
+""",
+    "gb": """
+NORMATIVA NACIONAL APLICABLE - REINO UNIDO:
+- UK REACH (post-Brexit) para sustancias químicas
+- UKCA Marking (reemplaza CE Marking en GB)
+- Health and Safety at Work Act 1974
+- Environmental Protection Act 1990
+- Waste (England and Wales) Regulations 2011
+- Supply of Machinery (Safety) Regulations 2008
+- Building Regulations si aplica construcción
+NOTA: Reino Unido ya no aplica marcado CE - usar UKCA marking.
+""",
+    "se": """
+NORMATIVA NACIONAL APLICABLE - SUECIA:
+- Miljöbalken (MB) - Código Medioambiental sueco
+- Arbetsmiljölagen (AML) - Ley de entorno de trabajo
+- Avfallsförordningen - Reglamento de residuos
+- Plan- och bygglagen (PBL) - si aplica construcción
+- Naturvårdsverkets föreskrifter - regulaciones de la Agencia de Medio Ambiente
+- CE Marking aplica igual que resto de UE
+- Kemikalieinspektionen (KEMI) para sustancias químicas
+""",
+    "other": """
+NORMATIVA APLICABLE - MERCADO INTERNACIONAL:
+Aplica el marco normativo europeo como referencia estándar.
+Identifica las normativas ISO y EN aplicables al sector.
+Indica que la normativa nacional específica debe verificarse
+según el país de comercialización del producto.
+""",
+}
+
+
 def _build_user_prompt(req: DiagnosticoRequest) -> str:
   sector_label = req.sector_custom if req.sector == 'otro' and req.sector_custom else req.sector
   certs = ', '.join(req.certs) if req.certs else 'ninguna'
@@ -365,6 +428,7 @@ def _build_user_prompt(req: DiagnosticoRequest) -> str:
   return (
     f"Empresa: {req.empresa or 'no especificada'}\n"
     f"Sector: {sector_label}\n"
+    f"País de operación: {req.pais or 'es'}\n"
     f"Actividad principal: {req.actividad}\n"
     f"Número de empleados: {req.empleados}\n"
     f"Certificaciones actuales: {certs}\n"
@@ -372,6 +436,7 @@ def _build_user_prompt(req: DiagnosticoRequest) -> str:
     f"Urgencia: {urgencia_map.get(req.urgencia, 'media')}\n"
     f"Problemas identificados: {problemas}\n"
     f"Contexto adicional: {req.extra or 'ninguno'}"
+    f"\n{NORMATIVA_NACIONAL.get(req.pais or 'es', NORMATIVA_NACIONAL['other'])}"
   )
 
 

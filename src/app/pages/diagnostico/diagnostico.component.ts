@@ -78,10 +78,19 @@ export class DiagnosticoComponent implements OnDestroy {
 
   // ── Form data ─────────────────────────────────────────────────
   form: DiagnosticoForm = {
-    empresa: '', sector: '', sectorCustom: '',
+    empresa: '', sector: '', sectorCustom: '', pais: 'es',
     actividad: '', empleados: '', certs: [],
     docState: '', urgencia: 2, problemas: [], extra: ''
   };
+
+  paisOpts = [
+    { val: 'es',    label: 'España',         flag: '🇪🇸' },
+    { val: 'de',    label: 'Deutschland',    flag: '🇩🇪' },
+    { val: 'fr',    label: 'France',         flag: '🇫🇷' },
+    { val: 'gb',    label: 'United Kingdom', flag: '🇬🇧' },
+    { val: 'se',    label: 'Sverige',        flag: '🇸🇪' },
+    { val: 'other', label: 'Other / Otro',   flag: '🌍' }
+  ];
 
   sectores = [
     { val: 'construccion',            es: 'Construcción',                  en: 'Construction' },

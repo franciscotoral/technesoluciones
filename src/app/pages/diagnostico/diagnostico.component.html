@@ -74,6 +74,21 @@
           </div>
 
           <h2 class="diag-step-title mt-8">
+            {{ i18n.lang() === 'es' ? 'País de operación' : 'Country of operation' }}
+          </h2>
+          <div class="chip-grid mt-5">
+            <button *ngFor="let p of paisOpts"
+              class="chip"
+              [class.selected]="isSelected('pais', p.val)"
+              (click)="selectSingle('pais', p.val)">
+              <svg class="chip-check" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ p.flag }} {{ p.label }}
+            </button>
+          </div>
+
+          <h2 class="diag-step-title mt-8">
             {{ i18n.lang() === 'es' ? 'Actividad principal' : 'Main activity' }}
           </h2>
           <textarea [(ngModel)]="form.actividad" rows="3"

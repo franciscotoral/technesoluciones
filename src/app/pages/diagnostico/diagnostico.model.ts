@@ -2,6 +2,7 @@ export interface DiagnosticoForm {
   empresa: string;
   sector: string;
   sectorCustom: string;
+  pais: string;
   actividad: string;
   empleados: string;
   certs: string[];

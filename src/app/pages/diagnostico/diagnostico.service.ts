@@ -39,6 +39,7 @@ export class DiagnosticoService {
       empresa: form.empresa,
       sector: form.sector,
       sector_custom: form.sectorCustom,
+      pais: form.pais,
       actividad: form.actividad,
       empleados: form.empleados,
       certs: form.certs,
