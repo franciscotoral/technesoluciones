@@ -421,11 +421,16 @@ según el país de comercialización del producto.
 
 
 def _build_user_prompt(req: DiagnosticoRequest) -> str:
+  if req.lang == 'en':
+    idioma_instruccion = "Respond ENTIRELY in English. All sections must be in English."
+  else:
+    idioma_instruccion = "Responde ÍNTEGRAMENTE en español."
   sector_label = req.sector_custom if req.sector == 'otro' and req.sector_custom else req.sector
   certs = ', '.join(req.certs) if req.certs else 'ninguna'
   problemas = ', '.join(req.problemas) if req.problemas else 'no especificados'
   urgencia_map = {1: 'muy baja', 2: 'baja', 3: 'media', 4: 'alta', 5: 'crítica'}
   return (
+    f"{idioma_instruccion}\n\n"
     f"Empresa: {req.empresa or 'no especificada'}\n"
     f"Sector: {sector_label}\n"
     f"País de operación: {req.pais or 'es'}\n"
