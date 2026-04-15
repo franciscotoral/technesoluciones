@@ -323,6 +323,7 @@ class DiagnosticoResult(BaseModel):
   flujo: str
   precio_rango: str
   retainer: str
+  via_ead: Optional[str] = ''
 
 
 class DiagnosticoResponse(BaseModel):
@@ -497,18 +498,32 @@ def generar_diagnostico(payload: DiagnosticoRequest) -> DiagnosticoResponse:
   )
 
   import json
-  raw = message.content[0].text.strip()
-  # Extraer JSON — Claude a veces envuelve en ```json ... ```
-  start = raw.find('{')
-  end = raw.rfind('}') + 1
-  if start == -1 or end == 0:
-    raise HTTPException(status_code=500, detail='Respuesta inesperada del modelo.')
   try:
-    data = json.loads(raw[start:end])
-  except json.JSONDecodeError as e:
-    raise HTTPException(status_code=500, detail=f'JSON inválido: {e}')
+    raw = message.content[0].text.strip()
+    # Limpiar posibles bloques de código markdown
+    if raw.startswith('```'):
+      raw = raw.split('```')[1]
+      if raw.startswith('json'):
+        raw = raw[4:]
+    raw = raw.strip()
 
-  return DiagnosticoResponse(ok=True, result=DiagnosticoResult(**data))
+    # Log para debugging
+    print(f'RAW RESPONSE: {raw[:500]}')
+
+    parsed = json.loads(raw)
+
+    # Asegurar que via_ead existe aunque sea vacío
+    if 'via_ead' not in parsed:
+      parsed['via_ead'] = ''
+
+    print(f"VIA_EAD VALUE: {parsed.get('via_ead', 'NOT FOUND')}")
+
+    return {'ok': True, 'result': parsed}
+
+  except json.JSONDecodeError as e:
+    print(f'JSON PARSE ERROR: {e}')
+    print(f'RAW TEXT: {raw}')
+    raise HTTPException(status_code=500, detail=f'Error parseando respuesta IA: {str(e)}')
 
 
 @app.post('/api/lead')
