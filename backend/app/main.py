@@ -421,30 +421,37 @@ según el país de comercialización del producto.
 
 
 NORMA_ARMONIZADA_INSTRUCCION = """
-INSTRUCCIÓN ADICIONAL - EVALUACIÓN DE COBERTURA NORMATIVA:
+INSTRUCCIÓN CRÍTICA - EVALUACIÓN DE COBERTURA POR NORMA ARMONIZADA:
 
-Analiza si el producto o sector descrito está cubierto por una
-norma armonizada (hEN) publicada en el Diario Oficial de la UE
-o por un acto de ejecución bajo el CPR 2024/3110.
+Antes de cerrar el análisis, evalúa EXPLÍCITAMENTE si existe
+una norma armonizada (hEN) cuya referencia esté publicada en
+el Diario Oficial de la UE (DOUE) que cubra ESPECÍFICAMENTE
+este producto tal como está descrito — incluyendo su composición,
+materiales y uso previsto.
 
-Si NO existe norma armonizada aplicable al producto, añade
-obligatoriamente una sección adicional en el JSON con la clave
-"via_ead" con este contenido adaptado al producto concreto:
+IMPORTANTE: El hecho de que existan normas de ensayo aplicables
+(como EN 13501, EN 13162, EN ISO 29053) NO significa que el
+producto esté cubierto por una norma armonizada. Una norma es
+armonizada SOLO si su referencia está publicada en el DOUE
+como norma de mandato bajo el CPR.
 
-{
-  "via_ead": "Este producto no está cubierto por una norma
-  armonizada publicada en el DOUE. Para obtener el marcado CE,
-  el fabricante puede optar por la vía de la Evaluación Técnica
-  Europea (ETA) basada en un Documento de Evaluación Europeo
-  (EAD) existente, o solicitar el desarrollo de un nuevo EAD
-  ante un Technical Assessment Body (TAB) autorizado, conforme
-  al Artículo 31 del Reglamento (UE) 2024/3110.
-  Recomendamos contactar con un consultor especializado para
-  identificar el TAB competente e iniciar el proceso."
-}
+Casos donde SIEMPRE debe activarse la vía EAD:
+- Productos kit con componentes de materiales mixtos o reciclados
+  sin hEN específica publicada
+- Productos innovadores sin precedente normativo directo
+- Productos donde la composición o proceso de fabricación difiere
+  significativamente de los productos cubiertos por hEN existentes
+- Productos donde el fabricante tendría que forzar la aplicación
+  de una hEN que no fue diseñada para ese producto
 
-Si SÍ existe norma armonizada aplicable, incluye "via_ead": ""
-(string vacío) en el JSON.
+Si se cumple alguno de los casos anteriores, establece
+"via_ead" con el texto explicativo completo.
+Si el producto está inequívocamente cubierto por una hEN
+publicada en el DOUE, establece "via_ead": "".
+
+Para este caso concreto de paneles de aislamiento con
+residuos textiles reciclados en fachada ventilada:
+NO existe hEN específica — debe activarse via_ead.
 """
 
 
