@@ -229,5 +229,9 @@ export class DiagnosticoComponent implements OnDestroy {
     return (this.result()?.flujo || '').split('\n').filter(Boolean);
   }
 
+  viaEad(): string {
+    return this.result()?.via_ead || '';
+  }
+
   restart() { window.location.reload(); }
 }

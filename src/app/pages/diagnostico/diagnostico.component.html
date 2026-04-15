@@ -347,6 +347,18 @@
             </ul>
           </article>
 
+          <!-- Vía ETA/EAD (sólo si el modelo lo detecta) -->
+          <div *ngIf="viaEad()" class="via-ead-block mb-5">
+            <div class="report-section-title diag-card-title mb-3">
+              {{ i18n.lang() === 'es'
+                ? 'Vía alternativa: Evaluación Técnica Europea (ETA/EAD)'
+                : 'Alternative route: European Technical Assessment (ETA/EAD)' }}
+            </div>
+            <div class="via-ead-content">
+              {{ viaEad() }}
+            </div>
+          </div>
+
           <!-- Plan + precio con email gate -->
           <div class="relative mb-5">
             <article class="diag-card" [class.report-blurred]="!emailSent()">

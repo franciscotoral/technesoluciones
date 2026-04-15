@@ -420,6 +420,34 @@ según el país de comercialización del producto.
 }
 
 
+NORMA_ARMONIZADA_INSTRUCCION = """
+INSTRUCCIÓN ADICIONAL - EVALUACIÓN DE COBERTURA NORMATIVA:
+
+Analiza si el producto o sector descrito está cubierto por una
+norma armonizada (hEN) publicada en el Diario Oficial de la UE
+o por un acto de ejecución bajo el CPR 2024/3110.
+
+Si NO existe norma armonizada aplicable al producto, añade
+obligatoriamente una sección adicional en el JSON con la clave
+"via_ead" con este contenido adaptado al producto concreto:
+
+{
+  "via_ead": "Este producto no está cubierto por una norma
+  armonizada publicada en el DOUE. Para obtener el marcado CE,
+  el fabricante puede optar por la vía de la Evaluación Técnica
+  Europea (ETA) basada en un Documento de Evaluación Europeo
+  (EAD) existente, o solicitar el desarrollo de un nuevo EAD
+  ante un Technical Assessment Body (TAB) autorizado, conforme
+  al Artículo 31 del Reglamento (UE) 2024/3110.
+  Recomendamos contactar con un consultor especializado para
+  identificar el TAB competente e iniciar el proceso."
+}
+
+Si SÍ existe norma armonizada aplicable, incluye "via_ead": ""
+(string vacío) en el JSON.
+"""
+
+
 def _build_user_prompt(req: DiagnosticoRequest) -> str:
   if req.lang == 'en':
     idioma_instruccion = "Respond ENTIRELY in English. All sections must be in English."
@@ -442,6 +470,7 @@ def _build_user_prompt(req: DiagnosticoRequest) -> str:
     f"Problemas identificados: {problemas}\n"
     f"Contexto adicional: {req.extra or 'ninguno'}"
     f"\n{NORMATIVA_NACIONAL.get(req.pais or 'es', NORMATIVA_NACIONAL['other'])}"
+    f"\n{NORMA_ARMONIZADA_INSTRUCCION}"
   )
 
 

@@ -19,6 +19,7 @@ export interface DiagnosticoResult {
   flujo: string;
   precio_rango: string;
   retainer: string;
+  via_ead?: string;
 }
 
 export type Screen =

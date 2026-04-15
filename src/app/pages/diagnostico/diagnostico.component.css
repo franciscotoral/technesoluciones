@@ -331,6 +331,19 @@
 }
 .loader-step-item.step-done .loader-step-msg { color: #64748b; }
 
+/* ── Vía ETA/EAD block ─────────────────────────────────────── */
+.via-ead-block {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid #22d3ee;
+  background: rgba(34, 211, 238, 0.06);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.via-ead-content {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
 /* ── Light theme overrides ─────────────────────────────────── */
 :host-context(body.theme-light) .diag-card {
   background: #ffffff;
