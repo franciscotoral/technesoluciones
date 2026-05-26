@@ -12,6 +12,7 @@ import { adminGuard } from './guards/admin.guard';
 import { OstlankenDashboardComponent } from './app/pages/ostlanken-dashboard/ostlanken-dashboard.component';
 import { ProjectsDashboardComponent } from './app/pages/projects-dashboard/projects-dashboard.component';
 import { ProjectDetailComponent } from './app/pages/project-detail/project-detail.component';
+import { BriefingComponent } from './components/briefing/briefing.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'portal', component: PortalComponent, canActivate: [authGuard] },
   { path: 'projects', component: ProjectsDashboardComponent },
   { path: 'projects/:slug', component: ProjectDetailComponent },
+  { path: 'briefing', component: BriefingComponent },
   { path: 'ostlanken', component: OstlankenDashboardComponent },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
   {
@@ -29,6 +31,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./app/pages/diagnostico/diagnostico.component').then(
         m => m.DiagnosticoComponent
+      ),
+  },
+  {
+    path: 'briefing/01',
+    loadComponent: () =>
+      import('./app/pages/briefing-01/briefing-01.component').then(
+        m => m.Briefing01Component
       ),
   },
   { path: '**', redirectTo: '' },

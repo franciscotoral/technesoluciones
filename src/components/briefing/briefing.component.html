@@ -1,0 +1,172 @@
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow">
+
+    <!-- Hero -->
+    <section class="py-20 md:py-28">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center">
+          <p class="text-xs font-bold tracking-widest text-blue-400 uppercase mb-4">
+            TECHNE REGULATORY BRIEFING
+          </p>
+          <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
+            Inteligencia normativa europea, cada dos semanas
+          </h1>
+          <p class="mt-6 text-lg text-gray-400 leading-relaxed">
+            Las novedades regulatorias que afectan a fabricantes, contratistas y gestores de proyecto en Europa.
+            Directo al grano, sin ruido.
+          </p>
+
+          <ul class="mt-8 space-y-3 text-left inline-block">
+            <li class="flex items-start gap-3">
+              <span class="text-green-400 font-bold text-lg leading-tight mt-0.5">✓</span>
+              <span class="text-gray-300">Cambios normativos CE, EN e ISO con impacto real</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-green-400 font-bold text-lg leading-tight mt-0.5">✓</span>
+              <span class="text-gray-300">Novedades en licitación y contratación pública europea</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-green-400 font-bold text-lg leading-tight mt-0.5">✓</span>
+              <span class="text-gray-300">Alertas de plazo para fabricantes y exportadores</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formulario de suscripción -->
+    <section class="pb-20 md:pb-24">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-lg mx-auto rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+
+          <form [formGroup]="subscribeForm" (ngSubmit)="submit()" novalidate class="space-y-4">
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="name">Nombre</label>
+              <input
+                id="name"
+                formControlName="name"
+                type="text"
+                placeholder="Tu nombre"
+                class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              @if (subscribeForm.controls.name.touched && subscribeForm.controls.name.invalid) {
+                <p class="mt-1 text-xs text-red-300">Introduce tu nombre (mín. 2 caracteres).</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="email">Email profesional</label>
+              <input
+                id="email"
+                formControlName="email"
+                type="email"
+                placeholder="tu@empresa.com"
+                class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              @if (subscribeForm.controls.email.touched && subscribeForm.controls.email.invalid) {
+                <p class="mt-1 text-xs text-red-300">Introduce un email válido.</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="country">País</label>
+              <select
+                id="country"
+                formControlName="country"
+                class="w-full rounded-md border border-gray-600 bg-slate-800 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="" disabled>Selecciona tu país</option>
+                <option value="España">España</option>
+                <option value="Suecia">Suecia</option>
+                <option value="Alemania">Alemania</option>
+                <option value="Dinamarca">Dinamarca</option>
+                <option value="Otro">Otro</option>
+              </select>
+              @if (subscribeForm.controls.country.touched && subscribeForm.controls.country.invalid) {
+                <p class="mt-1 text-xs text-red-300">Selecciona tu país.</p>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="profile">Perfil</label>
+              <select
+                id="profile"
+                formControlName="profile"
+                class="w-full rounded-md border border-gray-600 bg-slate-800 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="" disabled>Selecciona tu perfil</option>
+                <option value="Fabricante de producto">Fabricante de producto</option>
+                <option value="Constructora/Contratista">Constructora/Contratista</option>
+                <option value="Gestor de proyecto">Gestor de proyecto</option>
+                <option value="Inversor/Fondo">Inversor/Fondo</option>
+                <option value="Otro">Otro</option>
+              </select>
+              @if (subscribeForm.controls.profile.touched && subscribeForm.controls.profile.invalid) {
+                <p class="mt-1 text-xs text-red-300">Selecciona tu perfil.</p>
+              }
+            </div>
+
+            @if (submitError()) {
+              <p class="text-sm text-red-300">{{ submitError() }}</p>
+            }
+
+            @if (submitOk()) {
+              <p class="text-sm text-green-300">
+                ¡Suscripción confirmada! Recibirás el próximo boletín en tu correo.
+              </p>
+            }
+
+            <button
+              type="submit"
+              [disabled]="submitting()"
+              class="w-full rounded-md bg-[#0a4a86] px-5 py-3 font-semibold text-white hover:bg-[#083963] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              @if (submitting()) {
+                Procesando...
+              } @else {
+                Quiero recibirlo
+              }
+            </button>
+
+            <p class="text-center text-xs text-gray-500">
+              Sin spam. Baja cuando quieras. Quincenal como máximo.
+            </p>
+
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección de archivo -->
+    <section class="pb-20 md:pb-28 border-t border-gray-700/50">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto pt-16">
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Números anteriores</h2>
+          <p class="mt-2 text-gray-400">Acceso libre a todos los boletines publicados.</p>
+
+          <div class="mt-8 space-y-4">
+            <a
+              routerLink="/briefing/01"
+              class="flex items-start justify-between gap-4 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 hover:border-blue-500/50 transition-colors duration-200 group"
+            >
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-1">Nº 01 · Mayo 2026</p>
+                <h3 class="font-semibold text-white group-hover:text-blue-300 transition-colors">
+                  Q2 2026: 7 cambios normativos que afectan a tu producto o proyecto en Europa
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">CPR, Digital Product Passport, EPBD, CBAM y más.</p>
+              </div>
+              <span class="text-gray-500 group-hover:text-blue-400 transition-colors text-lg shrink-0">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <app-footer></app-footer>
+</div>

@@ -21,6 +21,9 @@
           <a routerLink="/projects" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
           </a>
+          <a routerLink="/briefing" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            Briefing
+          </a>
           <a href="#" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
           </a>
@@ -117,6 +120,9 @@
           </a>
           <a routerLink="/projects" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
+          </a>
+          <a routerLink="/briefing" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            Briefing
           </a>
           <a href="#" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}

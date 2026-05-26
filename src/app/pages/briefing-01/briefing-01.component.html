@@ -1,0 +1,326 @@
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <!-- Breadcrumb -->
+  <div class="border-b border-gray-700/50 bg-slate-900/30">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <nav class="flex items-center gap-2 text-sm text-gray-500">
+        <a routerLink="/" class="hover:text-blue-400 transition-colors">Inicio</a>
+        <span>›</span>
+        <a routerLink="/briefing" class="hover:text-blue-400 transition-colors">Briefing</a>
+        <span>›</span>
+        <span class="text-gray-300">Nº 01 · Mayo 2026</span>
+      </nav>
+    </div>
+  </div>
+
+  <main class="flex-grow">
+
+    <!-- Cabecera del artículo -->
+    <section class="py-14 md:py-20">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto">
+
+          <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+            <p class="text-xs font-bold tracking-widest text-blue-400 uppercase">
+              TECHNE REGULATORY BRIEFING · Nº 01
+            </p>
+            <a
+              routerLink="/briefing"
+              class="text-sm text-gray-400 hover:text-blue-400 transition-colors"
+            >← Volver al Briefing</a>
+          </div>
+
+          <p class="text-sm text-gray-500 mb-3">Mayo 2026</p>
+
+          <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+            Q2 2026: 7 cambios normativos que afectan a tu producto o proyecto en Europa
+          </h1>
+
+          <p class="mt-4 text-lg text-gray-400 leading-relaxed">
+            CPR, Digital Product Passport, EPBD, CBAM y más. Lo que necesitas saber este trimestre.
+          </p>
+
+          <p class="mt-4 text-xs text-gray-500 uppercase tracking-wider">6 min de lectura</p>
+
+          <div class="mt-8 border-t border-gray-700/50"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cuerpo del artículo -->
+    <article class="pb-16 md:pb-24">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto space-y-14">
+
+          <!-- ① CPR -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ① CPR revisado: la transición al nuevo marco termina en 2027
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Reglamento de Productos de Construcción (CPR, Reglamento UE 305/2011) sigue siendo el
+              marco de referencia para el marcado CE de productos de construcción, pero la reforma en curso
+              —que ha acelerado la adopción de actos delegados— implica cambios en las normas armonizadas (hEN)
+              y en los sistemas de evaluación de la constancia de prestaciones (AVCP). La Comisión Europea está
+              actualizando la lista de normas armonizadas publicadas en el DOUE, con varios estándares EN
+              entrando en el período de coexistencia durante 2025-2026 antes de la retirada de sus versiones
+              anteriores.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Si fabricas productos de construcción con marcado CE, revisa las fechas de retirada de las
+                normas EN que referencias en tu Declaración de Prestaciones (DoP). Una norma caducada en el
+                DOUE invalida tu marcado CE. Comprueba también si tu sistema AVCP cambia con la nueva norma.
+              </p>
+            </div>
+          </section>
+
+          <!-- ② DPP -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ② Digital Product Passport: 2026 arranca los primeros pilotos obligatorios
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Reglamento de Ecodiseño para Productos Sostenibles (ESPR, Reglamento UE 2024/1781) establece
+              el Digital Product Passport (DPP) como requisito obligatorio para múltiples categorías de producto.
+              Las baterías ya tienen su pasaporte bajo el Reglamento 2023/1542 (aplicable desde febrero de 2027
+              para baterías industriales). En 2026, la Comisión adoptará los primeros actos delegados para
+              textiles y productos electrónicos, con un horizonte de obligatoriedad entre 2027 y 2028.
+              Los productos de construcción están en el segundo bloque.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                El DPP requiere un identificador único de producto, un soporte de datos (QR/RFID) y un registro
+                en la plataforma europea. Fabricantes con presencia en mercados como Alemania o Suecia reciben
+                ya preguntas de sus clientes sobre esta hoja de ruta. Ahora es el momento de evaluar qué datos
+                de ciclo de vida tienes estructurados y cuáles necesitas capturar.
+              </p>
+            </div>
+          </section>
+
+          <!-- CTA intermedio -->
+          <div class="rounded-xl bg-blue-900/30 border border-blue-700/40 p-6 md:p-8">
+            <p class="text-white font-semibold text-lg leading-snug">
+              ¿Tu documentación técnica está lista para el nuevo CPR y el Digital Product Passport?
+            </p>
+            <a
+              routerLink="/contact"
+              class="mt-4 inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors duration-300"
+            >
+              Hablar con Techne →
+            </a>
+          </div>
+
+          <!-- ③ EPBD -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ③ EPBD 2024: fecha límite de transposición el 29 de mayo de 2026
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              La Directiva de Eficiencia Energética de Edificios refundida (EPBD, Directiva 2024/1275)
+              obliga a los estados miembros a transponerla antes del 29 de mayo de 2026. Los puntos más
+              relevantes para el sector: todos los edificios nuevos deberán ser de emisiones cero a partir
+              de 2028 (edificios públicos) y 2030 (todos los nuevos). Además, se introducen Estándares Mínimos
+              de Prestación Energética (MEPS) para el parque existente, con calendarios nacionales de
+              renovación obligatoria. España, Suecia y Alemania tienen diferentes niveles de ambición en
+              sus planes de transposición.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Las constructoras y gestores de proyecto deben integrar ya los requisitos ZEB/NZEB en las
+                especificaciones de proyecto para licitaciones y concursos que se ejecutarán a partir de 2028.
+                Los inversores en activos inmobiliarios deben revisar su cartera a la luz de los futuros MEPS:
+                los activos con baja calificación energética serán cada vez menos financiables.
+              </p>
+            </div>
+          </section>
+
+          <!-- ④ CBAM -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ④ CBAM: del régimen transitorio a la fase definitiva desde enero de 2026
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Mecanismo de Ajuste en Frontera por Carbono (CBAM, Reglamento UE 2023/956) entra en su
+              fase definitiva el 1 de enero de 2026. A partir de esa fecha, los importadores de productos
+              afectados —acero, hierro, aluminio, cemento, fertilizantes, electricidad, hidrógeno y
+              determinados productos derivados— deben adquirir certificados CBAM equivalentes al carbono
+              embebido en sus importaciones. El período transitorio (solo declaración, sin pago) finalizó
+              el 31 de diciembre de 2025.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Si importas acero o aluminio para tus proyectos o productos, necesitas calcular y documentar
+                el carbono embebido de cada lote. El coste del certificado CBAM se indexa al precio del CO₂
+                en el mercado ETS, actualmente en el entorno de 60-70 €/t. Esto impacta directamente en
+                los costes de materiales y en los presupuestos de obra.
+              </p>
+            </div>
+          </section>
+
+          <!-- ⑤ Maquinaria -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ⑤ Reglamento de Maquinaria (UE) 2023/1230: cuenta atrás para enero de 2027
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Reglamento (UE) 2023/1230 sobre maquinaria sustituye a la Directiva 2006/42/CE y es
+              aplicable a partir del 20 de enero de 2027. Las diferencias más relevantes respecto a la
+              directiva anterior: cobertura explícita de sistemas autónomos y de software que modifica la
+              seguridad de la máquina, nuevos Requisitos Esenciales de Seguridad y Salud (RESS) para
+              integración de IA, ampliación del ámbito a distribuidores e importadores, y nuevos
+              procedimientos de evaluación de conformidad para maquinaria de alto riesgo (Anexo I,
+              lista actualizada).
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Con 18 meses para la entrada en vigor, el plazo es justo. Los fabricantes de maquinaria
+                deben iniciar ya la revisión de sus expedientes técnicos, evaluar si alguno de sus productos
+                cae en el Anexo I (lista de alto riesgo) y determinar si necesitarán un organismo notificado
+                (Notified Body) donde antes bastaba la autodeclaración. Especial atención si incorporas
+                visión artificial o control autónomo de movimiento.
+              </p>
+            </div>
+          </section>
+
+          <!-- ⑥ NZIA -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ⑥ Net-Zero Industry Act: ventanilla única y fast-track real en marcha
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Reglamento (UE) 2024/1735 (Net-Zero Industry Act, NZIA) está operativo. Los estados
+              miembros deben designar sus puntos de contacto únicos (single-stop-shop) y dar respuesta
+              a proyectos estratégicos netos-cero en plazos acelerados: 18 meses para proyectos de gran
+              escala, 12 para el resto. Los sectores cubiertos incluyen energía solar fotovoltaica, eólica
+              offshore, baterías, bombas de calor, electrolizadores, biometano, captura de CO₂ y fisión
+              nuclear. El objetivo: que el 40% de las necesidades anuales de despliegue de la UE procedan
+              de fabricación europea para 2030.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Si gestionas proyectos en alguno de los sectores cubiertos, puedes solicitar el estatus de
+                proyecto estratégico y beneficiarte de permisos acelerados y prioridad en licitaciones públicas.
+                Para los fabricantes de componentes relacionados, la NZIA abre líneas de financiación pública
+                y simplificación regulatoria que conviene mapear antes de los próximos procesos de inversión.
+              </p>
+            </div>
+          </section>
+
+          <!-- ⑦ Normas EN -->
+          <section>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-4">
+              ⑦ Normas EN en revisión: alerta para fabricantes con marcado CE activo
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+              CEN y CENELEC tienen en marcha revisiones de varias normas armonizadas con impacto directo
+              en el marcado CE de productos estructurales y de mantenimiento. Destacan: EN 1337 (apoyos
+              estructurales para obras de ingeniería civil), cuya revisión afecta a los sistemas AVCP y a
+              la DoP; EN 1504 (productos y sistemas para reparación de estructuras de hormigón), con nuevos
+              requisitos de caracterización de durabilidad; y un paquete de normas de ejecución bajo la
+              futura EN 1090 actualizada. Varias de estas revisiones incluyen cambios en los métodos de
+              ensayo requeridos.
+            </p>
+            <div class="mt-5 border-l-4 border-blue-500 bg-slate-800/50 rounded-r-lg p-5">
+              <p class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Qué significa para ti</p>
+              <p class="text-gray-300 leading-relaxed">
+                Una norma EN revisada puede cambiar los ensayos de tipo requeridos, el sistema AVCP
+                aplicable o la estructura de la DoP. Si tu marcado CE referencia alguna de estas normas,
+                comprueba si la versión vigente en el DOUE es la misma que tienes en tu expediente técnico.
+                Ante cualquier discrepancia, contacta con tu organismo notificado antes de que expire el
+                período de coexistencia.
+              </p>
+            </div>
+          </section>
+
+          <!-- Conclusión -->
+          <section class="border-t border-gray-700/50 pt-10">
+            <h2 class="text-xl font-bold text-white mb-4">Conclusión</h2>
+            <p class="text-gray-400 leading-relaxed">
+              El Q2 2026 no es un trimestre de novedades aisladas: es la convergencia de varias reformas
+              que llevan años gestándose y que ahora entran en fase ejecutiva. El error más común que vemos
+              en empresas es tratar cada cambio normativo como un trámite independiente, cuando en realidad
+              el CPR, el DPP y la EPBD se retroalimentan, y el CBAM afecta a la cadena de costes de casi
+              cualquier proyecto de construcción o industria pesada.
+            </p>
+            <p class="mt-4 text-gray-400 leading-relaxed">
+              Si quieres revisar cómo afectan estos cambios a tu situación concreta, el siguiente paso es
+              una llamada de 30 minutos. Sin compromiso y con un diagnóstico claro al final.
+            </p>
+          </section>
+
+          <!-- CTA final -->
+          <div class="flex flex-col sm:flex-row gap-4 pt-2">
+            <a
+              href="https://calendly.com/administracion-techneconstrucciones?hide_gdpr_banner=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center rounded-md bg-[#0a4a86] px-6 py-3 font-semibold text-white hover:bg-[#083963] transition-colors duration-300"
+            >
+              Agenda una llamada gratuita
+            </a>
+            <a
+              routerLink="/projects"
+              class="inline-flex items-center justify-center rounded-md border border-gray-600 px-6 py-3 font-semibold text-gray-300 hover:border-blue-500 hover:text-blue-400 transition-colors duration-300"
+            >
+              Explorar el Radar de Proyectos
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </article>
+
+    <!-- Bloque de suscripción -->
+    <section class="bg-[#0a4a86] py-16">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-xl mx-auto text-center">
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Recibe el próximo número</h2>
+          <p class="mt-2 text-blue-200">Quincenal. Sin spam. Baja cuando quieras.</p>
+
+          <form [formGroup]="emailForm" (ngSubmit)="submit()" novalidate class="mt-8">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input
+                formControlName="email"
+                type="email"
+                placeholder="tu@empresa.com"
+                class="flex-grow rounded-md border border-blue-400 bg-white/10 px-4 py-3 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-white"
+              />
+              <button
+                type="submit"
+                [disabled]="submitting()"
+                class="rounded-md bg-white px-6 py-3 font-semibold text-[#0a4a86] hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                @if (submitting()) {
+                  Procesando...
+                } @else {
+                  Suscribirme
+                }
+              </button>
+            </div>
+
+            @if (emailForm.controls.email.touched && emailForm.controls.email.invalid) {
+              <p class="mt-2 text-sm text-blue-200">Introduce un email válido.</p>
+            }
+            @if (submitError()) {
+              <p class="mt-2 text-sm text-blue-200">{{ submitError() }}</p>
+            }
+            @if (submitOk()) {
+              <p class="mt-2 text-sm text-white font-semibold">¡Suscripción confirmada! Hasta pronto.</p>
+            }
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <app-footer></app-footer>
+</div>
