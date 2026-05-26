@@ -1,11 +1,15 @@
-﻿import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+﻿import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CASE_STUDIES } from '../../data/case-studies.data';
 import { LanguageService } from '../../services/language.service';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Service {
   nameEs: string;
@@ -58,6 +62,42 @@ declare global { interface Window { Calendly?: any; } }
 export class HomeComponent {
   private sanitizer = inject(DomSanitizer);
   readonly i18n = inject(LanguageService);
+
+  constructor() {
+    const el = inject(ElementRef);
+    const destroyRef = inject(DestroyRef);
+
+    afterNextRender(() => {
+      const root: HTMLElement = el.nativeElement;
+      const ctx = gsap.context(() => {
+        // Hero entrance
+        gsap.timeline({ defaults: { ease: 'power3.out' } })
+          .from('#hero-title',       { opacity: 0, y: 40, duration: 0.8 })
+          .from('#hero-subtitle',    { opacity: 0, y: 25, duration: 0.7 }, '-=0.5')
+          .from('#hero-actions > *', { opacity: 0, y: 15, duration: 0.5, stagger: 0.15 }, '-=0.4');
+
+        // Section headings
+        root.querySelectorAll<HTMLElement>('.reveal-title').forEach(heading => {
+          gsap.from(heading, {
+            opacity: 0, y: 30, duration: 0.7, ease: 'power3.out',
+            scrollTrigger: { trigger: heading, start: 'top 88%', once: true },
+          });
+        });
+
+        // Cards: set hidden first, then each card gets its own trigger via batch
+        gsap.set(root.querySelectorAll('.reveal-card'), { opacity: 0, y: 40 });
+        ScrollTrigger.batch(root.querySelectorAll('.reveal-card'), {
+          onEnter: batch => gsap.to(batch, {
+            opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power3.out', overwrite: true,
+          }),
+          start: 'top 90%',
+          once: true,
+        });
+      }, root);
+
+      destroyRef.onDestroy(() => ctx.revert());
+    });
+  }
 
   readonly services = signal<Service[]>([
     {

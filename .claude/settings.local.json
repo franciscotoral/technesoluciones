@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uvicorn app.main:app:*)",
+      "Bash(curl:*)",
+      "Bash(python3 -c \"import sys,json; paths=json.load\\(sys.stdin\\)['paths']; [print\\(m.upper\\(\\), p\\) for p,ops in paths.items\\(\\) for m in ops]\")",
+      "Bash(python -c \"import sys,json; paths=json.load\\(sys.stdin\\)['paths']; [print\\(m.upper\\(\\), p\\) for p,ops in paths.items\\(\\) for m in ops]\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 33316 //F)",
+      "Bash(npm run:*)",
+      "Bash(start-process cmd *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(node -e \"try{const p=require\\('./node_modules/@angular-devkit/build-angular/package.json'\\);console.log\\('build-angular:',p.version\\)}catch\\(e\\){console.log\\('NO @angular-devkit/build-angular'\\)}\")",
+      "Bash(node -e \"try{const p=require\\('./node_modules/@angular/build/package.json'\\);console.log\\('@angular/build:',p.version\\)}catch\\(e\\){console.log\\('NO @angular/build'\\)}\")",
+      "PowerShell(cd \"c:\\\\Users\\\\Francisco Toral\\\\technesoluciones\\\\dist\"; Get-ChildItem -Recurse -Filter \"index.html\" | ForEach-Object { $_.FullName.Replace\\(\\(Get-Location\\).Path + \"\\\\\", \"dist\\\\\"\\) }; Write-Host \"---\"; Get-Content prerendered-routes.json)"
+    ]
+  }
+}

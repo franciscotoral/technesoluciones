@@ -34,13 +34,13 @@
         <div class="absolute w-96 h-96 bg-cyan-900/40 rounded-full blur-3xl -bottom-20 -right-20"></div>
       </div>
       <div class="relative z-10">
-        <h1 class="text-4xl md:text-6xl font-extrabold text-white leading-tight tracking-tight">
+        <h1 id="hero-title" class="text-4xl md:text-6xl font-extrabold text-white leading-tight tracking-tight">
           {{ i18n.lang() === 'es' ? 'Consultoría Técnica de Alto Valor para Industrias Complejas' : 'High-Value Technical Consulting for Complex Industries' }}
         </h1>
-        <p class="mt-6 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
+        <p id="hero-subtitle" class="mt-6 text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
           {{ i18n.lang() === 'es' ? 'Ofrecemos soluciones expertas de ingeniería y tecnología, desde cumplimiento normativo y BIM hasta aseguramiento de calidad con IA, para impulsar el éxito de tus proyectos.' : 'We provide expert engineering and technology solutions, from regulatory compliance and BIM to AI-driven quality assurance, to drive your project\'s success.' }}
         </p>
-        <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <div id="hero-actions" class="mt-10 flex flex-wrap justify-center gap-4">
           <a
             href="https://calendly.com/administracion-techneconstrucciones"
             (click)="openCalendly($event)"
@@ -78,15 +78,15 @@
 
     <section id="services" class="py-20 md:py-28">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto">
+        <div class="reveal-title text-center max-w-3xl mx-auto">
           <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Nuestra experiencia clave' : 'Our Core Expertise' }}</h2>
           <p class="mt-4 text-lg text-gray-400">
             {{ i18n.lang() === 'es' ? 'Ofrecemos un portafolio integral de servicios técnicos diseñado para resolver tus desafíos más críticos y abrir nuevas oportunidades.' : 'We offer a comprehensive suite of technical services designed to tackle your most significant challenges and unlock new opportunities.' }}
           </p>
         </div>
-        <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="reveal-cards mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           @for (service of uiServices(); track service.name) {
-            <div class="bg-slate-800/50 p-8 rounded-lg border border-gray-700/50 hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300">
+            <div class="reveal-card bg-slate-800/50 p-8 rounded-lg border border-gray-700/50 hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300">
               <div class="flex items-center justify-center h-12 w-12 rounded-md bg-blue-600/20 text-blue-400 mb-6" [innerHTML]="service.icon"></div>
               <h3 class="text-xl font-semibold text-white">{{ service.name }}</h3>
               <p class="mt-2 text-gray-400">{{ service.description }}</p>
@@ -98,16 +98,16 @@
 
     <section id="cases" class="py-20 md:py-28 bg-slate-800/30">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto">
+        <div class="reveal-title text-center max-w-3xl mx-auto">
           <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Proyectos reales. Resultados medibles.' : 'Real projects. Measurable results.' }}</h2>
           <p class="mt-4 text-lg text-gray-400">
             {{ i18n.lang() === 'es' ? 'De las industrias más exigentes. Entregados por Techne.' : 'From the most demanding industries. Delivered by Techne.' }}
           </p>
         </div>
 
-        <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="reveal-cards mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (cs of caseStudies(); track cs.slug) {
-            <article class="group overflow-hidden rounded-lg border border-gray-700/50 bg-slate-900/40 hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300">
+            <article class="reveal-card group overflow-hidden rounded-lg border border-gray-700/50 bg-slate-900/40 hover:border-blue-500/50 hover:-translate-y-1 transition-all duration-300">
               <img
                 [src]="cs.imageUrl"
                 [alt]="cs.title + ' thumbnail'"
@@ -177,16 +177,16 @@
 
     <section class="py-20 md:py-28 bg-slate-800/30">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center max-w-3xl mx-auto">
+        <div class="reveal-title text-center max-w-3xl mx-auto">
           <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? 'Sectores clave' : 'Serving Key Industries' }}</h2>
           <p class="mt-4 text-lg text-gray-400">
             {{ i18n.lang() === 'es' ? 'Aplicamos la misma disciplina técnica en proyectos donde el riesgo documental, regulatorio y operativo exige trazabilidad y control fino.' : 'We apply the same technical discipline to projects where documentary, regulatory and operational risk requires traceability and tight control.' }}
           </p>
         </div>
 
-        <div class="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div class="reveal-cards mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           @for (sector of sectors(); track sector.nameEn) {
-            <article class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 hover:border-blue-500/40 hover:-translate-y-1 transition-all duration-300">
+            <article class="reveal-card rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 hover:border-blue-500/40 hover:-translate-y-1 transition-all duration-300">
               <div class="flex h-12 w-12 items-center justify-center rounded-md bg-blue-600/20 text-blue-400" [innerHTML]="sector.icon"></div>
               <h3 class="mt-5 text-xl font-semibold text-white">
                 {{ i18n.lang() === 'es' ? sector.nameEs : sector.nameEn }}
@@ -201,7 +201,7 @@
     </section>
 
     <section class="py-20 md:py-32">
-      <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div class="reveal-title container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-3xl md:text-4xl font-bold text-white">{{ i18n.lang() === 'es' ? '¿Listo para optimizar tu próximo proyecto?' : 'Ready to Optimize Your Next Project?' }}</h2>
         <p class="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
           {{ i18n.lang() === 'es' ? 'Hablemos de cómo nuestra experiencia técnica puede ayudarte a cumplir objetivos concretos.' : 'Let\'s discuss how our technical expertise can be leveraged to meet your specific goals.' }}
