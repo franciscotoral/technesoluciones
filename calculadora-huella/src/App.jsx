@@ -46,11 +46,22 @@ export default function App() {
   const [perfil, setPerfil] = useState(PERFILES[0]);
   const [vidrio, setVidrio] = useState(VIDRIOS[0]);
   const [herraje, setHerraje] = useState(HERRAJES[0]);
-  const [energia, setEnergia] = useState(2.5);   // kg CO2 por ventana (taller)
-  const [transporte, setTransporte] = useState(1.8);
-  const [embalaje, setEmbalaje] = useState(0.9);
+  const [horas, setHoras] = useState(1.5);        // horas de taller por ventana
+  const [distancia, setDistancia] = useState(150); // km transporte componentes a taller
+  const [madera, setMadera] = useState(3.0);       // kg madera embalaje
+  const [film, setFilm] = useState(0.4);           // kg film plástico
+  const [carton, setCarton] = useState(1.0);       // kg cartón
 
-  // ── Cálculo simplificado (demostrativo, módulos A1-A3 + A4-A5) ──
+  // ── Factores de emisión (valores demostrativos editables) ──────
+  const FE = {
+    taller: 1.6,       // kg CO2 / hora de taller (consumo eléctrico medio × mix)
+    transporte: 0.012, // kg CO2 / (km · ventana) — carga compartida camión
+    madera: 0.45,      // kg CO2 / kg madera
+    film: 2.5,         // kg CO2 / kg film plástico (PE)
+    carton: 0.9,       // kg CO2 / kg cartón
+  };
+
+  // ── Cálculo simplificado (demostrativo, módulos A1-A3 + A2) ──
   const calc = useMemo(() => {
     const perimetro = 2 * (ancho + alto);          // m de perfil
     const area = ancho * alto;                       // m² de vidrio
@@ -58,14 +69,19 @@ export default function App() {
     const cVidrio = area * vidrio.gwp;
     const cHerraje = herraje.gwp;
     const cComponentes = cPerfil + cVidrio + cHerraje;
-    const cProceso = energia + transporte + embalaje;
+
+    const cEnsamblaje = horas * FE.taller;
+    const cTransporte = distancia * FE.transporte;
+    const cEmbalaje = madera * FE.madera + film * FE.film + carton * FE.carton;
+    const cProceso = cEnsamblaje + cTransporte + cEmbalaje;
+
     const total = cComponentes + cProceso;
     return {
       perimetro, area, cPerfil, cVidrio, cHerraje,
-      cComponentes, cProceso, total,
+      cComponentes, cEnsamblaje, cTransporte, cEmbalaje, cProceso, total,
       porM2: total / area,
     };
-  }, [ancho, alto, perfil, vidrio, herraje, energia, transporte, embalaje]);
+  }, [ancho, alto, perfil, vidrio, herraje, horas, distancia, madera, film, carton]);
 
   const steps = ['Ventana', 'Componentes', 'Proceso', 'Huella'];
 
@@ -178,18 +194,36 @@ export default function App() {
         {step === 2 && (
           <Card>
             <H>Añade tu impacto de fabricación</H>
-            <Sub>Lo que aportas tú como fabricante de la ventana: ensamblaje, transporte y embalaje. Por unidad de producto.</Sub>
+            <Sub>Introduce lo que conoces de tu día a día. La herramienta convierte estos datos en huella de carbono por ti.</Sub>
+
             <div style={{ marginTop: 20 }}>
-              <Slider label="Energía de taller (corte, ensamblaje)" value={energia} min={0} max={10} step={0.1} unit="kg CO₂" onChange={setEnergia} />
-              <Slider label="Transporte de componentes" value={transporte} min={0} max={10} step={0.1} unit="kg CO₂" onChange={setTransporte} />
-              <Slider label="Embalaje final" value={embalaje} min={0} max={5} step={0.1} unit="kg CO₂" onChange={setEmbalaje} />
+              <div style={subLabel}>Ensamblaje</div>
+              <Slider label="Horas de taller por ventana" value={horas} min={0} max={8} step={0.25} unit="h" onChange={setHoras} />
+
+              <div style={subLabel}>Transporte de componentes a tu taller</div>
+              <Slider label="Distancia media desde proveedores" value={distancia} min={0} max={600} step={10} unit="km" onChange={setDistancia} />
+
+              <div style={subLabel}>Embalaje por ventana</div>
+              <Slider label="Madera (palet, protección)" value={madera} min={0} max={10} step={0.5} unit="kg" onChange={setMadera} />
+              <Slider label="Film plástico" value={film} min={0} max={2} step={0.1} unit="kg" onChange={setFilm} />
+              <Slider label="Cartón" value={carton} min={0} max={4} step={0.25} unit="kg" onChange={setCarton} />
+            </div>
+
+            <div style={{
+              marginTop: 18, padding: '14px 16px', background: '#FBF4E9',
+              borderRadius: 10, fontSize: 13, color: COL.slate,
+              border: `1px solid #F0E0C4`, lineHeight: 1.7,
+            }}>
+              <Row k="Ensamblaje" v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
+              <Row k="Transporte de componentes" v={`${fmt(calc.cTransporte)} kg CO₂`} />
+              <Row k="Embalaje" v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
+              <div style={{ borderTop: `1px solid #F0E0C4`, margin: '6px 0' }} />
+              <Row k="Tu proceso aporta" v={`${fmt(calc.cProceso)} kg CO₂ eq`} bold />
             </div>
             <div style={{
-              marginTop: 18, padding: '12px 14px', background: '#FBF4E9',
-              borderRadius: 10, fontSize: 13, color: COL.slate,
-              border: `1px solid #F0E0C4`,
+              marginTop: 10, fontSize: 11.5, color: COL.mist, fontStyle: 'italic', lineHeight: 1.6,
             }}>
-              Tu proceso aporta <b>{fmt(calc.cProceso)} kg CO₂ eq</b> a la huella total.
+              El embalaje conecta con tus obligaciones bajo la Ley 7/2022 de residuos de envases.
             </div>
             <Next onClick={() => setStep(3)} label="Calcular huella" />
           </Card>
@@ -243,7 +277,9 @@ export default function App() {
               <Row k={`Perfil · ${perfil.marca} (${fmt(calc.perimetro)} m)`} v={`${fmt(calc.cPerfil)} kg CO₂`} />
               <Row k={`Vidrio · ${vidrio.marca} (${fmt(calc.area)} m²)`} v={`${fmt(calc.cVidrio)} kg CO₂`} />
               <Row k={`Herraje · ${herraje.label}`} v={`${fmt(calc.cHerraje)} kg CO₂`} />
-              <Row k="Proceso de fabricación propio" v={`${fmt(calc.cProceso)} kg CO₂`} />
+              <Row k="Ensamblaje (taller)" v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
+              <Row k="Transporte de componentes" v={`${fmt(calc.cTransporte)} kg CO₂`} />
+              <Row k="Embalaje" v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
               <div style={{ borderTop: `1px solid ${COL.line}`, margin: '8px 0' }} />
               <Row k="Total declarado" v={`${fmt(calc.total)} kg CO₂ eq`} bold />
             </div>
@@ -381,4 +417,8 @@ const btnPrimary = {
 const btnGhost = {
   background: 'none', color: COL.slate, border: `1px solid ${COL.line}`,
   cursor: 'pointer', padding: '12px 22px', borderRadius: 11, fontSize: 14, fontWeight: 600,
+};
+const subLabel = {
+  fontSize: 13, fontWeight: 700, color: COL.ink, marginTop: 18, marginBottom: 10,
+  paddingBottom: 6, borderBottom: `1px solid ${COL.line}`,
 };
