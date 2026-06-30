@@ -2,86 +2,103 @@ import React, { useState, useMemo } from 'react';
 
 // ─────────────────────────────────────────────────────────────
 // TECHNE · Calculadora de Huella de Carbono para Ventanas
-// Demo conceptual — datos de ejemplo basados en DAP públicas
+// Demo conceptual v2 — revisada con observaciones técnicas de
+// Pablo Martín (Director ASEFAVE)
 // ─────────────────────────────────────────────────────────────
 
 const COL = {
-  ink: '#14202E',
-  slate: '#3A4A5C',
-  mist: '#6B7B8C',
-  line: '#D8E0E6',
-  paper: '#F4F7F9',
-  white: '#FFFFFF',
-  cyan: '#1A9FD4',
-  cyanDeep: '#0E7BA8',
-  leaf: '#2E9E6B',
-  amber: '#E0922F',
-  glass: '#BFE3EE',
+  ink: '#14202E', slate: '#3A4A5C', mist: '#6B7B8C', line: '#D8E0E6',
+  paper: '#F4F7F9', white: '#FFFFFF', cyan: '#1A9FD4', cyanDeep: '#0E7BA8',
+  leaf: '#2E9E6B', amber: '#E0922F', glass: '#BFE3EE',
 };
-
-// Componentes con DAP pública (valores A1-A3 reales aproximados, kg CO2 eq)
-const PERFILES = [
-  { id: 'alu-itesal', label: 'Perfil aluminio RPT', marca: 'ITESAL', unidad: 'kg CO₂/m', gwp: 8.4, fuente: 'DAP GlobalEPD' },
-  { id: 'pvc-komm', label: 'Perfil PVC 6 cámaras', marca: 'Kömmerling 76', unidad: 'kg CO₂/m', gwp: 3.1, fuente: 'DAP IBU' },
-  { id: 'alu-recycled', label: 'Perfil aluminio reciclado', marca: 'Genérico', unidad: 'kg CO₂/m', gwp: 3.9, fuente: 'INIES' },
-];
-
-const VIDRIOS = [
-  { id: 'sgg-orae', label: 'Vidrio bajo carbono ORAÉ', marca: 'Saint-Gobain', unidad: 'kg CO₂/m²', gwp: 6.64, fuente: 'EPD verificada' },
-  { id: 'sgg-std', label: 'Doble acristalamiento estándar', marca: 'Genérico', unidad: 'kg CO₂/m²', gwp: 25.0, fuente: 'ÖKOBAUDAT' },
-  { id: 'triple', label: 'Triple acristalamiento', marca: 'Genérico', unidad: 'kg CO₂/m²', gwp: 38.0, fuente: 'ÖKOBAUDAT' },
-];
-
-const HERRAJES = [
-  { id: 'herr-std', label: 'Herraje practicable estándar', marca: 'Genérico', unidad: 'kg CO₂/ud', gwp: 4.2, fuente: 'INIES' },
-  { id: 'herr-osc', label: 'Herraje oscilobatiente', marca: 'Genérico', unidad: 'kg CO₂/ud', gwp: 6.1, fuente: 'INIES' },
-];
 
 const fmt = (n) => n.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+const UNIDADES_COMPONENTE = [
+  { id: 'kg_kg', label: 'kg CO₂ / kg de producto' },
+  { id: 'kg_m',  label: 'kg CO₂ / m lineal' },
+  { id: 'kg_m2', label: 'kg CO₂ / m² de ventana' },
+  { id: 'kg_ud', label: 'kg CO₂ / unidad' },
+];
+
+const COMPONENTE_DEFAULT = (nombre) => ({
+  nombre, activo: true, valor: 0, unidad: 'kg_m2', peso: 0, cantidad: 1,
+  origen: null, // null | 'manual' | 'pdf'
+  archivoNombre: null,
+  leyendo: false,
+});
+
+// Valores que "extraería" la IA al simular la lectura de una DAP real,
+// según el tipo de componente — para que la demo se sienta creíble.
+const EXTRACCION_SIMULADA = {
+  Perfil:             { valor: 8.4,  unidad: 'kg_m',  pagina: 'pág. 4, tabla "Resultados A1-A3"',      archivo: 'DAP_Perfil_Aluminio_RPT.pdf' },
+  Vidrio:             { valor: 25.0, unidad: 'kg_m2', pagina: 'pág. 6, módulo A1-A3 GWP-fósil',        archivo: 'EPD_Doble_Acristalamiento.pdf' },
+  Herrajes:           { valor: 4.2,  unidad: 'kg_ud', pagina: 'pág. 3, "Carbon footprint per unit"',   archivo: 'DAP_Herraje_Practicable.pdf' },
+  'Cajón de persiana':{ valor: 12.0, unidad: 'kg_m',  pagina: 'pág. 4, tabla A1-A3',                   archivo: 'DAP_Perfil_Persiana.pdf' },
+};
+
 export default function App() {
   const [step, setStep] = useState(0);
+
   const [ancho, setAncho] = useState(1.2);
   const [alto, setAlto] = useState(1.5);
-  const [perfil, setPerfil] = useState(PERFILES[0]);
-  const [vidrio, setVidrio] = useState(VIDRIOS[0]);
-  const [herraje, setHerraje] = useState(HERRAJES[0]);
-  const [horas, setHoras] = useState(1.5);        // horas de taller por ventana
-  const [distancia, setDistancia] = useState(150); // km transporte componentes a taller
-  const [madera, setMadera] = useState(3.0);       // kg madera embalaje
-  const [film, setFilm] = useState(0.4);           // kg film plástico
-  const [carton, setCarton] = useState(1.0);       // kg cartón
+  const [hojas, setHojas] = useState(2);
+  const [persiana, setPersiana] = useState(true);
 
-  // ── Factores de emisión (valores demostrativos editables) ──────
-  const FE = {
-    taller: 1.6,       // kg CO2 / hora de taller (consumo eléctrico medio × mix)
-    transporte: 0.012, // kg CO2 / (km · ventana) — carga compartida camión
-    madera: 0.45,      // kg CO2 / kg madera
-    film: 2.5,         // kg CO2 / kg film plástico (PE)
-    carton: 0.9,       // kg CO2 / kg cartón
-  };
+  const [perfil,    setPerfil]    = useState({ ...COMPONENTE_DEFAULT('Perfil'),             valor: 8.4,  unidad: 'kg_m',  peso: 0 });
+  const [vidrio,    setVidrio]    = useState({ ...COMPONENTE_DEFAULT('Vidrio'),             valor: 25.0, unidad: 'kg_m2' });
+  const [herraje,   setHerraje]   = useState({ ...COMPONENTE_DEFAULT('Herrajes'),           valor: 4.2,  unidad: 'kg_ud', cantidad: 1 });
+  const [cajonComp, setCajonComp] = useState({ ...COMPONENTE_DEFAULT('Cajón de persiana'), valor: 12.0, unidad: 'kg_m' });
 
-  // ── Cálculo simplificado (demostrativo, módulos A1-A3 + A2) ──
+  const [horasM2,   setHorasM2]   = useState(0.6);
+  const [distancia, setDistancia] = useState(150);
+  const [maderaM2,  setMaderaM2]  = useState(1.4);
+  const [filmM2,    setFilmM2]    = useState(0.2);
+  const [cartonM2,  setCartonM2]  = useState(0.5);
+
+  const FE = { taller: 1.6, transporte: 0.012, madera: 0.45, film: 2.5, carton: 0.9 };
+
+  const geo = useMemo(() => {
+    const area = ancho * alto;
+    const perimetroMarco = 2 * (ancho + alto);
+    const perimetroHojasExtra = hojas === 2 ? alto * 1.0 : 0;
+    const perimetro = perimetroMarco + perimetroHojasExtra;
+    const perimetroPersiana = persiana ? ancho * 1.15 : 0;
+    return { area, perimetro, perimetroPersiana };
+  }, [ancho, alto, hojas, persiana]);
+
+  function aportaCO2(comp, baseLineal) {
+    if (!comp.activo) return 0;
+    switch (comp.unidad) {
+      case 'kg_kg': return comp.valor * comp.peso;
+      case 'kg_m':  return comp.valor * baseLineal;
+      case 'kg_m2': return comp.valor * geo.area;
+      case 'kg_ud': return comp.valor * comp.cantidad;
+      default: return 0;
+    }
+  }
+
   const calc = useMemo(() => {
-    const perimetro = 2 * (ancho + alto);          // m de perfil
-    const area = ancho * alto;                       // m² de vidrio
-    const cPerfil = perimetro * perfil.gwp;
-    const cVidrio = area * vidrio.gwp;
-    const cHerraje = herraje.gwp;
-    const cComponentes = cPerfil + cVidrio + cHerraje;
+    const cPerfil  = aportaCO2(perfil,    geo.perimetro);
+    const cVidrio  = aportaCO2(vidrio,    geo.perimetro);
+    const cHerraje = aportaCO2(herraje,   geo.perimetro);
+    const cCajon   = persiana ? aportaCO2(cajonComp, geo.perimetroPersiana) : 0;
 
-    const cEnsamblaje = horas * FE.taller;
+    const a1a3 = cPerfil + cVidrio + cHerraje + cCajon;
+
+    const cEnsamblaje = horasM2 * geo.area * FE.taller;
     const cTransporte = distancia * FE.transporte;
-    const cEmbalaje = madera * FE.madera + film * FE.film + carton * FE.carton;
-    const cProceso = cEnsamblaje + cTransporte + cEmbalaje;
+    const cEmbalaje   = (maderaM2 * FE.madera + filmM2 * FE.film + cartonM2 * FE.carton) * geo.area;
+    const restoModulos = cEnsamblaje + cTransporte + cEmbalaje;
 
-    const total = cComponentes + cProceso;
+    const total = a1a3 + restoModulos;
+
     return {
-      perimetro, area, cPerfil, cVidrio, cHerraje,
-      cComponentes, cEnsamblaje, cTransporte, cEmbalaje, cProceso, total,
-      porM2: total / area,
+      cPerfil, cVidrio, cHerraje, cCajon, a1a3,
+      cEnsamblaje, cTransporte, cEmbalaje, restoModulos,
+      total, porM2: total / geo.area, a1a3PorM2: a1a3 / geo.area,
     };
-  }, [ancho, alto, perfil, vidrio, herraje, horas, distancia, madera, film, carton]);
+  }, [perfil, vidrio, herraje, cajonComp, persiana, geo, horasM2, distancia, maderaM2, filmM2, cartonM2]);
 
   const steps = ['Ventana', 'Componentes', 'Proceso', 'Huella'];
 
@@ -91,7 +108,6 @@ export default function App() {
       fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
       padding: '0', margin: 0,
     }}>
-      {/* HEADER */}
       <div style={{
         background: COL.white, borderBottom: `1px solid ${COL.line}`,
         padding: '18px 28px', display: 'flex', alignItems: 'center',
@@ -117,10 +133,9 @@ export default function App() {
           fontSize: 11, color: COL.cyanDeep, background: '#E8F6FB',
           padding: '5px 11px', borderRadius: 20, fontWeight: 600,
           border: `1px solid ${COL.glass}`,
-        }}>DEMO CONCEPTUAL</div>
+        }}>DEMO CONCEPTUAL v2</div>
       </div>
 
-      {/* STEP NAV */}
       <div style={{
         display: 'flex', gap: 0, padding: '0 28px', background: COL.white,
         borderBottom: `1px solid ${COL.line}`, overflowX: 'auto',
@@ -144,25 +159,39 @@ export default function App() {
         ))}
       </div>
 
-      {/* BODY */}
-      <div style={{ maxWidth: 880, margin: '0 auto', padding: '28px 24px 60px' }}>
+      <div style={{ maxWidth: 920, margin: '0 auto', padding: '28px 24px 60px' }}>
 
-        {/* STEP 0 — VENTANA */}
         {step === 0 && (
           <Card>
             <H>Define tu ventana</H>
-            <Sub>Configura el producto que quieres declarar. La huella se calcula sobre esta unidad.</Sub>
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 22, alignItems: 'center' }}>
-              <WindowSVG ancho={ancho} alto={alto} />
-              <div style={{ flex: 1, minWidth: 230 }}>
+            <Sub>Configura el producto que quieres declarar. La geometría real afecta directamente a la cantidad de cada componente.</Sub>
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 22, alignItems: 'flex-start' }}>
+              <WindowSVG ancho={ancho} alto={alto} hojas={hojas} persiana={persiana} />
+              <div style={{ flex: 1, minWidth: 260 }}>
                 <Slider label="Ancho" value={ancho} min={0.5} max={2.5} step={0.1} unit="m" onChange={setAncho} />
-                <Slider label="Alto" value={alto} min={0.5} max={2.5} step={0.1} unit="m" onChange={setAlto} />
+                <Slider label="Alto"  value={alto}  min={0.5} max={2.5} step={0.1} unit="m" onChange={setAlto} />
+
+                <div style={subLabel}>Configuración</div>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                  {[1, 2].map(n => (
+                    <Toggle key={n} active={hojas === n} onClick={() => setHojas(n)}>
+                      {n} hoja{n > 1 ? 's' : ''}
+                    </Toggle>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <Toggle active={persiana} onClick={() => setPersiana(!persiana)}>
+                    {persiana ? '✓ ' : ''}Con cajón de persiana
+                  </Toggle>
+                </div>
+
                 <div style={{
                   marginTop: 18, padding: '12px 14px', background: COL.paper,
                   borderRadius: 10, fontSize: 13, color: COL.slate, lineHeight: 1.7,
                 }}>
-                  <Row k="Superficie de vidrio" v={`${fmt(calc.area)} m²`} />
-                  <Row k="Perímetro de perfil" v={`${fmt(calc.perimetro)} m`} />
+                  <Row k="Superficie de vidrio"                  v={`${fmt(geo.area)} m²`} />
+                  <Row k="Perímetro de perfil (marco + hojas)"   v={`${fmt(geo.perimetro)} m`} />
+                  {persiana && <Row k="Perímetro de cajón de persiana" v={`${fmt(geo.perimetroPersiana)} m`} />}
                 </div>
               </div>
             </div>
@@ -170,43 +199,56 @@ export default function App() {
           </Card>
         )}
 
-        {/* STEP 1 — COMPONENTES */}
         {step === 1 && (
           <Card>
-            <H>Selecciona los componentes</H>
-            <Sub>Elige los productos de tus proveedores. Cada uno aporta su huella desde su DAP verificada.</Sub>
+            <H>Introduce los datos de tus proveedores</H>
+            <Sub>
+              Sube el PDF de la DAP de cada proveedor y la herramienta extrae el valor automáticamente
+              con IA — o introdúcelo a mano si lo prefieres. Cada proveedor declara su huella en una
+              unidad distinta; la herramienta hace la conversión por ti.
+            </Sub>
 
-            <Picker title="Perfil" options={PERFILES} value={perfil} onSelect={setPerfil} />
-            <Picker title="Vidrio" options={VIDRIOS} value={vidrio} onSelect={setVidrio} />
-            <Picker title="Herraje" options={HERRAJES} value={herraje} onSelect={setHerraje} />
+            <ComponentRow comp={perfil}    setComp={setPerfil}    hint="Ej: ITESAL declara en kg CO₂/kg de perfil" />
+            <ComponentRow comp={vidrio}    setComp={setVidrio}    hint="Ej: algunos vidrios declaran en kg CO₂/m² de ventana" />
+            <ComponentRow comp={herraje}   setComp={setHerraje}   hint="Habitualmente en kg CO₂/kg o por unidad" />
+            {persiana && (
+              <ComponentRow comp={cajonComp} setComp={setCajonComp} hint="Perfil del cajón — normalmente en kg CO₂/m lineal" />
+            )}
 
             <div style={{
-              marginTop: 8, fontSize: 12, color: COL.mist, fontStyle: 'italic',
-              display: 'flex', alignItems: 'center', gap: 6,
+              marginTop: 14, fontSize: 12, color: COL.mist, fontStyle: 'italic',
+              display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.6,
             }}>
-              <Dot c={COL.leaf} /> Datos de ejemplo basados en DAP públicas (ITESAL, Saint-Gobain, Kömmerling, INIES, ÖKOBAUDAT)
+              <Dot c={COL.leaf} />
+              <span>
+                La extracción por IA es asistida, no automática: siempre puedes revisar y corregir el
+                valor antes de que entre en el cálculo. El dato final es responsabilidad tuya.
+              </span>
             </div>
             <Next onClick={() => setStep(2)} />
           </Card>
         )}
 
-        {/* STEP 2 — PROCESO */}
         {step === 2 && (
           <Card>
             <H>Añade tu impacto de fabricación</H>
-            <Sub>Introduce lo que conoces de tu día a día. La herramienta convierte estos datos en huella de carbono por ti.</Sub>
+            <Sub>
+              Introduce tus datos por <b>m² de ventana</b> — así puedes reutilizar los mismos valores
+              de referencia para cualquier tamaño de ventana que fabriques.
+            </Sub>
 
             <div style={{ marginTop: 20 }}>
               <div style={subLabel}>Ensamblaje</div>
-              <Slider label="Horas de taller por ventana" value={horas} min={0} max={8} step={0.25} unit="h" onChange={setHoras} />
+              <Slider label="Horas de taller por m² de ventana" value={horasM2} min={0} max={3} step={0.05} unit="h/m²" onChange={setHorasM2} />
+              <div style={miniNote}>→ {fmt(horasM2 * geo.area)} h totales para esta ventana ({fmt(geo.area)} m²)</div>
 
               <div style={subLabel}>Transporte de componentes a tu taller</div>
               <Slider label="Distancia media desde proveedores" value={distancia} min={0} max={600} step={10} unit="km" onChange={setDistancia} />
 
-              <div style={subLabel}>Embalaje por ventana</div>
-              <Slider label="Madera (palet, protección)" value={madera} min={0} max={10} step={0.5} unit="kg" onChange={setMadera} />
-              <Slider label="Film plástico" value={film} min={0} max={2} step={0.1} unit="kg" onChange={setFilm} />
-              <Slider label="Cartón" value={carton} min={0} max={4} step={0.25} unit="kg" onChange={setCarton} />
+              <div style={subLabel}>Embalaje por m² de ventana</div>
+              <Slider label="Madera (palet, protección)" value={maderaM2} min={0} max={5}  step={0.1}  unit="kg/m²" onChange={setMaderaM2} />
+              <Slider label="Film plástico"              value={filmM2}   min={0} max={1}  step={0.05} unit="kg/m²" onChange={setFilmM2} />
+              <Slider label="Cartón"                     value={cartonM2} min={0} max={2}  step={0.1}  unit="kg/m²" onChange={setCartonM2} />
             </div>
 
             <div style={{
@@ -214,78 +256,85 @@ export default function App() {
               borderRadius: 10, fontSize: 13, color: COL.slate,
               border: `1px solid #F0E0C4`, lineHeight: 1.7,
             }}>
-              <Row k="Ensamblaje" v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
-              <Row k="Transporte de componentes" v={`${fmt(calc.cTransporte)} kg CO₂`} />
-              <Row k="Embalaje" v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
+              <Row k="Ensamblaje (para esta ventana)"  v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
+              <Row k="Transporte de componentes"        v={`${fmt(calc.cTransporte)} kg CO₂`} />
+              <Row k="Embalaje (para esta ventana)"     v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
               <div style={{ borderTop: `1px solid #F0E0C4`, margin: '6px 0' }} />
-              <Row k="Tu proceso aporta" v={`${fmt(calc.cProceso)} kg CO₂ eq`} bold />
+              <Row k="Tu proceso aporta" v={`${fmt(calc.restoModulos)} kg CO₂ eq`} bold />
             </div>
-            <div style={{
-              marginTop: 10, fontSize: 11.5, color: COL.mist, fontStyle: 'italic', lineHeight: 1.6,
-            }}>
+            <div style={{ marginTop: 10, fontSize: 11.5, color: COL.mist, fontStyle: 'italic', lineHeight: 1.6 }}>
               El embalaje conecta con tus obligaciones bajo la Ley 7/2022 de residuos de envases.
             </div>
             <Next onClick={() => setStep(3)} label="Calcular huella" />
           </Card>
         )}
 
-        {/* STEP 3 — RESULTADO */}
         {step === 3 && (
           <Card>
             <H>Huella de carbono de tu ventana</H>
-            <Sub>Resultado conforme a los módulos A1–A5 de EN 15804, agregados según EN 17213.</Sub>
+            <Sub>Resultado separado por fases del ciclo de vida, conforme a EN 15804.</Sub>
 
             <div style={{
-              display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 22,
-              alignItems: 'stretch',
+              marginTop: 22, border: `1.5px solid ${COL.cyan}`, borderRadius: 16,
+              overflow: 'hidden',
             }}>
-              {/* Big number */}
               <div style={{
-                flex: '1 1 230px', background: `linear-gradient(150deg, ${COL.ink}, ${COL.cyanDeep})`,
-                borderRadius: 16, padding: '26px 24px', color: '#fff',
-                display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                background: `linear-gradient(150deg, ${COL.ink}, ${COL.cyanDeep})`,
+                padding: '20px 22px', color: '#fff',
               }}>
-                <div style={{ fontSize: 12.5, opacity: 0.8, letterSpacing: 1, textTransform: 'uppercase' }}>
-                  PCG / GWP total
-                </div>
-                <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.05, margin: '6px 0' }}>
-                  {fmt(calc.total)}
-                </div>
-                <div style={{ fontSize: 14, opacity: 0.9 }}>kg CO₂ eq · por ventana</div>
                 <div style={{
-                  marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.2)',
-                  fontSize: 13.5, opacity: 0.92,
+                  fontSize: 11.5, opacity: 0.85, letterSpacing: 1, textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
                 }}>
-                  {fmt(calc.porM2)} kg CO₂ eq / m²
+                  Módulos A1–A3 · Fase de producto
+                  <span style={{
+                    fontSize: 10, background: 'rgba(255,255,255,0.18)', padding: '2px 8px',
+                    borderRadius: 10, fontWeight: 700, textTransform: 'none', letterSpacing: 0,
+                  }}>Lo que exige el DB-HSA</span>
+                </div>
+                <div style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.1, margin: '6px 0' }}>
+                  {fmt(calc.a1a3)}
+                </div>
+                <div style={{ fontSize: 14, opacity: 0.9 }}>
+                  kg CO₂ eq · {fmt(calc.a1a3PorM2)} kg CO₂ eq/m²
                 </div>
               </div>
-
-              {/* Breakdown */}
-              <div style={{ flex: '1 1 300px' }}>
-                <BreakBar label="Perfil" v={calc.cPerfil} total={calc.total} c={COL.cyan} />
-                <BreakBar label="Vidrio" v={calc.cVidrio} total={calc.total} c={COL.cyanDeep} />
-                <BreakBar label="Herraje" v={calc.cHerraje} total={calc.total} c={COL.glass} />
-                <BreakBar label="Tu proceso" v={calc.cProceso} total={calc.total} c={COL.amber} />
+              <div style={{ padding: '16px 20px', background: COL.white }}>
+                <Row k="Perfil"   v={`${fmt(calc.cPerfil)} kg CO₂`} />
+                <Row k="Vidrio"   v={`${fmt(calc.cVidrio)} kg CO₂`} />
+                <Row k="Herrajes" v={`${fmt(calc.cHerraje)} kg CO₂`} />
+                {persiana && <Row k="Cajón de persiana" v={`${fmt(calc.cCajon)} kg CO₂`} />}
               </div>
             </div>
 
             <div style={{
-              marginTop: 22, padding: '16px 18px', background: COL.paper,
-              borderRadius: 12, fontSize: 13, color: COL.slate, lineHeight: 1.7,
+              marginTop: 18, border: `1px solid ${COL.line}`, borderRadius: 14,
+              padding: '16px 18px', background: COL.paper,
             }}>
-              <div style={{ fontWeight: 700, color: COL.ink, marginBottom: 8 }}>Desglose del cálculo</div>
-              <Row k={`Perfil · ${perfil.marca} (${fmt(calc.perimetro)} m)`} v={`${fmt(calc.cPerfil)} kg CO₂`} />
-              <Row k={`Vidrio · ${vidrio.marca} (${fmt(calc.area)} m²)`} v={`${fmt(calc.cVidrio)} kg CO₂`} />
-              <Row k={`Herraje · ${herraje.label}`} v={`${fmt(calc.cHerraje)} kg CO₂`} />
-              <Row k="Ensamblaje (taller)" v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
+              <div style={{
+                fontSize: 11.5, color: COL.mist, letterSpacing: 1, textTransform: 'uppercase',
+                marginBottom: 8, fontWeight: 700,
+              }}>
+                Resto de módulos · Proceso del fabricante
+              </div>
+              <Row k="Ensamblaje"                v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
               <Row k="Transporte de componentes" v={`${fmt(calc.cTransporte)} kg CO₂`} />
-              <Row k="Embalaje" v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
-              <div style={{ borderTop: `1px solid ${COL.line}`, margin: '8px 0' }} />
-              <Row k="Total declarado" v={`${fmt(calc.total)} kg CO₂ eq`} bold />
+              <Row k="Embalaje"                  v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
+              <div style={{ borderTop: `1px solid ${COL.line}`, margin: '6px 0' }} />
+              <Row k="Subtotal proceso" v={`${fmt(calc.restoModulos)} kg CO₂ eq`} bold />
+            </div>
+
+            <div style={{
+              marginTop: 18, display: 'flex', justifyContent: 'space-between',
+              alignItems: 'center', padding: '14px 18px', background: COL.ink,
+              borderRadius: 12, color: '#fff', flexWrap: 'wrap', gap: 8,
+            }}>
+              <span style={{ fontSize: 13.5, fontWeight: 600 }}>Total agregado (todos los módulos)</span>
+              <span style={{ fontSize: 20, fontWeight: 800 }}>{fmt(calc.total)} kg CO₂ eq</span>
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
-              <button style={btnPrimary} onClick={() => alert('En la versión final: genera un informe PDF trazable y verificable, listo para la declaración ambiental del producto.')}>
+              <button style={btnPrimary} onClick={() => alert('En la versión final: informe PDF trazable con desglose A1-A3 y resto de módulos, listo para apoyar la declaración ambiental conforme al DB-HSA.')}>
                 Generar informe ↓
               </button>
               <button style={btnGhost} onClick={() => setStep(0)}>
@@ -297,9 +346,10 @@ export default function App() {
               marginTop: 20, fontSize: 11.5, color: COL.mist, fontStyle: 'italic',
               lineHeight: 1.6, borderTop: `1px solid ${COL.line}`, paddingTop: 14,
             }}>
-              Demo conceptual con cálculo simplificado y datos de ejemplo. La versión final implementa
-              el conjunto completo de módulos del ciclo de vida (A, B, C, D) y la verificación conforme
-              a EN 17213 y EN 15804, con conexión a las bases de datos de DAP reconocidas por ECO Platform.
+              Demo conceptual con cálculo simplificado y datos de ejemplo editables. La versión final
+              implementa la verificación completa conforme a EN 17213 y EN 15804, homogeneizando
+              unidades de origen de cualquier proveedor y separando los módulos A1-A3 del resto,
+              conforme al documento de apoyo del DB-HSA.
             </div>
           </Card>
         )}
@@ -308,7 +358,6 @@ export default function App() {
   );
 }
 
-// ─── Subcomponentes ──────────────────────────────────────────
 function Card({ children }) {
   return <div style={{
     background: COL.white, borderRadius: 18, padding: '28px 26px',
@@ -329,7 +378,7 @@ function Row({ k, v, bold }) {
   }}><span>{k}</span><span>{v}</span></div>;
 }
 function Dot({ c }) {
-  return <span style={{ width: 8, height: 8, borderRadius: '50%', background: c, display: 'inline-block' }} />;
+  return <span style={{ width: 8, height: 8, borderRadius: '50%', background: c, display: 'inline-block', marginTop: 5, flexShrink: 0 }} />;
 }
 function Slider({ label, value, min, max, step, unit, onChange }) {
   return (
@@ -344,61 +393,178 @@ function Slider({ label, value, min, max, step, unit, onChange }) {
     </div>
   );
 }
-function Picker({ title, options, value, onSelect }) {
+function Toggle({ active, onClick, children }) {
   return (
-    <div style={{ marginTop: 18 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: COL.ink, marginBottom: 8 }}>{title}</div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {options.map((o) => {
-          const sel = value.id === o.id;
-          return (
-            <button key={o.id} onClick={() => onSelect(o)} style={{
-              flex: '1 1 200px', textAlign: 'left', cursor: 'pointer',
-              border: sel ? `1.5px solid ${COL.cyan}` : `1px solid ${COL.line}`,
-              background: sel ? '#F0FAFE' : COL.white,
-              borderRadius: 12, padding: '12px 14px', transition: 'all .15s',
-            }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: COL.ink }}>{o.label}</div>
-              <div style={{ fontSize: 12, color: COL.mist, marginTop: 2 }}>{o.marca}</div>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', marginTop: 8,
-                fontSize: 12, alignItems: 'center',
+    <button onClick={onClick} style={{
+      flex: 1, cursor: 'pointer', padding: '10px 14px', borderRadius: 10,
+      border: active ? `1.5px solid ${COL.cyan}` : `1px solid ${COL.line}`,
+      background: active ? '#F0FAFE' : COL.white,
+      color: active ? COL.cyanDeep : COL.slate,
+      fontWeight: 600, fontSize: 13,
+    }}>{children}</button>
+  );
+}
+function NumberInput({ value, onChange, w = 90, suffix }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <input type="number" value={value} step="0.1"
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        style={{
+          width: w, padding: '8px 10px', borderRadius: 8, border: `1px solid ${COL.line}`,
+          fontSize: 13.5, color: COL.ink, fontWeight: 600,
+        }} />
+      {suffix && <span style={{ fontSize: 12, color: COL.mist }}>{suffix}</span>}
+    </div>
+  );
+}
+function ComponentRow({ comp, setComp, hint }) {
+  const handleUpload = (e) => {
+    const file = e.target.files?.[0];
+    const sim = EXTRACCION_SIMULADA[comp.nombre];
+    const archivoNombre = file ? file.name : sim.archivo;
+
+    setComp({ ...comp, leyendo: true, archivoNombre });
+
+    // Simula el tiempo de lectura del PDF por la IA
+    setTimeout(() => {
+      setComp((prev) => ({
+        ...prev,
+        leyendo: false,
+        origen: 'pdf',
+        valor: sim.valor,
+        unidad: sim.unidad,
+        archivoNombre,
+        pagina: sim.pagina,
+      }));
+    }, 1100);
+  };
+
+  return (
+    <div style={{
+      marginTop: 16, border: comp.origen === 'pdf' ? `1.5px solid ${COL.leaf}` : `1px solid ${COL.line}`,
+      borderRadius: 12, padding: '14px 16px',
+      background: comp.activo ? COL.white : COL.paper,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: COL.ink }}>{comp.nombre}</span>
+        <span style={{ fontSize: 11, color: COL.mist, fontStyle: 'italic' }}>{hint}</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <label style={{
+          ...uploadBtn,
+          background: comp.origen === 'pdf' ? '#EAF7EF' : COL.white,
+          borderColor: comp.origen === 'pdf' ? COL.leaf : COL.line,
+          color: comp.origen === 'pdf' ? COL.leaf : COL.slate,
+        }}>
+          <input type="file" accept="application/pdf" onChange={handleUpload} style={{ display: 'none' }} />
+          📄 Subir DAP (PDF)
+        </label>
+        <button
+          onClick={() => setComp({ ...comp, origen: 'manual' })}
+          style={{
+            ...uploadBtn,
+            background: comp.origen === 'manual' ? '#F0FAFE' : COL.white,
+            borderColor: comp.origen === 'manual' ? COL.cyan : COL.line,
+            color: comp.origen === 'manual' ? COL.cyanDeep : COL.slate,
+            cursor: 'pointer',
+          }}
+        >
+          ✏ Introducir manualmente
+        </button>
+      </div>
+
+      {comp.leyendo && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
+          background: '#FBF4E9', borderRadius: 8, fontSize: 12.5, color: COL.slate,
+          marginBottom: 12, border: '1px solid #F0E0C4',
+        }}>
+          <Spinner /> Leyendo {comp.archivoNombre} con IA…
+        </div>
+      )}
+
+      {comp.origen === 'pdf' && !comp.leyendo && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px',
+          background: '#EAF7EF', borderRadius: 8, fontSize: 12, color: COL.leaf,
+          marginBottom: 12, border: '1px solid #CFEBD9', lineHeight: 1.5,
+        }}>
+          <span>✓</span>
+          <span>
+            Extraído de <b>{comp.archivoNombre}</b> — {comp.pagina}. Revisa el valor antes de continuar.
+          </span>
+        </div>
+      )}
+
+      {(comp.origen === 'manual' || comp.origen === 'pdf') && (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div>
+            <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Valor de la DAP</div>
+            <NumberInput value={comp.valor} onChange={(v) => setComp({ ...comp, valor: v, origen: comp.origen === 'pdf' ? 'pdf' : 'manual' })} suffix="kg CO₂" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Unidad de origen</div>
+            <select value={comp.unidad} onChange={(e) => setComp({ ...comp, unidad: e.target.value })}
+              style={{
+                padding: '8px 10px', borderRadius: 8, border: `1px solid ${COL.line}`,
+                fontSize: 13, color: COL.ink, background: COL.white, fontWeight: 600,
               }}>
-                <span style={{ color: COL.cyanDeep, fontWeight: 700 }}>{fmt(o.gwp)} {o.unidad}</span>
-                <span style={{ color: COL.leaf, fontSize: 11 }}>{o.fuente}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              {UNIDADES_COMPONENTE.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
+            </select>
+          </div>
+          {comp.unidad === 'kg_kg' && (
+            <div>
+              <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Peso del componente</div>
+              <NumberInput value={comp.peso} onChange={(v) => setComp({ ...comp, peso: v })} suffix="kg" />
+            </div>
+          )}
+          {comp.unidad === 'kg_ud' && (
+            <div>
+              <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Cantidad</div>
+              <NumberInput value={comp.cantidad} onChange={(v) => setComp({ ...comp, cantidad: v })} suffix="ud" w={70} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {!comp.origen && !comp.leyendo && (
+        <div style={{ fontSize: 12, color: COL.mist, fontStyle: 'italic' }}>
+          Elige cómo quieres introducir el dato de este componente.
+        </div>
+      )}
     </div>
   );
 }
-function BreakBar({ label, v, total, c }) {
-  const pct = total > 0 ? (v / total) * 100 : 0;
+function Spinner() {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
-        <span style={{ color: COL.slate, fontWeight: 600 }}>{label}</span>
-        <span style={{ color: COL.mist }}>{fmt(v)} kg · {pct.toFixed(0)}%</span>
-      </div>
-      <div style={{ height: 9, background: COL.paper, borderRadius: 5, overflow: 'hidden' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: c, borderRadius: 5, transition: 'width .4s' }} />
-      </div>
-    </div>
+    <span style={{
+      display: 'inline-block', width: 13, height: 13, borderRadius: '50%',
+      border: `2px solid ${COL.amber}`, borderTopColor: 'transparent',
+      animation: 'spin 0.8s linear infinite',
+    }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </span>
   );
 }
-function WindowSVG({ ancho, alto }) {
+function WindowSVG({ ancho, alto, hojas, persiana }) {
   const w = 130, scale = w / 2.5;
   const ww = Math.max(40, ancho * scale);
   const hh = Math.max(40, alto * scale);
+  const persianaH = persiana ? 14 : 0;
   return (
-    <svg width={ww + 30} height={hh + 30} style={{ flexShrink: 0 }}>
-      <rect x="6" y="6" width={ww} height={hh} rx="4"
+    <svg width={ww + 30} height={hh + 30 + persianaH} style={{ flexShrink: 0 }}>
+      {persiana && (
+        <rect x="6" y="4" width={ww} height={persianaH} rx="2"
+          fill={COL.mist} stroke={COL.ink} strokeWidth="1.5" />
+      )}
+      <rect x="6" y={6 + persianaH} width={ww} height={hh} rx="4"
         fill={COL.glass} stroke={COL.cyanDeep} strokeWidth="5" opacity="0.92" />
-      <line x1={6 + ww / 2} y1="6" x2={6 + ww / 2} y2={6 + hh} stroke={COL.cyanDeep} strokeWidth="3" />
-      <line x1="6" y1={6 + hh / 2} x2={6 + ww} y2={6 + hh / 2} stroke={COL.cyanDeep} strokeWidth="3" />
-      <line x1="14" y1="14" x2={ww - 6} y2={hh - 6} stroke="#fff" strokeWidth="1.5" opacity="0.5" />
+      {hojas === 2 && (
+        <line x1={6 + ww / 2} y1={6 + persianaH} x2={6 + ww / 2} y2={6 + persianaH + hh} stroke={COL.cyanDeep} strokeWidth="4" />
+      )}
+      <line x1="6" y1={6 + persianaH + hh / 2} x2={6 + ww} y2={6 + persianaH + hh / 2} stroke={COL.cyanDeep} strokeWidth="3" />
+      <line x1="14" y1={14 + persianaH} x2={ww - 6} y2={persianaH + hh - 6} stroke="#fff" strokeWidth="1.5" opacity="0.5" />
     </svg>
   );
 }
@@ -421,4 +587,12 @@ const btnGhost = {
 const subLabel = {
   fontSize: 13, fontWeight: 700, color: COL.ink, marginTop: 18, marginBottom: 10,
   paddingBottom: 6, borderBottom: `1px solid ${COL.line}`,
+};
+const miniNote = {
+  fontSize: 11.5, color: COL.mist, marginTop: -10, marginBottom: 16, fontStyle: 'italic',
+};
+const uploadBtn = {
+  display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+  padding: '8px 14px', borderRadius: 9, border: `1px solid ${COL.line}`,
+  fontSize: 12.5, fontWeight: 600, transition: 'all .15s',
 };
