@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 // ─────────────────────────────────────────────────────────────
 // TECHNE · Calculadora de Huella de Carbono para Ventanas
@@ -12,7 +12,26 @@ const COL = {
   leaf: '#2E9E6B', amber: '#E0922F', glass: '#BFE3EE',
 };
 
+const FE = {
+  taller: 1.575, transporte: 0.012, madera: 0.45, film: 2.5, carton: 0.9,
+};
+
 const fmt = (n) => n.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const TECHNE_SESSION_KEY = 'techne_auth_session';
+
+function leerSesionTechne() {
+  try {
+    const raw = localStorage.getItem(TECHNE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.accessToken || !parsed?.expiresAt || parsed.expiresAt <= Date.now() + 10000) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 const UNIDADES_COMPONENTE = [
   { id: 'kg_kg', label: 'kg CO₂ / kg de producto' },
@@ -28,17 +47,23 @@ const COMPONENTE_DEFAULT = (nombre) => ({
   leyendo: false,
 });
 
-// Valores que "extraería" la IA al simular la lectura de una DAP real,
-// según el tipo de componente — para que la demo se sienta creíble.
-const EXTRACCION_SIMULADA = {
-  Perfil:             { valor: 8.4,  unidad: 'kg_m',  pagina: 'pág. 4, tabla "Resultados A1-A3"',      archivo: 'DAP_Perfil_Aluminio_RPT.pdf' },
-  Vidrio:             { valor: 25.0, unidad: 'kg_m2', pagina: 'pág. 6, módulo A1-A3 GWP-fósil',        archivo: 'EPD_Doble_Acristalamiento.pdf' },
-  Herrajes:           { valor: 4.2,  unidad: 'kg_ud', pagina: 'pág. 3, "Carbon footprint per unit"',   archivo: 'DAP_Herraje_Practicable.pdf' },
-  'Cajón de persiana':{ valor: 12.0, unidad: 'kg_m',  pagina: 'pág. 4, tabla A1-A3',                   archivo: 'DAP_Perfil_Persiana.pdf' },
-};
+function validarDimensionComponente(comp) {
+  if (!comp.activo) return '';
+  if (comp.unidad === 'kg_kg' && !(comp.peso > 0)) {
+    return `Indica un peso mayor que 0 kg para ${comp.nombre}.`;
+  }
+  if (comp.unidad === 'kg_ud' && !(comp.cantidad > 0)) {
+    return `Indica una cantidad mayor que 0 para ${comp.nombre}.`;
+  }
+  return '';
+}
 
 export default function App() {
   const [step, setStep] = useState(0);
+  const [session, setSession] = useState(() => leerSesionTechne());
+  const [empresaNombre, setEmpresaNombre] = useState('');
+  const [empresaCif, setEmpresaCif] = useState('');
+  const [productoNombre, setProductoNombre] = useState('Ventana personalizada');
 
   const [ancho, setAncho] = useState(1.2);
   const [alto, setAlto] = useState(1.5);
@@ -49,6 +74,11 @@ export default function App() {
   const [vidrio,    setVidrio]    = useState({ ...COMPONENTE_DEFAULT('Vidrio'),             valor: 25.0, unidad: 'kg_m2' });
   const [herraje,   setHerraje]   = useState({ ...COMPONENTE_DEFAULT('Herrajes'),           valor: 4.2,  unidad: 'kg_ud', cantidad: 1 });
   const [cajonComp, setCajonComp] = useState({ ...COMPONENTE_DEFAULT('Cajón de persiana'), valor: 12.0, unidad: 'kg_m' });
+  const [resultadoApi, setResultadoApi] = useState(null);
+  const [calculando, setCalculando] = useState(false);
+  const [errorCalculo, setErrorCalculo] = useState('');
+  const [generandoInforme, setGenerandoInforme] = useState(false);
+  const [errorInforme, setErrorInforme] = useState('');
 
   const [horasM2,   setHorasM2]   = useState(0.6);
   const [distancia, setDistancia] = useState(150);
@@ -56,7 +86,9 @@ export default function App() {
   const [filmM2,    setFilmM2]    = useState(0.2);
   const [cartonM2,  setCartonM2]  = useState(0.5);
 
-  const FE = { taller: 1.6, transporte: 0.012, madera: 0.45, film: 2.5, carton: 0.9 };
+  const authHeaders = useMemo(() => (
+    session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}
+  ), [session?.accessToken]);
 
   const geo = useMemo(() => {
     const area = ancho * alto;
@@ -67,18 +99,18 @@ export default function App() {
     return { area, perimetro, perimetroPersiana };
   }, [ancho, alto, hojas, persiana]);
 
-  function aportaCO2(comp, baseLineal) {
-    if (!comp.activo) return 0;
-    switch (comp.unidad) {
-      case 'kg_kg': return comp.valor * comp.peso;
-      case 'kg_m':  return comp.valor * baseLineal;
-      case 'kg_m2': return comp.valor * geo.area;
-      case 'kg_ud': return comp.valor * comp.cantidad;
-      default: return 0;
-    }
-  }
-
   const calc = useMemo(() => {
+    function aportaCO2(comp, baseLineal) {
+      if (!comp.activo) return 0;
+      switch (comp.unidad) {
+        case 'kg_kg': return comp.valor * comp.peso;
+        case 'kg_m':  return comp.valor * baseLineal;
+        case 'kg_m2': return comp.valor * geo.area;
+        case 'kg_ud': return comp.valor * comp.cantidad;
+        default: return 0;
+      }
+    }
+
     const cPerfil  = aportaCO2(perfil,    geo.perimetro);
     const cVidrio  = aportaCO2(vidrio,    geo.perimetro);
     const cHerraje = aportaCO2(herraje,   geo.perimetro);
@@ -101,6 +133,163 @@ export default function App() {
   }, [perfil, vidrio, herraje, cajonComp, persiana, geo, horasM2, distancia, maderaM2, filmM2, cartonM2]);
 
   const steps = ['Ventana', 'Componentes', 'Proceso', 'Huella'];
+  const componentesPaso = persiana
+    ? [perfil, vidrio, herraje, cajonComp]
+    : [perfil, vidrio, herraje];
+  const erroresComponentes = componentesPaso
+    .map(validarDimensionComponente)
+    .filter(Boolean);
+  const componentesValidos = erroresComponentes.length === 0;
+
+  function crearPayloadCalculo() {
+    const definiciones = [
+      [perfil, 'perfil'],
+      [vidrio, 'vidrio'],
+      [herraje, 'herraje'],
+      ...(persiana ? [[cajonComp, 'cajon_persiana']] : []),
+    ];
+    return {
+      ancho_m: ancho,
+      alto_m: alto,
+      hojas,
+      cajon_persiana: persiana,
+      componentes: definiciones
+        .filter(([comp]) => comp.activo)
+        .map(([comp, tipo]) => ({
+          nombre: comp.nombre,
+          tipo,
+          gwp_valor: comp.valor,
+          gwp_unidad: comp.unidad,
+          peso_kg: comp.unidad === 'kg_kg' ? comp.peso : null,
+          cantidad: comp.unidad === 'kg_ud' ? comp.cantidad : null,
+        })),
+      proceso: {
+        horas_taller_m2: horasM2,
+        distancia_km: distancia,
+        madera_kg_m2: maderaM2,
+        film_kg_m2: filmM2,
+        carton_kg_m2: cartonM2,
+      },
+    };
+  }
+
+  async function calcularHuella() {
+    if (!componentesValidos || calculando) return;
+    setCalculando(true);
+    setErrorCalculo('');
+    try {
+      const response = await fetch('/api/hcc/calcular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify(crearPayloadCalculo()),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || 'No se pudo calcular la huella');
+      }
+      setResultadoApi(data);
+      setStep(3);
+    } catch (error) {
+      setErrorCalculo(error instanceof Error ? error.message : 'Error inesperado');
+    } finally {
+      setCalculando(false);
+    }
+  }
+
+  async function descargarInforme() {
+    if (!resultadoApi || generandoInforme) return;
+    if (!empresaNombre.trim() || !empresaCif.trim() || !productoNombre.trim()) {
+      setErrorInforme(
+        'Completa empresa, CIF y nombre del producto en el paso Ventana.'
+      );
+      return;
+    }
+    setGenerandoInforme(true);
+    setErrorInforme('');
+    try {
+      const fuentes = componentesPaso.map((comp) => ({
+        nombre: comp.nombre,
+        proveedor: comp.proveedorExtraido || null,
+        programa: comp.programaExtraido || null,
+      }));
+      const response = await fetch('/api/hcc/informe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          calculo: crearPayloadCalculo(),
+          empresa: {
+            nombre: empresaNombre.trim(),
+            cif: empresaCif.trim(),
+          },
+          producto_nombre: productoNombre.trim(),
+          fuentes,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || 'No se pudo generar el informe');
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const nombre = match?.[1] || 'informe-huella-carbono.pdf';
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = nombre;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorInforme(error instanceof Error ? error.message : 'Error inesperado');
+    } finally {
+      setGenerandoInforme(false);
+    }
+  }
+
+  function irAPaso(destino) {
+    if (destino > 1 && !componentesValidos) {
+      setStep(1);
+      return;
+    }
+    if (destino === 3) {
+      calcularHuella();
+      return;
+    }
+    setStep(destino);
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem(TECHNE_SESSION_KEY);
+    setSession(null);
+    setResultadoApi(null);
+    setStep(0);
+  }
+
+  function irALogin() {
+    const redirect = encodeURIComponent('/calculadora/');
+    window.location.href = `/login?redirect=${redirect}`;
+  }
+
+  const resultadoMostrado = resultadoApi ? {
+    cPerfil: resultadoApi.a1a3.desglose.Perfil ?? 0,
+    cVidrio: resultadoApi.a1a3.desglose.Vidrio ?? 0,
+    cHerraje: resultadoApi.a1a3.desglose.Herrajes ?? 0,
+    cCajon: resultadoApi.a1a3.desglose['Cajón de persiana'] ?? 0,
+    a1a3: resultadoApi.a1a3.total_kg,
+    a1a3PorM2: resultadoApi.a1a3.total_kg_m2,
+    cEnsamblaje: resultadoApi.proceso.desglose.ensamblaje,
+    cTransporte: resultadoApi.proceso.desglose.transporte_componentes,
+    cEmbalaje: resultadoApi.proceso.desglose.embalaje,
+    restoModulos: resultadoApi.proceso.total_kg,
+    total: resultadoApi.agregado.total_kg,
+  } : calc;
+
+  if (!session) {
+    return <LoginBridge onLogin={irALogin} />;
+  }
 
   return (
     <div style={{
@@ -129,11 +318,19 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div style={{
-          fontSize: 11, color: COL.cyanDeep, background: '#E8F6FB',
-          padding: '5px 11px', borderRadius: 20, fontWeight: 600,
-          border: `1px solid ${COL.glass}`,
-        }}>DEMO CONCEPTUAL v2</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{
+            fontSize: 11, color: COL.cyanDeep, background: '#E8F6FB',
+            padding: '5px 11px', borderRadius: 20, fontWeight: 600,
+            border: `1px solid ${COL.glass}`,
+          }}>DEMO CONCEPTUAL v2</div>
+          <div style={{ fontSize: 12, color: COL.mist }}>
+            {session.email}
+          </div>
+          <button style={{ ...btnGhost, padding: '8px 12px', fontSize: 12 }} onClick={cerrarSesion}>
+            Salir
+          </button>
+        </div>
       </div>
 
       <div style={{
@@ -141,7 +338,7 @@ export default function App() {
         borderBottom: `1px solid ${COL.line}`, overflowX: 'auto',
       }}>
         {steps.map((s, i) => (
-          <button key={s} onClick={() => setStep(i)} style={{
+          <button key={s} onClick={() => irAPaso(i)} style={{
             border: 'none', background: 'none', cursor: 'pointer',
             padding: '14px 18px', fontSize: 13.5, fontWeight: step === i ? 700 : 500,
             color: step === i ? COL.cyanDeep : COL.mist,
@@ -195,6 +392,31 @@ export default function App() {
                 </div>
               </div>
             </div>
+            <div style={subLabel}>Datos identificativos del informe</div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <TextInput
+                label="Empresa"
+                value={empresaNombre}
+                onChange={setEmpresaNombre}
+                placeholder="Nombre o razón social"
+              />
+              <TextInput
+                label="CIF"
+                value={empresaCif}
+                onChange={setEmpresaCif}
+                placeholder="B12345678"
+                w={150}
+              />
+              <TextInput
+                label="Producto"
+                value={productoNombre}
+                onChange={setProductoNombre}
+                placeholder="Nombre comercial de la ventana"
+              />
+            </div>
+            <div style={{ ...miniNote, marginTop: 8, marginBottom: 0 }}>
+              Estos datos aparecerán en la cabecera del informe PDF.
+            </div>
             <Next onClick={() => setStep(1)} />
           </Card>
         )}
@@ -208,11 +430,11 @@ export default function App() {
               unidad distinta; la herramienta hace la conversión por ti.
             </Sub>
 
-            <ComponentRow comp={perfil}    setComp={setPerfil}    hint="Ej: ITESAL declara en kg CO₂/kg de perfil" />
-            <ComponentRow comp={vidrio}    setComp={setVidrio}    hint="Ej: algunos vidrios declaran en kg CO₂/m² de ventana" />
-            <ComponentRow comp={herraje}   setComp={setHerraje}   hint="Habitualmente en kg CO₂/kg o por unidad" />
+            <ComponentRow comp={perfil}    setComp={setPerfil}    hint="Ej: ITESAL declara en kg CO₂/kg de perfil" error={validarDimensionComponente(perfil)} authHeaders={authHeaders} />
+            <ComponentRow comp={vidrio}    setComp={setVidrio}    hint="Ej: algunos vidrios declaran en kg CO₂/m² de ventana" error={validarDimensionComponente(vidrio)} authHeaders={authHeaders} />
+            <ComponentRow comp={herraje}   setComp={setHerraje}   hint="Habitualmente en kg CO₂/kg o por unidad" error={validarDimensionComponente(herraje)} authHeaders={authHeaders} />
             {persiana && (
-              <ComponentRow comp={cajonComp} setComp={setCajonComp} hint="Perfil del cajón — normalmente en kg CO₂/m lineal" />
+              <ComponentRow comp={cajonComp} setComp={setCajonComp} hint="Perfil del cajón — normalmente en kg CO₂/m lineal" error={validarDimensionComponente(cajonComp)} authHeaders={authHeaders} />
             )}
 
             <div style={{
@@ -225,7 +447,16 @@ export default function App() {
                 valor antes de que entre en el cálculo. El dato final es responsabilidad tuya.
               </span>
             </div>
-            <Next onClick={() => setStep(2)} />
+            {!componentesValidos && (
+              <div style={{
+                marginTop: 16, padding: '10px 12px', borderRadius: 8,
+                color: '#A33A3A', background: '#FDEEEE',
+                border: '1px solid #F3CACA', fontSize: 12.5,
+              }}>
+                Completa los datos requeridos antes de continuar.
+              </div>
+            )}
+            <Next onClick={() => irAPaso(2)} disabled={!componentesValidos} />
           </Card>
         )}
 
@@ -265,7 +496,20 @@ export default function App() {
             <div style={{ marginTop: 10, fontSize: 11.5, color: COL.mist, fontStyle: 'italic', lineHeight: 1.6 }}>
               El embalaje conecta con tus obligaciones bajo la Ley 7/2022 de residuos de envases.
             </div>
-            <Next onClick={() => setStep(3)} label="Calcular huella" />
+            {errorCalculo && (
+              <div style={{
+                marginTop: 14, padding: '10px 12px', borderRadius: 8,
+                color: '#A33A3A', background: '#FDEEEE',
+                border: '1px solid #F3CACA', fontSize: 12.5,
+              }}>
+                {errorCalculo}
+              </div>
+            )}
+            <Next
+              onClick={calcularHuella}
+              label={calculando ? 'Calculando…' : 'Calcular huella'}
+              disabled={calculando}
+            />
           </Card>
         )}
 
@@ -293,17 +537,17 @@ export default function App() {
                   }}>Lo que exige el DB-HSA</span>
                 </div>
                 <div style={{ fontSize: 42, fontWeight: 800, lineHeight: 1.1, margin: '6px 0' }}>
-                  {fmt(calc.a1a3)}
+                  {fmt(resultadoMostrado.a1a3)}
                 </div>
                 <div style={{ fontSize: 14, opacity: 0.9 }}>
-                  kg CO₂ eq · {fmt(calc.a1a3PorM2)} kg CO₂ eq/m²
+                  kg CO₂ eq · {fmt(resultadoMostrado.a1a3PorM2)} kg CO₂ eq/m²
                 </div>
               </div>
               <div style={{ padding: '16px 20px', background: COL.white }}>
-                <Row k="Perfil"   v={`${fmt(calc.cPerfil)} kg CO₂`} />
-                <Row k="Vidrio"   v={`${fmt(calc.cVidrio)} kg CO₂`} />
-                <Row k="Herrajes" v={`${fmt(calc.cHerraje)} kg CO₂`} />
-                {persiana && <Row k="Cajón de persiana" v={`${fmt(calc.cCajon)} kg CO₂`} />}
+                <Row k="Perfil"   v={`${fmt(resultadoMostrado.cPerfil)} kg CO₂`} />
+                <Row k="Vidrio"   v={`${fmt(resultadoMostrado.cVidrio)} kg CO₂`} />
+                <Row k="Herrajes" v={`${fmt(resultadoMostrado.cHerraje)} kg CO₂`} />
+                {persiana && <Row k="Cajón de persiana" v={`${fmt(resultadoMostrado.cCajon)} kg CO₂`} />}
               </div>
             </div>
 
@@ -317,11 +561,11 @@ export default function App() {
               }}>
                 Resto de módulos · Proceso del fabricante
               </div>
-              <Row k="Ensamblaje"                v={`${fmt(calc.cEnsamblaje)} kg CO₂`} />
-              <Row k="Transporte de componentes" v={`${fmt(calc.cTransporte)} kg CO₂`} />
-              <Row k="Embalaje"                  v={`${fmt(calc.cEmbalaje)} kg CO₂`} />
+              <Row k="Ensamblaje"                v={`${fmt(resultadoMostrado.cEnsamblaje)} kg CO₂`} />
+              <Row k="Transporte de componentes" v={`${fmt(resultadoMostrado.cTransporte)} kg CO₂`} />
+              <Row k="Embalaje"                  v={`${fmt(resultadoMostrado.cEmbalaje)} kg CO₂`} />
               <div style={{ borderTop: `1px solid ${COL.line}`, margin: '6px 0' }} />
-              <Row k="Subtotal proceso" v={`${fmt(calc.restoModulos)} kg CO₂ eq`} bold />
+              <Row k="Subtotal proceso" v={`${fmt(resultadoMostrado.restoModulos)} kg CO₂ eq`} bold />
             </div>
 
             <div style={{
@@ -330,17 +574,38 @@ export default function App() {
               borderRadius: 12, color: '#fff', flexWrap: 'wrap', gap: 8,
             }}>
               <span style={{ fontSize: 13.5, fontWeight: 600 }}>Total agregado (todos los módulos)</span>
-              <span style={{ fontSize: 20, fontWeight: 800 }}>{fmt(calc.total)} kg CO₂ eq</span>
+              <span style={{ fontSize: 20, fontWeight: 800 }}>{fmt(resultadoMostrado.total)} kg CO₂ eq</span>
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
-              <button style={btnPrimary} onClick={() => alert('En la versión final: informe PDF trazable con desglose A1-A3 y resto de módulos, listo para apoyar la declaración ambiental conforme al DB-HSA.')}>
-                Generar informe ↓
+              <button
+                style={{
+                  ...btnPrimary,
+                  opacity: generandoInforme ? 0.55 : 1,
+                  cursor: generandoInforme ? 'not-allowed' : 'pointer',
+                }}
+                onClick={descargarInforme}
+                disabled={generandoInforme}
+              >
+                {generandoInforme ? 'Generando…' : 'Generar informe ↓'}
               </button>
-              <button style={btnGhost} onClick={() => setStep(0)}>
+              <button style={btnGhost} onClick={() => {
+                setResultadoApi(null);
+                setErrorInforme('');
+                setStep(0);
+              }}>
                 Nueva ventana
               </button>
             </div>
+            {errorInforme && (
+              <div style={{
+                marginTop: 12, padding: '10px 12px', borderRadius: 8,
+                color: '#A33A3A', background: '#FDEEEE',
+                border: '1px solid #F3CACA', fontSize: 12.5,
+              }}>
+                {errorInforme}
+              </div>
+            )}
 
             <div style={{
               marginTop: 20, fontSize: 11.5, color: COL.mist, fontStyle: 'italic',
@@ -357,6 +622,46 @@ export default function App() {
     </div>
   );
 }
+
+function LoginBridge({ onLogin }) {
+  return (
+    <div style={{
+      minHeight: '100vh', background: COL.paper, color: COL.ink,
+      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+      display: 'grid', placeItems: 'center', padding: 24,
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 430, background: COL.white, borderRadius: 18,
+        padding: '28px 26px', border: `1px solid ${COL.line}`,
+        boxShadow: '0 1px 3px rgba(20,32,46,0.06), 0 8px 30px rgba(20,32,46,0.05)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 10,
+            background: `linear-gradient(135deg, ${COL.cyan}, ${COL.cyanDeep})`,
+            display: 'grid', placeItems: 'center', color: '#fff',
+            fontWeight: 800, fontSize: 18,
+          }}>T</div>
+          <div>
+            <div style={{ fontWeight: 750, fontSize: 18 }}>Calculadora protegida</div>
+            <div style={{ fontSize: 12.5, color: COL.mist }}>Techne Soluciones · HCC</div>
+          </div>
+        </div>
+        <Sub>
+          Usa el login existente de technesoluciones.es. Al iniciar sesión volverás automáticamente a la calculadora.
+        </Sub>
+        <button
+          type="button"
+          onClick={onLogin}
+          style={{ ...btnPrimary, width: '100%', marginTop: 18 }}
+        >
+          Ir al login
+        </button>
+      </div>
+    </div>
+  );
+}
+
 
 function Card({ children }) {
   return <div style={{
@@ -417,26 +722,75 @@ function NumberInput({ value, onChange, w = 90, suffix }) {
     </div>
   );
 }
-function ComponentRow({ comp, setComp, hint }) {
-  const handleUpload = (e) => {
+function TextInput({ label, value, onChange, placeholder, w = 220 }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <span style={{ fontSize: 11.5, color: COL.mist }}>{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{
+          width: w, maxWidth: '100%', padding: '8px 10px', borderRadius: 8,
+          border: `1px solid ${COL.line}`, fontSize: 13, color: COL.ink,
+          boxSizing: 'border-box',
+        }}
+      />
+    </label>
+  );
+}
+function ComponentRow({ comp, setComp, hint, error, authHeaders }) {
+  const [errorUpload, setErrorUpload] = useState('');
+
+  const handleUpload = async (e) => {
     const file = e.target.files?.[0];
-    const sim = EXTRACCION_SIMULADA[comp.nombre];
-    const archivoNombre = file ? file.name : sim.archivo;
+    if (!file) return;
 
-    setComp({ ...comp, leyendo: true, archivoNombre });
+    setErrorUpload('');
+    setComp((prev) => ({
+      ...prev,
+      leyendo: true,
+      origen: null,
+      archivoNombre: file.name,
+    }));
 
-    // Simula el tiempo de lectura del PDF por la IA
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      formData.append('archivo', file);
+
+      const response = await fetch('/api/hcc/extraer-dap', {
+        method: 'POST',
+        headers: authHeaders,
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'No se pudo analizar la DAP');
+      }
+
       setComp((prev) => ({
         ...prev,
         leyendo: false,
         origen: 'pdf',
-        valor: sim.valor,
-        unidad: sim.unidad,
-        archivoNombre,
-        pagina: sim.pagina,
+        valor: data.gwp_valor ?? 0,
+        unidad: data.gwp_unidad ?? prev.unidad,
+        archivoNombre: file.name,
+        pagina: data.cita_pagina || 'Referencia no indicada',
+        confianza: data.confianza,
+        validacion: data.estado_validacion,
+        mensajeValidacion: data.mensaje,
+        productoExtraido: data.producto,
+        proveedorExtraido: data.proveedor,
+        programaExtraido: data.programa,
       }));
-    }, 1100);
+    } catch (error) {
+      setErrorUpload(error instanceof Error ? error.message : 'Error inesperado');
+      setComp((prev) => ({ ...prev, leyendo: false, origen: null }));
+    } finally {
+      e.target.value = '';
+    }
   };
 
   return (
@@ -484,6 +838,16 @@ function ComponentRow({ comp, setComp, hint }) {
         </div>
       )}
 
+      {errorUpload && !comp.leyendo && (
+        <div style={{
+          padding: '10px 12px', background: '#FDEEEE', borderRadius: 8,
+          fontSize: 12.5, color: '#A33A3A', marginBottom: 12,
+          border: '1px solid #F3CACA',
+        }}>
+          No se pudo leer la DAP: {errorUpload}
+        </div>
+      )}
+
       {comp.origen === 'pdf' && !comp.leyendo && (
         <div style={{
           display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px',
@@ -492,8 +856,21 @@ function ComponentRow({ comp, setComp, hint }) {
         }}>
           <span>✓</span>
           <span>
-            Extraído de <b>{comp.archivoNombre}</b> — {comp.pagina}. Revisa el valor antes de continuar.
+            Extraído de <b>{comp.archivoNombre}</b> — {comp.pagina}.
+            {comp.confianza != null && ` Confianza: ${Math.round(comp.confianza * 100)}%.`}
+            {' '}Revisa el valor antes de continuar.
           </span>
+        </div>
+      )}
+
+      {comp.origen === 'pdf' && comp.mensajeValidacion && (
+        <div style={{
+          padding: '8px 12px', borderRadius: 8, fontSize: 12,
+          color: comp.validacion === 'atipico' ? '#9A5A0A' : COL.slate,
+          background: comp.validacion === 'atipico' ? '#FBF4E9' : COL.paper,
+          marginBottom: 12,
+        }}>
+          {comp.mensajeValidacion}
         </div>
       )}
 
@@ -517,12 +894,14 @@ function ComponentRow({ comp, setComp, hint }) {
             <div>
               <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Peso del componente</div>
               <NumberInput value={comp.peso} onChange={(v) => setComp({ ...comp, peso: v })} suffix="kg" />
+              {error && <div style={{ color: '#A33A3A', fontSize: 11, marginTop: 4 }}>{error}</div>}
             </div>
           )}
           {comp.unidad === 'kg_ud' && (
             <div>
               <div style={{ fontSize: 11.5, color: COL.mist, marginBottom: 4 }}>Cantidad</div>
               <NumberInput value={comp.cantidad} onChange={(v) => setComp({ ...comp, cantidad: v })} suffix="ud" w={70} />
+              {error && <div style={{ color: '#A33A3A', fontSize: 11, marginTop: 4 }}>{error}</div>}
             </div>
           )}
         </div>
@@ -568,10 +947,21 @@ function WindowSVG({ ancho, alto, hojas, persiana }) {
     </svg>
   );
 }
-function Next({ onClick, label = 'Continuar →' }) {
+function Next({ onClick, label = 'Continuar →', disabled = false }) {
   return (
     <div style={{ marginTop: 26, display: 'flex', justifyContent: 'flex-end' }}>
-      <button style={btnPrimary} onClick={onClick}>{label}</button>
+      <button
+        style={{
+          ...btnPrimary,
+          opacity: disabled ? 0.45 : 1,
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          boxShadow: disabled ? 'none' : btnPrimary.boxShadow,
+        }}
+        onClick={onClick}
+        disabled={disabled}
+      >
+        {label}
+      </button>
     </div>
   );
 }
