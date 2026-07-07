@@ -623,42 +623,282 @@ export default function App() {
   );
 }
 
+const LOGIN = {
+  navy: '#143D73', navyDeep: '#0E2C54', blue: '#1F5F9F', sky: '#EAF4FA',
+  green: '#66A94A', greenSoft: '#EAF5E6', greenText: '#1B6B3A',
+  text: '#17233A', muted: '#6E7D92', border: '#DCE5EE', bg: '#F6F9FC', white: '#FFFFFF',
+};
+
 function LoginBridge({ onLogin }) {
   return (
-    <div style={{
-      minHeight: '100vh', background: COL.paper, color: COL.ink,
-      fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
-      display: 'grid', placeItems: 'center', padding: 24,
-    }}>
-      <div style={{
-        width: '100%', maxWidth: 430, background: COL.white, borderRadius: 18,
-        padding: '28px 26px', border: `1px solid ${COL.line}`,
-        boxShadow: '0 1px 3px rgba(20,32,46,0.06), 0 8px 30px rgba(20,32,46,0.05)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 10,
-            background: `linear-gradient(135deg, ${COL.cyan}, ${COL.cyanDeep})`,
-            display: 'grid', placeItems: 'center', color: '#fff',
-            fontWeight: 800, fontSize: 18,
-          }}>T</div>
+    <div className="techne-login-wrap">
+      <style>{`
+        .techne-login-wrap {
+          position: relative; min-height: 100vh; overflow: hidden;
+          background: linear-gradient(180deg, ${LOGIN.white} 0%, ${LOGIN.bg} 45%, ${LOGIN.sky} 100%);
+          color: ${LOGIN.text};
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+          display: flex; flex-direction: column; align-items: center;
+          padding: 28px 16px 40px;
+          box-sizing: border-box;
+        }
+        .techne-login-texture { position: absolute; inset: 0; width: 100%; height: 420px; z-index: 0; }
+        .techne-login-header {
+          position: relative; z-index: 1; width: 100%; max-width: 980px;
+          display: flex; align-items: flex-start; justify-content: space-between;
+          flex-wrap: wrap; gap: 18px; padding: 4px 6px 8px;
+        }
+        .techne-login-brand { display: flex; align-items: center; gap: 12px; }
+        .techne-login-brand-line { width: 3px; align-self: stretch; min-height: 34px; border-radius: 2px; background: ${LOGIN.green}; }
+        .techne-login-brand-logo {
+          width: 36px; height: 36px; border-radius: 9px; background: ${LOGIN.navy};
+          display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 15px; flex-shrink: 0;
+        }
+        .techne-login-brand-name { font-weight: 750; font-size: 15.5px; letter-spacing: -0.2px; color: ${LOGIN.text}; }
+        .techne-login-brand-sub { font-size: 10.5px; font-weight: 700; letter-spacing: 1.4px; color: ${LOGIN.muted}; margin-top: 2px; }
+        .techne-login-illustration { width: 220px; max-width: 44vw; height: auto; flex-shrink: 0; }
+        .techne-login-card {
+          position: relative; z-index: 1; width: calc(100% - 32px); max-width: 680px;
+          background: ${LOGIN.white}; border-radius: 28px; border: 1px solid ${LOGIN.border};
+          box-shadow: 0 1px 2px rgba(20,32,46,0.04), 0 24px 60px -20px rgba(20,61,115,0.22);
+          padding: 28px; box-sizing: border-box; margin-top: 22px;
+        }
+        .techne-login-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+        .techne-login-card-head-text { min-width: 0; }
+        .techne-login-app-icon { position: relative; width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+          background: linear-gradient(135deg, ${LOGIN.navy}, ${LOGIN.navyDeep});
+          display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 22px;
+        }
+        .techne-login-app-icon-leaf {
+          position: absolute; right: -5px; bottom: -5px; width: 20px; height: 20px; border-radius: 7px;
+          background: ${LOGIN.green}; display: grid; place-items: center; border: 2px solid ${LOGIN.white};
+        }
+        .techne-login-title { font-size: 20px; font-weight: 750; letter-spacing: -0.3px; margin: 0 0 4px; line-height: 1.25; overflow-wrap: break-word; }
+        .techne-login-subtitle { font-size: 13px; color: ${LOGIN.muted}; overflow-wrap: break-word; }
+        .techne-login-secure { color: ${LOGIN.greenText}; font-weight: 700; }
+        .techne-login-copy { font-size: 14.5px; color: #3A4A5C; line-height: 1.65; margin: 0 0 20px; }
+        .techne-login-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 22px; }
+        .techne-login-chip {
+          display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0;
+          padding: 12px 12px; border-radius: 14px; background: ${LOGIN.bg}; border: 1px solid ${LOGIN.border};
+        }
+        .techne-login-chip-icon {
+          width: 28px; height: 28px; border-radius: 9px; background: ${LOGIN.sky};
+          display: grid; place-items: center; color: ${LOGIN.blue}; flex-shrink: 0;
+        }
+        .techne-login-chip-label { font-size: 12.5px; font-weight: 700; color: ${LOGIN.text}; overflow-wrap: break-word; }
+        .techne-login-btn {
+          width: 100%; height: 56px; border: none; border-radius: 16px; cursor: pointer;
+          background: ${LOGIN.navy}; color: #fff; font-size: 15.5px; font-weight: 650;
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          box-shadow: 0 10px 24px -8px rgba(20,61,115,0.45);
+          transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .techne-login-btn:active { transform: scale(0.98); }
+        @media (hover: hover) {
+          .techne-login-btn:hover { background: ${LOGIN.navyDeep}; transform: translateY(-1px); box-shadow: 0 14px 30px -8px rgba(20,61,115,0.5); }
+        }
+        .techne-login-shield {
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          margin-top: 14px; font-size: 12px; color: ${LOGIN.muted};
+        }
+        .techne-login-tagline {
+          position: relative; z-index: 1; display: flex; align-items: center; gap: 8px;
+          margin-top: 22px; font-size: 13px; font-weight: 600; color: ${LOGIN.greenText};
+        }
+        @media (prefers-reduced-motion: no-preference) {
+          .techne-login-dot { animation: techne-login-pulse 4.5s ease-in-out infinite; }
+        }
+        @keyframes techne-login-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.85; } }
+        @media (max-width: 640px) {
+          .techne-login-illustration { max-width: 60vw; }
+          .techne-login-card { padding: 24px 20px; border-radius: 24px; margin-top: 14px; }
+          .techne-login-title { font-size: 18px; }
+        }
+        @media (max-width: 420px) {
+          .techne-login-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 300px) {
+          .techne-login-chips { grid-template-columns: minmax(0, 1fr); }
+        }
+      `}</style>
+
+      <BackgroundTexture />
+
+      <div className="techne-login-header">
+        <div className="techne-login-brand">
+          <div className="techne-login-brand-logo">T</div>
+          <div className="techne-login-brand-line" />
           <div>
-            <div style={{ fontWeight: 750, fontSize: 18 }}>Calculadora protegida</div>
-            <div style={{ fontSize: 12.5, color: COL.mist }}>Techne Soluciones · HCC</div>
+            <div className="techne-login-brand-name">Techne Soluciones</div>
+            <div className="techne-login-brand-sub">CONSULTORÍA TÉCNICA EUROPEA</div>
           </div>
         </div>
-        <Sub>
-          Usa el login existente de technesoluciones.es. Al iniciar sesión volverás automáticamente a la calculadora.
-        </Sub>
+        <FootprintIllustration />
+      </div>
+
+      <div className="techne-login-card">
+        <div className="techne-login-card-head">
+          <div className="techne-login-app-icon">
+            T
+            <span className="techne-login-app-icon-leaf">
+              <LeafIcon size={11} color="#fff" />
+            </span>
+          </div>
+          <div className="techne-login-card-head-text">
+            <h1 className="techne-login-title">Calculadora de Huella de Carbono</h1>
+            <div className="techne-login-subtitle">
+              Techne Soluciones · <span className="techne-login-secure">Acceso seguro</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="techne-login-copy">
+          Inicia sesión con tu cuenta de technesoluciones.es para acceder a tus cálculos,
+          indicadores y reportes de sostenibilidad.
+        </p>
+
+        <div className="techne-login-chips">
+          <BenefitChip label="Medición" icon={<MeasureIcon />} />
+          <BenefitChip label="Reducción" icon={<ReduceIcon />} />
+          <BenefitChip label="Reportes" icon={<ReportIcon />} />
+        </div>
+
         <button
           type="button"
           onClick={onLogin}
-          style={{ ...btnPrimary, width: '100%', marginTop: 18 }}
+          className="techne-login-btn"
+          aria-label="Ir al login de Techne Soluciones"
         >
-          Ir al login
+          <span>Ir al login</span>
+          <ArrowIcon />
         </button>
+
+        <div className="techne-login-shield">
+          <ShieldIcon />
+          <span>Acceso corporativo seguro</span>
+        </div>
+      </div>
+
+      <div className="techne-login-tagline">
+        <LeafIcon size={15} color={LOGIN.greenText} />
+        <span>Mide tu impacto. Optimiza tu huella.</span>
       </div>
     </div>
+  );
+}
+
+function BenefitChip({ icon, label }) {
+  return (
+    <div className="techne-login-chip">
+      <span className="techne-login-chip-icon" aria-hidden="true">{icon}</span>
+      <span className="techne-login-chip-label">{label}</span>
+    </div>
+  );
+}
+
+function MeasureIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="9" width="18" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M7 9v3M11 9v3M15 9v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ReduceIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 5c7 0 9 4 9 9M13 14c3 0 4-1.5 4-1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M13 14l5 2M13 14l1.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 19l-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ReportIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="3.5" width="14" height="17" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ArrowIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function ShieldIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3l7 3v5.5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5V6l7-3z" stroke={LOGIN.muted} strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9 12l2 2 4-4.5" stroke={LOGIN.muted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function LeafIcon({ size = 16, color = LOGIN.green }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 19c-1-7 3-13 14-14 1 11-5 15-14 14z" stroke={color} strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M6 18c3-4 6-7 12-13" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FootprintIllustration() {
+  return (
+    <svg
+      className="techne-login-illustration"
+      viewBox="0 0 260 130"
+      fill="none"
+      aria-hidden="true"
+      role="presentation"
+    >
+      <path d="M20 105c-6-30 8-58 48-63 5 40-14 65-48 63z" fill={LOGIN.greenSoft} stroke={LOGIN.green} strokeWidth="1.6" />
+      <path d="M26 100c8-18 18-32 38-52" stroke={LOGIN.green} strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
+
+      <rect x="86" y="30" width="34" height="20" rx="10" fill={LOGIN.sky} />
+      <text x="103" y="44" textAnchor="middle" fontSize="10" fontWeight="700" fill={LOGIN.navy} fontFamily="system-ui, sans-serif">CO₂</text>
+
+      <g>
+        <rect x="146" y="70" width="8" height="20" rx="1.5" fill={LOGIN.blue} opacity="0.85" />
+        <rect x="158" y="58" width="8" height="32" rx="1.5" fill={LOGIN.navy} opacity="0.9" />
+        <rect x="170" y="46" width="8" height="44" rx="1.5" fill={LOGIN.green} opacity="0.9" />
+      </g>
+
+      <polyline points="140,26 158,34 172,18 188,24" fill="none" stroke={LOGIN.green} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+
+      <g transform="translate(220,60)">
+        <circle r="18" fill="none" stroke={LOGIN.border} strokeWidth="7" />
+        <circle r="18" fill="none" stroke={LOGIN.navy} strokeWidth="7" strokeDasharray="70 113" strokeLinecap="round" transform="rotate(-90)" />
+        <circle r="18" fill="none" stroke={LOGIN.green} strokeWidth="7" strokeDasharray="30 113" strokeDashoffset="-70" strokeLinecap="round" transform="rotate(-90)" />
+      </g>
+
+      <g stroke={LOGIN.border} strokeWidth="1" strokeDasharray="3 4" opacity="0.9">
+        <path d="M68 60L98 42" />
+        <path d="M122 40L146 58" />
+        <path d="M182 50L204 58" />
+      </g>
+      <circle className="techne-login-dot" cx="68" cy="60" r="2.5" fill={LOGIN.green} />
+      <circle className="techne-login-dot" cx="122" cy="40" r="2.5" fill={LOGIN.blue} />
+      <circle className="techne-login-dot" cx="204" cy="58" r="2.5" fill={LOGIN.navy} />
+    </svg>
+  );
+}
+
+function BackgroundTexture() {
+  return (
+    <svg className="techne-login-texture" viewBox="0 0 800 420" preserveAspectRatio="xMidYMin slice" aria-hidden="true" role="presentation">
+      <defs>
+        <pattern id="techne-login-dots" width="26" height="26" patternUnits="userSpaceOnUse">
+          <circle cx="1.4" cy="1.4" r="1.4" fill={LOGIN.blue} opacity="0.16" />
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="800" height="220" fill="url(#techne-login-dots)" />
+      <path d="M-40 260C160 200 300 320 480 250S760 180 860 240" stroke={LOGIN.navy} strokeWidth="1" fill="none" opacity="0.08" />
+      <path d="M-40 300C180 360 340 220 520 300S780 340 860 290" stroke={LOGIN.green} strokeWidth="1" fill="none" opacity="0.08" />
+    </svg>
   );
 }
 
