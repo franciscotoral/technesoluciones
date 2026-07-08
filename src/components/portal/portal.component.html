@@ -242,6 +242,26 @@
             </section>
           }
         }
+
+        <section class="mt-10">
+          <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Herramientas' : 'Tools' }}</h2>
+
+          @if (hccAutorizado() === null) {
+            <div class="mt-4 h-28 w-full max-w-sm rounded-lg border border-slate-700/60 bg-slate-900/40 animate-pulse"></div>
+          } @else if (hccAutorizado() === true) {
+            <article class="mt-4 max-w-sm rounded-lg border border-cyan-700/60 bg-gradient-to-br from-cyan-900/30 to-slate-900 p-4">
+              <p class="text-sm text-cyan-200">{{ i18n.lang() === 'es' ? 'Calculadora de huella de carbono' : 'Carbon footprint calculator' }}</p>
+              <p class="mt-1 text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Acceso piloto HCC habilitado para tu cuenta.' : 'HCC pilot access enabled for your account.' }}</p>
+              <button
+                type="button"
+                (click)="goToCalculadora()"
+                class="mt-4 inline-flex items-center justify-center rounded-md bg-cyan-600 px-4 py-2 font-semibold text-white hover:bg-cyan-500 transition-colors"
+              >
+                {{ i18n.lang() === 'es' ? 'Acceder a la Calculadora HCC' : 'Open HCC Calculator' }}
+              </button>
+            </article>
+          }
+        </section>
       </div>
     </section>
   </main>

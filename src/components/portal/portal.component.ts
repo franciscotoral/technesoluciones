@@ -47,6 +47,7 @@ export class PortalComponent implements OnInit, OnDestroy {
   readonly projects = signal<PrivateProject[]>([]);
   readonly blockVisibility = signal<DashboardVisibility>(this.loadBlockVisibility());
   readonly selectedPhaseMonth = signal<number | null>(null);
+  readonly hccAutorizado = signal<boolean | null>(null);
 
   readonly timelinePhases = computed<TimelinePhase[]>(() => {
     const list: TimelinePhase[] = [];
@@ -105,6 +106,7 @@ export class PortalComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.reloadData();
+    this.checkHccAccess();
   }
 
   ngOnDestroy() {
@@ -135,6 +137,27 @@ export class PortalComponent implements OnInit, OnDestroy {
   onLogout() {
     this.auth.logout();
     this.router.navigateByUrl('/');
+  }
+
+  goToCalculadora() {
+    window.location.href = '/calculadora/';
+  }
+
+  private async checkHccAccess() {
+    const token = this.auth.accessToken();
+    if (!token) {
+      this.hccAutorizado.set(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/hcc/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      this.hccAutorizado.set(response.ok);
+    } catch {
+      this.hccAutorizado.set(false);
+    }
   }
 
   isBlockVisible(block: DashboardBlockId): boolean {
