@@ -47,7 +47,9 @@ export class LoginComponent {
 
     const redirectUrl = this.getRedirectUrl();
     if (redirectUrl.startsWith('/calculadora')) {
-      window.location.href = redirectUrl;
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 300);
     } else {
       this.router.navigateByUrl(redirectUrl);
     }
