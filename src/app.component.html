@@ -15,14 +15,14 @@
     <header class="flex items-center justify-between border-b border-slate-700 px-4 py-3">
       <div>
         <h2 class="text-base font-semibold text-white">Asistente y reservas</h2>
-        <p class="text-xs text-slate-400">OpenClaw + Calendly</p>
+        <p class="text-xs text-slate-400">Chat IA + Calendly</p>
       </div>
       <button type="button" (click)="closeAssistant()" class="rounded-md border border-slate-600 px-2 py-1 text-xs hover:bg-slate-800">
         Cerrar
       </button>
     </header>
 
-    <div class="p-4 border-b border-slate-700 flex gap-2">
+    <div class="p-4 border-b border-slate-700">
       <button
         type="button"
         (click)="openBooking()"
@@ -30,30 +30,43 @@
       >
         Reservar cita
       </button>
-      @if (assistantConfig().openclawChatUrl) {
-        <button
-          type="button"
-          (click)="openOpenClawExternal()"
-          class="rounded-md border border-cyan-500 px-3 py-2 text-sm font-semibold text-cyan-200 hover:bg-cyan-900/40"
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-3 space-y-2">
+      @if (chat.messages().length === 0) {
+        <p class="text-sm text-slate-400">Escribe tu pregunta y el asistente te responderá.</p>
+      }
+      @for (msg of chat.messages(); track $index) {
+        <div
+          class="max-w-[85%] rounded-lg px-3 py-2 text-sm"
+          [class.ml-auto]="msg.role === 'user'"
+          [class.bg-cyan-600]="msg.role === 'user'"
+          [class.text-white]="msg.role === 'user'"
+          [class.bg-slate-800]="msg.role === 'assistant'"
         >
-          Abrir chat
-        </button>
+          {{ msg.content }}
+        </div>
+      }
+      @if (chat.loading()) {
+        <div class="max-w-[85%] rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-400">Escribiendo…</div>
       }
     </div>
 
-    <div class="flex-1 p-3">
-      @if (assistantConfig().openclawWidgetUrl) {
-        <iframe
-          [src]="assistantConfig().openclawWidgetUrl"
-          title="OpenClaw Assistant"
-          class="h-full w-full rounded-lg border border-slate-700 bg-slate-900"
-        ></iframe>
-      } @else {
-        <div class="h-full rounded-lg border border-dashed border-slate-600 bg-slate-900/50 p-4 text-sm text-slate-300">
-          <p class="font-semibold text-white">Widget OpenClaw no configurado.</p>
-          <p class="mt-2">A�ade <code>openclawWidgetUrl</code> o <code>openclawChatUrl</code> en <code>window.__TECHNE_CONFIG__</code> dentro de <code>index.html</code>.</p>
-        </div>
-      }
-    </div>
+    <form (ngSubmit)="sendMessage()" class="flex gap-2 border-t border-slate-700 p-3">
+      <input
+        type="text"
+        name="draft"
+        [(ngModel)]="draft"
+        placeholder="Escribe un mensaje…"
+        class="flex-1 rounded-md border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none"
+      />
+      <button
+        type="submit"
+        [disabled]="chat.loading()"
+        class="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-50"
+      >
+        Enviar
+      </button>
+    </form>
   </section>
 }

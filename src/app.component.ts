@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 
+import { ChatService } from './services/chat.service';
 import { ThemeService } from './services/theme.service';
 
 @Component({
@@ -8,26 +10,17 @@ import { ThemeService } from './services/theme.service';
   templateUrl: './app.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, FormsModule],
 })
 export class AppComponent {
   private readonly theme = inject(ThemeService);
+  readonly chat = inject(ChatService);
   readonly assistantOpen = signal(false);
+  draft = '';
 
-  readonly assistantConfig = computed(() => {
-    const cfg = (window as Window & {
-      __TECHNE_CONFIG__?: {
-        openclawWidgetUrl?: string;
-        openclawChatUrl?: string;
-        calendlyUrl?: string;
-      };
-    }).__TECHNE_CONFIG__;
-
-    return {
-      openclawWidgetUrl: (cfg?.openclawWidgetUrl ?? '').trim(),
-      openclawChatUrl: (cfg?.openclawChatUrl ?? '').trim(),
-      calendlyUrl: (cfg?.calendlyUrl ?? 'https://calendly.com/administracion-techneconstrucciones').trim(),
-    };
+  readonly calendlyUrl = computed(() => {
+    const cfg = (window as Window & { __TECHNE_CONFIG__?: { calendlyUrl?: string } }).__TECHNE_CONFIG__;
+    return (cfg?.calendlyUrl ?? 'https://calendly.com/administracion-techneconstrucciones').trim();
   });
 
   toggleAssistant() {
@@ -38,8 +31,13 @@ export class AppComponent {
     this.assistantOpen.set(false);
   }
 
+  sendMessage() {
+    this.chat.send(this.draft);
+    this.draft = '';
+  }
+
   openBooking() {
-    const url = this.assistantConfig().calendlyUrl;
+    const url = this.calendlyUrl();
     const calendly = (window as Window & {
       Calendly?: { initPopupWidget: (cfg: { url: string }) => void };
     }).Calendly;
@@ -49,12 +47,6 @@ export class AppComponent {
       return;
     }
 
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
-  openOpenClawExternal() {
-    const url = this.assistantConfig().openclawChatUrl;
-    if (!url) return;
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

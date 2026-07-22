@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 import anthropic
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -549,6 +550,76 @@ def guardar_lead(payload: LeadRequest) -> Dict[str, bool]:
     }).execute()
 
   return {'ok': True}
+
+
+# ══ Asistente de chat (NVIDIA) ═════════════════════════════════════════════
+
+NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions'
+
+
+class ChatMessage(BaseModel):
+  role: str
+  content: str
+
+
+class ChatRequest(BaseModel):
+  messages: List[ChatMessage] = Field(default_factory=list)
+
+
+class ChatResponse(BaseModel):
+  reply: str
+
+
+@app.post('/api/chat', response_model=ChatResponse)
+def chat(payload: ChatRequest) -> Dict[str, str]:
+  api_key = os.getenv('NVIDIA_API_KEY')
+  if not api_key:
+    raise HTTPException(status_code=500, detail='NVIDIA_API_KEY no configurada.')
+
+  if not payload.messages:
+    raise HTTPException(status_code=400, detail='No se ha enviado ningún mensaje.')
+
+  model = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-8b-instruct')
+  system_prompt = os.getenv(
+    'NVIDIA_SYSTEM_PROMPT',
+    'Eres el asistente virtual de Techne Soluciones. Responde de forma breve y profesional.',
+  )
+
+  history = [{'role': 'system', 'content': system_prompt}]
+  history += [{'role': m.role, 'content': m.content} for m in payload.messages[-20:]]
+
+  try:
+    response = httpx.post(
+      NVIDIA_CHAT_URL,
+      headers={
+        'Authorization': f'Bearer {api_key}',
+        'Accept': 'application/json',
+      },
+      json={
+        'model': model,
+        'messages': history,
+        'temperature': 0.5,
+        'max_tokens': 512,
+        'stream': False,
+      },
+      timeout=30.0,
+    )
+    response.raise_for_status()
+  except httpx.HTTPStatusError as e:
+    raise HTTPException(
+      status_code=502,
+      detail=f'Error del servicio NVIDIA: {e.response.status_code} {e.response.text[:300]}',
+    )
+  except httpx.RequestError as e:
+    raise HTTPException(status_code=502, detail=f'No se pudo contactar con NVIDIA: {e}')
+
+  data = response.json()
+  try:
+    reply = data['choices'][0]['message']['content']
+  except (KeyError, IndexError):
+    raise HTTPException(status_code=502, detail='Respuesta inesperada del servicio NVIDIA.')
+
+  return {'reply': reply}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
