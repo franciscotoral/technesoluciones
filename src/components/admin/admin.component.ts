@@ -1,18 +1,27 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import {
   AdminApiService,
+  AdminUser,
   Tenant,
   TenantDataSource,
   TenantModel,
   TenantPipeline,
 } from '../../services/admin-api.service';
-import { AdminService } from '../../services/admin.service';
+import { AdminService, ModuleGrantRow } from '../../services/admin.service';
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
+
+type AdminTab = 'general' | 'access';
+
+const ACCESS_MODULES: ReadonlyArray<{ key: string; name: string }> = [
+  { key: 'pipeline', name: 'Pipeline de Construcción' },
+  { key: 'calculadora', name: 'Calculadora de Huella de Carbono' },
+  { key: 'diagnostico', name: 'Diagnóstico Normativo' },
+];
 
 interface AdminMetricRow {
   user_id: string;
@@ -61,6 +70,36 @@ export class AdminComponent implements OnInit {
   readonly tenantDataSources = signal<TenantDataSource[]>([]);
   readonly tenantPipelines = signal<TenantPipeline[]>([]);
   readonly tenantModels = signal<TenantModel[]>([]);
+
+  readonly activeTab = signal<AdminTab>('general');
+  readonly accessModules = ACCESS_MODULES;
+  readonly accessLoading = signal(false);
+  readonly accessError = signal<string | null>(null);
+  readonly accessUsers = signal<AdminUser[]>([]);
+  readonly accessGrants = signal<Record<string, Record<string, ModuleGrantRow>>>({});
+  readonly userSearch = signal('');
+  readonly accessPage = signal(1);
+  readonly accessPageSize = 20;
+  readonly savingCell = signal<string | null>(null);
+  readonly savedCell = signal<string | null>(null);
+  readonly expandedNotes = signal<ReadonlySet<string>>(new Set());
+  readonly noteDrafts = signal<Record<string, string>>({});
+
+  readonly filteredAccessUsers = computed(() => {
+    const term = this.userSearch().trim().toLowerCase();
+    const users = this.accessUsers();
+    if (!term) return users;
+    return users.filter((u) => (u.email ?? '').toLowerCase().includes(term));
+  });
+
+  readonly accessTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredAccessUsers().length / this.accessPageSize))
+  );
+
+  readonly pagedAccessUsers = computed(() => {
+    const start = (this.accessPage() - 1) * this.accessPageSize;
+    return this.filteredAccessUsers().slice(start, start + this.accessPageSize);
+  });
 
   private readonly admin = inject(AdminService);
   private readonly adminApi = inject(AdminApiService);
@@ -344,5 +383,154 @@ export class AdminComponent implements OnInit {
 
   onGoPortal() {
     this.router.navigateByUrl('/portal');
+  }
+
+  async onSelectTab(tab: AdminTab) {
+    this.activeTab.set(tab);
+    if (tab === 'access' && this.accessUsers().length === 0 && !this.accessLoading()) {
+      await this.loadAccessTab();
+    }
+  }
+
+  async loadAccessTab() {
+    this.accessLoading.set(true);
+    this.accessError.set(null);
+    try {
+      const [users, grants] = await Promise.all([this.adminApi.listUsers(), this.admin.getAllModuleGrants()]);
+      this.accessUsers.set(users);
+      this.accessGrants.set(this.buildGrantsMap(grants));
+      this.accessPage.set(1);
+    } catch {
+      this.accessError.set(
+        this.i18n.lang() === 'es'
+          ? 'No se pudieron cargar los usuarios o los accesos.'
+          : 'Could not load users or access grants.'
+      );
+    } finally {
+      this.accessLoading.set(false);
+    }
+  }
+
+  onUserSearchChange(value: string) {
+    this.userSearch.set(value);
+    this.accessPage.set(1);
+  }
+
+  goToAccessPage(page: number) {
+    this.accessPage.set(Math.max(1, Math.min(page, this.accessTotalPages())));
+  }
+
+  userDisplayName(user: AdminUser): string | null {
+    const metadata = user.user_metadata ?? {};
+    const name = (metadata['full_name'] ?? metadata['name']) as string | undefined;
+    return name?.trim() || null;
+  }
+
+  isGranted(userId: string, moduleKey: string): boolean {
+    return this.grantFor(userId, moduleKey)?.enabled ?? false;
+  }
+
+  grantedAt(userId: string, moduleKey: string): string | null {
+    return this.grantFor(userId, moduleKey)?.granted_at ?? null;
+  }
+
+  isSavingCell(userId: string, moduleKey: string): boolean {
+    return this.savingCell() === this.cellKey(userId, moduleKey);
+  }
+
+  isSavedCell(userId: string, moduleKey: string): boolean {
+    return this.savedCell() === this.cellKey(userId, moduleKey);
+  }
+
+  isNotesExpanded(userId: string, moduleKey: string): boolean {
+    return this.expandedNotes().has(this.cellKey(userId, moduleKey));
+  }
+
+  toggleNotesExpanded(userId: string, moduleKey: string) {
+    const key = this.cellKey(userId, moduleKey);
+    const next = new Set(this.expandedNotes());
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+      if (this.noteDrafts()[key] === undefined) {
+        this.noteDrafts.set({ ...this.noteDrafts(), [key]: this.grantFor(userId, moduleKey)?.notes ?? '' });
+      }
+    }
+    this.expandedNotes.set(next);
+  }
+
+  noteDraft(userId: string, moduleKey: string): string {
+    const key = this.cellKey(userId, moduleKey);
+    const draft = this.noteDrafts()[key];
+    if (draft !== undefined) return draft;
+    return this.grantFor(userId, moduleKey)?.notes ?? '';
+  }
+
+  onNoteDraftChange(userId: string, moduleKey: string, value: string) {
+    this.noteDrafts.set({ ...this.noteDrafts(), [this.cellKey(userId, moduleKey)]: value });
+  }
+
+  async onToggleGrant(userId: string, moduleKey: string, checked: boolean) {
+    await this.saveGrant(userId, moduleKey, checked, this.grantFor(userId, moduleKey)?.notes ?? undefined);
+  }
+
+  async onSaveNotes(userId: string, moduleKey: string) {
+    await this.saveGrant(userId, moduleKey, this.isGranted(userId, moduleKey), this.noteDraft(userId, moduleKey));
+  }
+
+  formatDate(iso: string | null): string {
+    if (!iso) return '--';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '--';
+    return date.toLocaleDateString('es-ES');
+  }
+
+  private grantFor(userId: string, moduleKey: string): ModuleGrantRow | null {
+    return this.accessGrants()[userId]?.[moduleKey] ?? null;
+  }
+
+  private cellKey(userId: string, moduleKey: string): string {
+    return `${userId}:${moduleKey}`;
+  }
+
+  private buildGrantsMap(rows: ModuleGrantRow[]): Record<string, Record<string, ModuleGrantRow>> {
+    const map: Record<string, Record<string, ModuleGrantRow>> = {};
+    for (const row of rows) {
+      (map[row.user_id] ??= {})[row.module_key] = row;
+    }
+    return map;
+  }
+
+  private async saveGrant(userId: string, moduleKey: string, enabled: boolean, notes?: string) {
+    const key = this.cellKey(userId, moduleKey);
+    this.savingCell.set(key);
+    this.savedCell.set(null);
+
+    try {
+      const saved = await this.adminApi.upsertGrant({ userId, moduleKey, enabled, notes });
+      const nextGrants = { ...this.accessGrants() };
+      nextGrants[userId] = {
+        ...(nextGrants[userId] ?? {}),
+        [moduleKey]: {
+          user_id: saved.user_id,
+          module_key: saved.module_key,
+          enabled: saved.enabled,
+          notes: saved.notes,
+          granted_at: saved.granted_at ?? new Date().toISOString(),
+        },
+      };
+      this.accessGrants.set(nextGrants);
+      this.savedCell.set(key);
+      setTimeout(() => {
+        if (this.savedCell() === key) this.savedCell.set(null);
+      }, 1500);
+    } catch {
+      this.accessError.set(
+        this.i18n.lang() === 'es' ? 'No se pudo guardar el cambio de acceso.' : 'Could not save access change.'
+      );
+    } finally {
+      if (this.savingCell() === key) this.savingCell.set(null);
+    }
   }
 }

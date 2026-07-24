@@ -46,6 +46,29 @@ export interface TenantModel {
   created_at?: string;
 }
 
+export interface AdminUser {
+  id: string;
+  email: string | null;
+  created_at: string | null;
+  user_metadata: Record<string, unknown>;
+}
+
+export interface UpsertGrantInput {
+  userId: string;
+  moduleKey: string;
+  enabled: boolean;
+  notes?: string;
+}
+
+export interface GrantRecord {
+  user_id: string;
+  module_key: string;
+  enabled: boolean;
+  notes: string | null;
+  granted_by: string | null;
+  granted_at: string | null;
+}
+
 export interface CreateDataSourceInput {
   type: string;
   host: string;
@@ -64,6 +87,22 @@ export class AdminApiService {
 
   hasApiConfig(): boolean {
     return Boolean(this.resolveBaseUrl());
+  }
+
+  async listUsers(): Promise<AdminUser[]> {
+    return this.request<AdminUser[]>('/api/v1/admin/users');
+  }
+
+  async upsertGrant(input: UpsertGrantInput): Promise<GrantRecord> {
+    return this.request<GrantRecord>('/api/v1/admin/grants', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: input.userId,
+        module_key: input.moduleKey,
+        enabled: input.enabled,
+        ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      }),
+    });
   }
 
   async listTenants(): Promise<Tenant[]> {

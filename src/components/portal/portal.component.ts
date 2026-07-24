@@ -3,12 +3,22 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { CapabilitiesService } from '../../services/capabilities.service';
 import { LanguageService } from '../../services/language.service';
 import { InvestmentMetric, PortalDataService, PrivateProject } from '../../services/portal-data.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
 type DashboardBlockId = 'summary' | 'model' | 'composition' | 'rd105' | 'timeline' | 'projects';
+
+interface PortalTool {
+  key: string;
+  name: string;
+  description: string;
+  icon: 'chart-bar' | 'calculator' | 'search';
+  kind: 'route' | 'external';
+  target: string;
+}
 
 type DashboardVisibility = Record<DashboardBlockId, boolean>;
 
@@ -47,7 +57,34 @@ export class PortalComponent implements OnInit, OnDestroy {
   readonly projects = signal<PrivateProject[]>([]);
   readonly blockVisibility = signal<DashboardVisibility>(this.loadBlockVisibility());
   readonly selectedPhaseMonth = signal<number | null>(null);
-  readonly hccAutorizado = signal<boolean | null>(null);
+  readonly toolsLoading = signal(true);
+
+  readonly tools: PortalTool[] = [
+    {
+      key: 'pipeline',
+      name: 'Pipeline de Construcción',
+      description: 'Radar de infraestructura europea',
+      icon: 'chart-bar',
+      kind: 'route',
+      target: '/projects',
+    },
+    {
+      key: 'calculadora',
+      name: 'Calculadora de Huella de Carbono',
+      description: 'Cálculo y certificación de huella CO₂',
+      icon: 'calculator',
+      kind: 'external',
+      target: '/calculadora/',
+    },
+    {
+      key: 'diagnostico',
+      name: 'Diagnóstico Normativo',
+      description: 'Análisis de cumplimiento normativo europeo',
+      icon: 'search',
+      kind: 'route',
+      target: '/diagnostico',
+    },
+  ];
 
   readonly timelinePhases = computed<TimelinePhase[]>(() => {
     const list: TimelinePhase[] = [];
@@ -100,13 +137,14 @@ export class PortalComponent implements OnInit, OnDestroy {
   });
 
   private readonly portalData = inject(PortalDataService);
+  private readonly capabilities = inject(CapabilitiesService);
   private readonly router = inject(Router);
   private timelineChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
   private compositionChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
 
   async ngOnInit() {
     await this.reloadData();
-    this.checkHccAccess();
+    await this.loadTools();
   }
 
   ngOnDestroy() {
@@ -139,24 +177,31 @@ export class PortalComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl('/');
   }
 
-  goToCalculadora() {
-    window.location.href = '/calculadora/';
+  hasAccess(tool: PortalTool): boolean {
+    return this.capabilities.hasModule(tool.key);
   }
 
-  private async checkHccAccess() {
-    const token = this.auth.accessToken();
-    if (!token) {
-      this.hccAutorizado.set(false);
-      return;
-    }
+  openTool(tool: PortalTool) {
+    if (!this.hasAccess(tool)) return;
 
+    if (tool.kind === 'external') {
+      window.location.href = tool.target;
+    } else {
+      this.router.navigateByUrl(tool.target);
+    }
+  }
+
+  requestAccessHref(tool: PortalTool): string {
+    const subject = encodeURIComponent(`Solicitud de acceso: ${tool.name}`);
+    return `mailto:francisco.toral@technesoluciones.es?subject=${subject}`;
+  }
+
+  private async loadTools() {
+    this.toolsLoading.set(true);
     try {
-      const response = await fetch('/api/hcc/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      this.hccAutorizado.set(response.ok);
-    } catch {
-      this.hccAutorizado.set(false);
+      await this.capabilities.getCapabilities();
+    } finally {
+      this.toolsLoading.set(false);
     }
   }
 

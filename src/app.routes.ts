@@ -9,6 +9,7 @@ import { PortalComponent } from './components/portal/portal.component';
 import { authGuard } from './guards/auth.guard';
 import { AdminComponent } from './components/admin/admin.component';
 import { adminGuard } from './guards/admin.guard';
+import { moduleGuard } from './guards/module.guard';
 import { OstlankenDashboardComponent } from './app/pages/ostlanken-dashboard/ostlanken-dashboard.component';
 import { ProjectsDashboardComponent } from './app/pages/projects-dashboard/projects-dashboard.component';
 import { ProjectDetailComponent } from './app/pages/project-detail/project-detail.component';
@@ -21,7 +22,12 @@ export const routes: Routes = [
   { path: 'contact', component: ContactComponent },
   { path: 'login', component: LoginComponent },
   { path: 'portal', component: PortalComponent, canActivate: [authGuard] },
-  { path: 'projects', component: ProjectsDashboardComponent },
+  {
+    path: 'projects',
+    component: ProjectsDashboardComponent,
+    canActivate: [authGuard, moduleGuard],
+    data: { moduleKey: 'pipeline' },
+  },
   { path: 'projects/:slug', component: ProjectDetailComponent },
   { path: 'briefing', component: BriefingComponent },
   { path: 'ostlanken', component: OstlankenDashboardComponent },
@@ -33,6 +39,11 @@ export const routes: Routes = [
         m => m.DiagnosticoComponent
       ),
   },
+  // No existe ruta '/calculadora' en el Router de Angular: el portal navega con
+  // window.location.href a la SPA React independiente (calculadora-huella/),
+  // servida como bundle estatico aparte. moduleGuard no puede protegerla aqui;
+  // el gating vive en el portal (hasModule('calculadora')) y, pendiente,
+  // en el backend HCC cuando exista.
   {
     path: 'briefing/01',
     loadComponent: () =>

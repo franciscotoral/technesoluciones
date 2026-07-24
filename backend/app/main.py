@@ -627,3 +627,228 @@ def chat(payload: ChatRequest) -> Dict[str, str]:
 def ensure_tenant_exists(tenant_id: str) -> None:
   if not any(t['id'] == tenant_id for t in TENANTS):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Tenant not found.')
+
+
+# ══ Multitenant minimo: capacidades por modulo y administracion de accesos ═════
+
+class SupabaseUser(BaseModel):
+  id: str
+  email: Optional[str] = None
+
+
+def _supabase_anon_config() -> tuple[str, str]:
+  supabase_url = os.getenv('SUPABASE_URL')
+  supabase_anon_key = os.getenv('SUPABASE_ANON_KEY')
+  if not supabase_url or not supabase_anon_key:
+    raise HTTPException(status_code=500, detail='SUPABASE_URL o SUPABASE_ANON_KEY no configuradas.')
+  return supabase_url.rstrip('/'), supabase_anon_key
+
+
+def _supabase_service_config() -> tuple[str, str]:
+  supabase_url = os.getenv('SUPABASE_URL')
+  service_key = os.getenv('SUPABASE_SERVICE_KEY')
+  if not supabase_url or not service_key:
+    raise HTTPException(status_code=500, detail='SUPABASE_URL o SUPABASE_SERVICE_KEY no configuradas.')
+  return supabase_url.rstrip('/'), service_key
+
+
+def resolve_supabase_user(authorization: Optional[str]) -> tuple[SupabaseUser, str]:
+  """Valida el JWT contra Supabase Auth y devuelve el usuario y el token crudo."""
+  require_bearer(authorization)
+  token = authorization.split(' ', 1)[1].strip()
+  supabase_url, supabase_anon_key = _supabase_anon_config()
+
+  try:
+    response = httpx.get(
+      f'{supabase_url}/auth/v1/user',
+      headers={
+        'apikey': supabase_anon_key,
+        'Authorization': f'Bearer {token}',
+      },
+      timeout=10.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='No se pudo validar el token con Supabase.')
+
+  if response.status_code != 200:
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token invalido o expirado.')
+
+  data = response.json()
+  user_id = data.get('id')
+  if not user_id:
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token invalido o expirado.')
+
+  return SupabaseUser(id=user_id, email=data.get('email')), token
+
+
+def is_admin_user(user_id: str, token: str) -> bool:
+  """Comprueba admin_users usando el propio token del usuario (RLS: select own)."""
+  supabase_url, supabase_anon_key = _supabase_anon_config()
+  url = f'{supabase_url}/rest/v1/admin_users?select=user_id&user_id=eq.{user_id}&limit=1'
+
+  try:
+    response = httpx.get(
+      url,
+      headers={
+        'apikey': supabase_anon_key,
+        'Authorization': f'Bearer {token}',
+      },
+      timeout=10.0,
+    )
+  except httpx.RequestError:
+    return False
+
+  if response.status_code != 200:
+    return False
+
+  rows = response.json()
+  return isinstance(rows, list) and len(rows) > 0
+
+
+def require_admin(authorization: Optional[str]) -> tuple[SupabaseUser, str]:
+  user, token = resolve_supabase_user(authorization)
+  if not is_admin_user(user.id, token):
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Se requieren permisos de administrador.')
+  return user, token
+
+
+class CapabilitiesResponse(BaseModel):
+  user_id: str
+  email: Optional[str] = None
+  capabilities: List[str]
+
+
+@app.get('/api/v1/me/capabilities', response_model=CapabilitiesResponse)
+def get_my_capabilities(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+  user, token = resolve_supabase_user(authorization)
+  supabase_url, supabase_anon_key = _supabase_anon_config()
+
+  url = (
+    f'{supabase_url}/rest/v1/user_module_grants'
+    f'?select=module_key&user_id=eq.{user.id}&enabled=eq.true'
+  )
+
+  try:
+    response = httpx.get(
+      url,
+      headers={
+        'apikey': supabase_anon_key,
+        'Authorization': f'Bearer {token}',
+      },
+      timeout=10.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo consultar los accesos en Supabase.')
+
+  if response.status_code != 200:
+    raise HTTPException(status_code=502, detail='No se pudo consultar los accesos en Supabase.')
+
+  rows = response.json()
+  capabilities = [row['module_key'] for row in rows if isinstance(row, dict) and row.get('module_key')]
+
+  return {'user_id': user.id, 'email': user.email, 'capabilities': capabilities}
+
+
+class AdminUserResponse(BaseModel):
+  id: str
+  email: Optional[str] = None
+  created_at: Optional[str] = None
+  user_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get('/api/v1/admin/users', response_model=List[AdminUserResponse])
+def list_admin_users(authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
+  require_admin(authorization)
+  supabase_url, service_key = _supabase_service_config()
+
+  try:
+    response = httpx.get(
+      f'{supabase_url}/auth/v1/admin/users?per_page=200',
+      headers={
+        'apikey': service_key,
+        'Authorization': f'Bearer {service_key}',
+      },
+      timeout=15.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo contactar con la Admin API de Supabase.')
+
+  if response.status_code != 200:
+    raise HTTPException(status_code=502, detail='La Admin API de Supabase devolvio un error.')
+
+  payload = response.json()
+  users = payload.get('users', []) if isinstance(payload, dict) else payload
+
+  return [
+    {
+      'id': u.get('id'),
+      'email': u.get('email'),
+      'created_at': u.get('created_at'),
+      'user_metadata': u.get('user_metadata') or {},
+    }
+    for u in users
+    if isinstance(u, dict) and u.get('id')
+  ]
+
+
+class GrantUpsertRequest(BaseModel):
+  user_id: str
+  module_key: str
+  enabled: bool = True
+  notes: Optional[str] = None
+
+
+class GrantResponse(BaseModel):
+  user_id: str
+  module_key: str
+  enabled: bool
+  notes: Optional[str] = None
+  granted_by: Optional[str] = None
+  granted_at: Optional[str] = None
+
+
+@app.post('/api/v1/admin/grants', response_model=GrantResponse)
+def upsert_grant(payload: GrantUpsertRequest, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+  admin, _token = require_admin(authorization)
+  supabase_url, service_key = _supabase_service_config()
+
+  body: Dict[str, Any] = {
+    'user_id': payload.user_id,
+    'module_key': payload.module_key,
+    'enabled': payload.enabled,
+    'granted_by': admin.id,
+  }
+  if payload.notes is not None:
+    body['notes'] = payload.notes
+
+  try:
+    response = httpx.post(
+      f'{supabase_url}/rest/v1/user_module_grants',
+      headers={
+        'apikey': service_key,
+        'Authorization': f'Bearer {service_key}',
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=representation',
+      },
+      json=body,
+      timeout=15.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo guardar el grant en Supabase.')
+
+  if response.status_code not in (200, 201):
+    raise HTTPException(status_code=502, detail=f'Supabase rechazo el grant: {response.text[:300]}')
+
+  rows = response.json()
+  if not rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio el grant guardado.')
+
+  row = rows[0]
+  return {
+    'user_id': row.get('user_id'),
+    'module_key': row.get('module_key'),
+    'enabled': row.get('enabled'),
+    'notes': row.get('notes'),
+    'granted_by': row.get('granted_by'),
+    'granted_at': row.get('granted_at'),
+  }

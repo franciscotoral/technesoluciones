@@ -30,6 +30,14 @@ interface ProjectRow extends PrivateProject {
   created_at: string;
 }
 
+export interface ModuleGrantRow {
+  user_id: string;
+  module_key: string;
+  enabled: boolean;
+  notes: string | null;
+  granted_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   constructor(private readonly auth: AuthService) {}
@@ -130,6 +138,20 @@ export class AdminService {
       throw new Error('No se pudo cargar el historial de proyectos.');
     }
     return (await response.json()) as ProjectRow[];
+  }
+
+  async getAllModuleGrants(): Promise<ModuleGrantRow[]> {
+    const { config, accessToken } = this.requireAuth();
+    const url =
+      `${config.supabaseUrl}/rest/v1/user_module_grants` +
+      '?select=user_id,module_key,enabled,notes,granted_at';
+    const response = await fetch(url, {
+      headers: this.buildHeaders(accessToken, config.supabaseAnonKey),
+    });
+    if (!response.ok) {
+      throw new Error('No se pudieron cargar los accesos por modulo.');
+    }
+    return (await response.json()) as ModuleGrantRow[];
   }
 
   private requireAuth(): { config: { supabaseUrl: string; supabaseAnonKey: string }; accessToken: string } {

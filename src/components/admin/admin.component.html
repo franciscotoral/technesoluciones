@@ -39,6 +39,33 @@
           }
 
           @if (isAdmin()) {
+            <div class="mt-8 flex flex-wrap gap-2 text-sm">
+              <button
+                type="button"
+                (click)="onSelectTab('general')"
+                class="rounded-full border px-4 py-1.5 font-semibold"
+                [class.border-cyan-400]="activeTab() === 'general'"
+                [class.text-cyan-200]="activeTab() === 'general'"
+                [class.border-slate-700]="activeTab() !== 'general'"
+                [class.text-slate-400]="activeTab() !== 'general'"
+              >
+                {{ i18n.lang() === 'es' ? 'General' : 'General' }}
+              </button>
+              <button
+                type="button"
+                (click)="onSelectTab('access')"
+                class="rounded-full border px-4 py-1.5 font-semibold"
+                [class.border-cyan-400]="activeTab() === 'access'"
+                [class.text-cyan-200]="activeTab() === 'access'"
+                [class.border-slate-700]="activeTab() !== 'access'"
+                [class.text-slate-400]="activeTab() !== 'access'"
+              >
+                {{ i18n.lang() === 'es' ? 'Gestion de accesos' : 'Access management' }}
+              </button>
+            </div>
+          }
+
+          @if (isAdmin() && activeTab() === 'general') {
             <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
               <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-5">
                 <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Nueva metrica' : 'New metric' }}</h2>
@@ -239,6 +266,140 @@
                         </div>
                       }
                     </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+
+          @if (isAdmin() && activeTab() === 'access') {
+            <div class="mt-8 rounded-lg border border-slate-700/60 bg-slate-800/30 p-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-white">
+                  {{ i18n.lang() === 'es' ? 'Gestion de accesos por modulo' : 'Per-module access management' }}
+                </h2>
+                <button
+                  type="button"
+                  [disabled]="accessLoading()"
+                  (click)="loadAccessTab()"
+                  class="rounded-md border border-cyan-500 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/40 disabled:opacity-60"
+                >
+                  {{ i18n.lang() === 'es' ? 'Recargar' : 'Reload' }}
+                </button>
+              </div>
+
+              <input
+                #userSearchInput
+                type="search"
+                [value]="userSearch()"
+                (input)="onUserSearchChange(userSearchInput.value)"
+                placeholder="{{ i18n.lang() === 'es' ? 'Buscar por email...' : 'Search by email...' }}"
+                class="mt-4 w-full max-w-sm rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+              />
+
+              @if (accessError()) {
+                <p class="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                  {{ accessError() }}
+                </p>
+              }
+
+              @if (accessLoading()) {
+                <p class="mt-4 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'Cargando usuarios...' : 'Loading users...' }}
+                </p>
+              } @else if (pagedAccessUsers().length === 0) {
+                <p class="mt-4 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'No hay usuarios que coincidan con la busqueda.' : 'No users match the search.' }}
+                </p>
+              } @else {
+                <div class="mt-4 space-y-3">
+                  @for (user of pagedAccessUsers(); track user.id) {
+                    <article class="rounded-md border border-slate-700/60 bg-slate-900/40 p-4">
+                      <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <div>
+                          <p class="text-sm font-semibold text-white">{{ userDisplayName(user) || user.email || user.id }}</p>
+                          @if (userDisplayName(user)) {
+                            <p class="text-xs text-gray-400">{{ user.email }}</p>
+                          }
+                        </div>
+                        <p class="text-xs text-gray-500">{{ user.id }}</p>
+                      </div>
+
+                      <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        @for (module of accessModules; track module.key) {
+                          <div class="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                            <div class="flex items-center justify-between gap-2">
+                              <label class="flex items-center gap-2 text-sm text-gray-200">
+                                <input
+                                  #grantCheckbox
+                                  type="checkbox"
+                                  [checked]="isGranted(user.id, module.key)"
+                                  (change)="onToggleGrant(user.id, module.key, grantCheckbox.checked)"
+                                  class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                                />
+                                {{ module.name }}
+                              </label>
+
+                              @if (isSavingCell(user.id, module.key)) {
+                                <span class="h-3 w-3 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent"></span>
+                              } @else if (isSavedCell(user.id, module.key)) {
+                                <span class="text-emerald-400 text-sm">&#10003;</span>
+                              }
+                            </div>
+
+                            @if (isGranted(user.id, module.key)) {
+                              <p class="mt-1 text-xs text-emerald-300">
+                                {{ i18n.lang() === 'es' ? 'Concedido el' : 'Granted on' }}: {{ formatDate(grantedAt(user.id, module.key)) }}
+                              </p>
+                            }
+
+                            <button
+                              type="button"
+                              (click)="toggleNotesExpanded(user.id, module.key)"
+                              class="mt-2 text-xs text-cyan-300 hover:underline"
+                            >
+                              {{ isNotesExpanded(user.id, module.key)
+                                ? (i18n.lang() === 'es' ? 'Ocultar notas' : 'Hide notes')
+                                : (i18n.lang() === 'es' ? 'Notas' : 'Notes') }}
+                            </button>
+
+                            @if (isNotesExpanded(user.id, module.key)) {
+                              <input
+                                #notesInput
+                                type="text"
+                                [value]="noteDraft(user.id, module.key)"
+                                (input)="onNoteDraftChange(user.id, module.key, notesInput.value)"
+                                (blur)="onSaveNotes(user.id, module.key)"
+                                placeholder="{{ i18n.lang() === 'es' ? 'ej: cliente enero 2026' : 'e.g. client January 2026' }}"
+                                class="mt-2 w-full rounded-md border border-slate-600 bg-slate-900/70 px-2 py-1 text-xs text-gray-100"
+                              />
+                            }
+                          </div>
+                        }
+                      </div>
+                    </article>
+                  }
+                </div>
+
+                @if (accessTotalPages() > 1) {
+                  <div class="mt-4 flex items-center justify-center gap-2 text-sm">
+                    <button
+                      type="button"
+                      [disabled]="accessPage() <= 1"
+                      (click)="goToAccessPage(accessPage() - 1)"
+                      class="rounded-md border border-slate-600 px-3 py-1.5 text-slate-300 disabled:opacity-40"
+                    >
+                      {{ i18n.lang() === 'es' ? 'Anterior' : 'Previous' }}
+                    </button>
+                    <span class="text-gray-400">{{ accessPage() }} / {{ accessTotalPages() }}</span>
+                    <button
+                      type="button"
+                      [disabled]="accessPage() >= accessTotalPages()"
+                      (click)="goToAccessPage(accessPage() + 1)"
+                      class="rounded-md border border-slate-600 px-3 py-1.5 text-slate-300 disabled:opacity-40"
+                    >
+                      {{ i18n.lang() === 'es' ? 'Siguiente' : 'Next' }}
+                    </button>
                   </div>
                 }
               }
