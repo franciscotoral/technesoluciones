@@ -52,11 +52,10 @@ export class CapabilitiesService {
 
   private async fetchCapabilities(): Promise<string[]> {
     const token = this.auth.accessToken();
-    const baseUrl = this.resolveBaseUrl();
-    if (!token || !baseUrl) return [];
+    if (!token) return [];
 
     try {
-      const response = await fetch(`${baseUrl}/api/v1/me/capabilities`, {
+      const response = await fetch('/api/v1/me/capabilities', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) return [];
@@ -66,14 +65,5 @@ export class CapabilitiesService {
     } catch {
       return [];
     }
-  }
-
-  private resolveBaseUrl(): string {
-    const runtimeConfig = (window as Window & {
-      __TECHNE_CONFIG__?: { adminApiBaseUrl?: string };
-    }).__TECHNE_CONFIG__;
-
-    const raw = runtimeConfig?.adminApiBaseUrl ?? '';
-    return raw.trim().replace(/\/+$/, '');
   }
 }

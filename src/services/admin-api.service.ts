@@ -90,19 +90,23 @@ export class AdminApiService {
   }
 
   async listUsers(): Promise<AdminUser[]> {
-    return this.request<AdminUser[]>('/api/v1/admin/users');
+    return this.request<AdminUser[]>('/api/v1/admin/users', undefined, { relative: true });
   }
 
   async upsertGrant(input: UpsertGrantInput): Promise<GrantRecord> {
-    return this.request<GrantRecord>('/api/v1/admin/grants', {
-      method: 'POST',
-      body: JSON.stringify({
-        user_id: input.userId,
-        module_key: input.moduleKey,
-        enabled: input.enabled,
-        ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      }),
-    });
+    return this.request<GrantRecord>(
+      '/api/v1/admin/grants',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: input.userId,
+          module_key: input.moduleKey,
+          enabled: input.enabled,
+          ...(input.notes !== undefined ? { notes: input.notes } : {}),
+        }),
+      },
+      { relative: true }
+    );
   }
 
   async listTenants(): Promise<Tenant[]> {
@@ -182,19 +186,22 @@ export class AdminApiService {
     );
   }
 
-  private async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const baseUrl = this.resolveBaseUrl();
+  private async request<T>(path: string, init?: RequestInit, options?: { relative?: boolean }): Promise<T> {
     const accessToken = this.auth.accessToken();
-
-    if (!baseUrl) {
-      throw new Error('No se encontro adminApiBaseUrl en window.__TECHNE_CONFIG__.');
-    }
-
     if (!accessToken) {
       throw new Error('Sesion no valida.');
     }
 
-    const response = await fetch(`${baseUrl}${path}`, {
+    let url = path;
+    if (!options?.relative) {
+      const baseUrl = this.resolveBaseUrl();
+      if (!baseUrl) {
+        throw new Error('No se encontro adminApiBaseUrl en window.__TECHNE_CONFIG__.');
+      }
+      url = `${baseUrl}${path}`;
+    }
+
+    const response = await fetch(url, {
       ...init,
       headers: {
         Authorization: `Bearer ${accessToken}`,
