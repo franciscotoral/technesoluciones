@@ -1,0 +1,424 @@
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+  <app-header></app-header>
+
+  <main class="flex-grow py-10 md:py-16">
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+      <a
+        [routerLink]="['/portal']"
+        class="inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200"
+      >
+        <span aria-hidden="true">&larr;</span>
+        {{ i18n.lang() === 'es' ? 'Volver al portal' : 'Back to portal' }}
+      </a>
+
+      @if (loading()) {
+        <div class="mt-6 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8 animate-pulse">
+          <div class="h-8 w-2/3 rounded bg-slate-700/50"></div>
+          <div class="mt-3 h-4 w-1/2 rounded bg-slate-700/40"></div>
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @for (i of [0, 1, 2]; track i) {
+              <div class="h-24 rounded-lg border border-slate-700/60 bg-slate-800/40"></div>
+            }
+          </div>
+        </div>
+        <span class="sr-only" role="status">{{ i18n.lang() === 'es' ? 'Cargando proyecto...' : 'Loading project...' }}</span>
+      } @else if (notFound()) {
+        <div class="mt-6 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+          <h1 class="text-2xl font-bold text-white">
+            {{ i18n.lang() === 'es' ? 'Proyecto no encontrado' : 'Project not found' }}
+          </h1>
+          <a
+            [routerLink]="['/portal']"
+            class="mt-4 inline-flex items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+          >
+            {{ i18n.lang() === 'es' ? 'Volver al portal' : 'Back to portal' }}
+          </a>
+        </div>
+      } @else if (error()) {
+        <div class="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-6 md:p-8">
+          <p class="text-sm text-red-200">{{ error() }}</p>
+          <button
+            type="button"
+            (click)="loadProyecto()"
+            class="mt-4 inline-flex items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+          >
+            {{ i18n.lang() === 'es' ? 'Reintentar' : 'Retry' }}
+          </button>
+        </div>
+      } @else if (proyecto(); as p) {
+        <!-- Cabecera -->
+        <div class="mt-6 rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h1 class="text-2xl md:text-3xl font-bold text-white break-words">{{ p.nombre }}</h1>
+              @if (p.descripcion) {
+                <p class="mt-2 text-sm text-gray-400">{{ p.descripcion }}</p>
+              }
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                <span>{{ tipoLabel(p.tipo) }}</span>
+                @if (p.ubicacion) {
+                  <span aria-hidden="true">·</span>
+                  <span>{{ p.ubicacion }}</span>
+                }
+              </div>
+            </div>
+
+            <span
+              class="shrink-0 rounded-full border px-3 py-1 text-xs font-semibold"
+              [class]="estadoBadgeClass(p.estado)"
+            >
+              {{ estadoLabel(p.estado) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Banner de aprobaciones pendientes -->
+        @if (tareasPendientesCount() > 0) {
+          <div
+            class="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-100"
+            role="status"
+          >
+            {{ bannerTexto() }}
+          </div>
+        }
+
+        <!-- Tabs -->
+        <div class="mt-6 overflow-x-auto">
+          <div role="tablist" [attr.aria-label]="i18n.lang() === 'es' ? 'Secciones del proyecto' : 'Project sections'" class="flex gap-2 border-b border-slate-700/60 pb-px min-w-max">
+            @for (tab of tabs; track tab.id) {
+              <button
+                type="button"
+                role="tab"
+                [id]="'tab-' + tab.id"
+                [attr.aria-selected]="activeTab() === tab.id"
+                [attr.aria-controls]="'panel-' + tab.id"
+                (click)="selectTab(tab.id)"
+                class="whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold"
+                [class.border-cyan-400]="activeTab() === tab.id"
+                [class.text-cyan-200]="activeTab() === tab.id"
+                [class.border-transparent]="activeTab() !== tab.id"
+                [class.text-gray-400]="activeTab() !== tab.id"
+              >
+                {{ i18n.lang() === 'es' ? tab.labelEs : tab.labelEn }}
+                @if (tab.id === 'checklist' && tareasPendientesCount() > 0) {
+                  <span class="ml-1.5 inline-flex items-center justify-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-slate-950">
+                    {{ tareasPendientesCount() }}
+                  </span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- RESUMEN -->
+        @if (activeTab() === 'resumen') {
+          <div [id]="'panel-resumen'" role="tabpanel" [attr.aria-labelledby]="'tab-resumen'" class="mt-6">
+            <div class="rounded-lg border border-slate-700/60 bg-slate-900/40 p-5">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-300">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</span>
+                <span class="font-semibold text-cyan-200">{{ avancePct() }}%</span>
+              </div>
+              <div
+                class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-700/70"
+                role="progressbar"
+                [attr.aria-valuenow]="avancePct()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-label]="i18n.lang() === 'es' ? 'Avance del proyecto' : 'Project progress'"
+              >
+                <div class="h-full bg-cyan-500 transition-all" [style.width]="avancePct() + '%'"></div>
+              </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Proximo hito' : 'Next milestone' }}</p>
+                <p class="mt-1 text-sm font-semibold text-white">{{ p.proximo_hito || '--' }}</p>
+              </article>
+              <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Fecha de inicio' : 'Start date' }}</p>
+                <p class="mt-1 text-sm font-semibold text-white">{{ formatFecha(p.fecha_inicio) }}</p>
+              </article>
+              <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Fin previsto' : 'Expected end' }}</p>
+                <p class="mt-1 text-sm font-semibold text-white">{{ formatFecha(p.fecha_prevista_fin) }}</p>
+              </article>
+              <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Documentos' : 'Documents' }}</p>
+                <p class="mt-1 text-sm font-semibold text-white">{{ p.documentos.length }}</p>
+              </article>
+              <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</p>
+                <p class="mt-1 text-sm font-semibold" [class]="estadoTextClass(p.estado)">
+                  {{ estadoLabel(p.estado) }}
+                </p>
+              </article>
+            </div>
+
+            @if (ultimaNotaVisible(); as nota) {
+              <div class="mt-4 rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Ultima nota' : 'Latest note' }}</p>
+                <p class="mt-1 text-sm text-gray-200">{{ nota.texto }}</p>
+                <p class="mt-1 text-xs text-gray-500">{{ formatFechaHora(nota.created_at) }}</p>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- DOCUMENTOS -->
+        @if (activeTab() === 'documentos') {
+          <div [id]="'panel-documentos'" role="tabpanel" [attr.aria-labelledby]="'tab-documentos'" class="mt-6">
+            <div class="overflow-x-auto">
+              <div role="tablist" [attr.aria-label]="i18n.lang() === 'es' ? 'Filtrar por categoria' : 'Filter by category'" class="flex gap-2 min-w-max">
+                @for (cat of categoriaTabs; track cat.key) {
+                  <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="docFiltro() === cat.key"
+                    (click)="selectDocFiltro(cat.key)"
+                    class="whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold"
+                    [class.border-cyan-400]="docFiltro() === cat.key"
+                    [class.text-cyan-200]="docFiltro() === cat.key"
+                    [class.border-slate-700]="docFiltro() !== cat.key"
+                    [class.text-gray-400]="docFiltro() !== cat.key"
+                  >
+                    {{ i18n.lang() === 'es' ? cat.labelEs : cat.labelEn }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (documentosFiltrados().length === 0) {
+              <p class="mt-4 text-sm text-gray-400">
+                {{ i18n.lang() === 'es' ? 'No hay documentos en esta categoria.' : 'No documents in this category.' }}
+              </p>
+            }
+
+            @if (fotos().length > 0) {
+              <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                @for (foto of fotos(); track foto.id) {
+                  <button
+                    type="button"
+                    (click)="abrirDocumento(foto)"
+                    [disabled]="isOpeningDoc(foto.id)"
+                    class="group relative aspect-square overflow-hidden rounded-lg border border-slate-700/60 bg-slate-800/40 disabled:opacity-70"
+                  >
+                    @if (photoUrls()[foto.id]) {
+                      <img
+                        [src]="photoUrls()[foto.id]"
+                        [alt]="foto.nombre"
+                        class="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    } @else if (isPhotoLoading(foto.id)) {
+                      <div class="flex h-full w-full items-center justify-center">
+                        <span class="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" aria-hidden="true"></span>
+                        <span class="sr-only">{{ i18n.lang() === 'es' ? 'Cargando miniatura de ' + foto.nombre : 'Loading thumbnail for ' + foto.nombre }}</span>
+                      </div>
+                    } @else if (hasPhotoError(foto.id)) {
+                      <div class="flex h-full w-full items-center justify-center p-2 text-center text-xs text-red-300">
+                        {{ i18n.lang() === 'es' ? 'Error al cargar' : 'Failed to load' }}
+                      </div>
+                    } @else {
+                      <div class="h-full w-full animate-pulse bg-slate-700/40"></div>
+                    }
+
+                    @if (isOpeningDoc(foto.id)) {
+                      <span class="absolute inset-0 flex items-center justify-center bg-slate-950/60">
+                        <span class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                        <span class="sr-only">{{ i18n.lang() === 'es' ? 'Abriendo documento...' : 'Opening document...' }}</span>
+                      </span>
+                    }
+
+                    <span class="absolute inset-x-0 bottom-0 truncate bg-slate-950/70 px-1.5 py-1 text-[11px] text-gray-200">
+                      {{ foto.nombre }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+
+            @if (documentosNoFoto().length > 0) {
+              <div class="mt-4 space-y-2">
+                @for (doc of documentosNoFoto(); track doc.id) {
+                  <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-3">
+                    <div class="flex items-start gap-3">
+                      <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-700/50 text-slate-300">
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </span>
+
+                      <div class="min-w-0 flex-1">
+                        <button
+                          type="button"
+                          (click)="abrirDocumento(doc)"
+                          [disabled]="isOpeningDoc(doc.id)"
+                          class="block truncate text-left text-sm font-semibold text-cyan-200 hover:underline disabled:opacity-60"
+                        >
+                          {{ doc.nombre }}
+                        </button>
+                        @if (doc.descripcion) {
+                          <p class="mt-0.5 truncate text-xs text-gray-400">{{ doc.descripcion }}</p>
+                        }
+                        <p class="mt-0.5 text-xs text-gray-500">
+                          {{ formatFecha(doc.created_at) }}
+                          @if (doc.size_bytes !== undefined && doc.size_bytes !== null) {
+                            <span aria-hidden="true"> · </span>{{ formatSize(doc.size_bytes) }}
+                          }
+                        </p>
+                        @if (docOpenError(doc.id)) {
+                          <p class="mt-1 text-xs text-red-300">{{ docOpenError(doc.id) }}</p>
+                        }
+                      </div>
+
+                      @if (isOpeningDoc(doc.id)) {
+                        <span class="mt-1 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" aria-hidden="true"></span>
+                        <span class="sr-only">{{ i18n.lang() === 'es' ? 'Abriendo documento...' : 'Opening document...' }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- CHECKLIST -->
+        @if (activeTab() === 'checklist') {
+          <div [id]="'panel-checklist'" role="tabpanel" [attr.aria-labelledby]="'tab-checklist'" class="mt-6 space-y-6">
+            <div>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                {{ i18n.lang() === 'es' ? 'Pendientes' : 'Pending' }}
+              </h2>
+
+              @if (tareasPendientesGrupo().length === 0) {
+                <p class="mt-2 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'No hay tareas pendientes.' : 'No pending tasks.' }}
+                </p>
+              } @else {
+                <div class="mt-2 space-y-2">
+                  @for (tarea of tareasPendientesGrupo(); track tarea.id) {
+                    <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold text-white">{{ tarea.titulo }}</p>
+                          @if (tarea.descripcion) {
+                            <p class="mt-1 text-xs text-gray-400">{{ tarea.descripcion }}</p>
+                          }
+                          <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                            <span class="rounded-full border border-slate-600 px-2 py-0.5 text-gray-300">{{ tareaEstadoLabel(tarea.estado) }}</span>
+                            @if (tarea.requiere_aprobacion_cliente) {
+                              <span class="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200">
+                                {{ i18n.lang() === 'es' ? 'Requiere tu aprobacion' : 'Requires your approval' }}
+                              </span>
+                            }
+                            <span class="text-gray-500">{{ formatFecha(tarea.created_at) }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      @if (tarea.requiere_aprobacion_cliente && tarea.estado === 'completada') {
+                        @if (confirmingTareaId() === tarea.id) {
+                          <div class="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3" role="alertdialog" aria-live="assertive">
+                            <p class="text-sm text-amber-100">
+                              {{ i18n.lang() === 'es' ? '¿Confirmas la aprobacion de esta tarea?' : 'Confirm approval of this task?' }}
+                            </p>
+                            @if (approveError()) {
+                              <p class="mt-2 text-xs text-red-300">{{ approveError() }}</p>
+                            }
+                            <div class="mt-3 flex gap-2">
+                              <button
+                                type="button"
+                                [disabled]="approvingTareaId() === tarea.id"
+                                (click)="cancelarAprobacion()"
+                                class="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:bg-slate-700/40 disabled:opacity-60"
+                              >
+                                {{ i18n.lang() === 'es' ? 'Cancelar' : 'Cancel' }}
+                              </button>
+                              <button
+                                type="button"
+                                [disabled]="approvingTareaId() === tarea.id"
+                                (click)="confirmarAprobarTarea(tarea)"
+                                class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+                              >
+                                @if (approvingTareaId() === tarea.id) {
+                                  <span class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                                  <span>{{ i18n.lang() === 'es' ? 'Procesando...' : 'Processing...' }}</span>
+                                } @else {
+                                  {{ i18n.lang() === 'es' ? 'Confirmar' : 'Confirm' }}
+                                }
+                              </button>
+                            </div>
+                          </div>
+                        } @else {
+                          <button
+                            type="button"
+                            (click)="solicitarConfirmacionAprobar(tarea.id)"
+                            class="mt-3 inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500"
+                          >
+                            <span aria-hidden="true">✓</span> {{ i18n.lang() === 'es' ? 'Aprobar' : 'Approve' }}
+                          </button>
+                        }
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </div>
+
+            <div>
+              <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                {{ i18n.lang() === 'es' ? 'Finalizadas' : 'Completed' }}
+              </h2>
+
+              @if (tareasFinalizadasGrupo().length === 0) {
+                <p class="mt-2 text-sm text-gray-400">
+                  {{ i18n.lang() === 'es' ? 'Aun no hay tareas finalizadas.' : 'No completed tasks yet.' }}
+                </p>
+              } @else {
+                <div class="mt-2 space-y-2">
+                  @for (tarea of tareasFinalizadasGrupo(); track tarea.id) {
+                    <article class="rounded-lg border border-slate-700/60 bg-slate-800/30 p-4 opacity-90">
+                      <p class="text-sm font-semibold text-white">{{ tarea.titulo }}</p>
+                      @if (tarea.descripcion) {
+                        <p class="mt-1 text-xs text-gray-400">{{ tarea.descripcion }}</p>
+                      }
+                      <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                        <span class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-emerald-200">
+                          {{ tareaEstadoLabel(tarea.estado) }}
+                        </span>
+                        <span class="text-gray-500">{{ formatFecha(tarea.created_at) }}</span>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- HISTORIAL -->
+        @if (activeTab() === 'historial') {
+          <div [id]="'panel-historial'" role="tabpanel" [attr.aria-labelledby]="'tab-historial'" class="mt-6">
+            @if (notasVisibles().length === 0) {
+              <p class="text-sm text-gray-400">
+                {{ i18n.lang() === 'es' ? 'Aun no hay notas registradas.' : 'No notes recorded yet.' }}
+              </p>
+            } @else {
+              <div class="space-y-3">
+                @for (nota of notasVisibles(); track nota.id) {
+                  <article class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4">
+                    <p class="text-sm text-gray-200">{{ nota.texto }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ formatFechaHora(nota.created_at) }}</p>
+                  </article>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

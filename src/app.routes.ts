@@ -39,6 +39,15 @@ export const routes: Routes = [
         m => m.DiagnosticoComponent
       ),
   },
+  {
+    path: 'portal/proyecto/:id',
+    loadComponent: () =>
+      import('./app/pages/proyecto-cliente/proyecto-cliente.component').then(
+        m => m.ProyectoClienteComponent
+      ),
+    canActivate: [authGuard, moduleGuard],
+    data: { moduleKey: 'proyectos' },
+  },
   // No existe ruta '/calculadora' en el Router de Angular: el portal navega con
   // window.location.href a la SPA React independiente (calculadora-huella/),
   // servida como bundle estatico aparte. moduleGuard no puede protegerla aqui;

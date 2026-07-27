@@ -8,9 +8,10 @@ from uuid import uuid4
 import anthropic
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -852,3 +853,562 @@ def upsert_grant(payload: GrantUpsertRequest, authorization: Optional[str] = Hea
     'granted_by': row.get('granted_by'),
     'granted_at': row.get('granted_at'),
   }
+
+
+# ══ Portal de proyectos ═════════════════════════════════════════════════════
+
+PROYECTOS_BUCKET = 'proyectos'
+PROYECTO_DOC_MAX_BYTES = 50 * 1024 * 1024
+PROYECTO_DOC_CATEGORIAS = {'informe', 'factura', 'plano', 'foto', 'checklist', 'contrato', 'otro'}
+
+_supabase_service_client_singleton: Optional[Client] = None
+
+
+def _supabase_service_client() -> Client:
+  global _supabase_service_client_singleton
+  if _supabase_service_client_singleton is None:
+    supabase_url, service_key = _supabase_service_config()
+    _supabase_service_client_singleton = create_client(supabase_url, service_key)
+  return _supabase_service_client_singleton
+
+
+def _rest_get(path: str, token: str) -> Any:
+  """Lee PostgREST reenviando el token propio del usuario: RLS decide que filas ve."""
+  supabase_url, anon_key = _supabase_anon_config()
+  try:
+    response = httpx.get(
+      f'{supabase_url}/rest/v1/{path}',
+      headers={'apikey': anon_key, 'Authorization': f'Bearer {token}'},
+      timeout=15.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo consultar Supabase.')
+
+  if response.status_code != 200:
+    raise HTTPException(status_code=502, detail='Supabase devolvio un error.')
+
+  return response.json()
+
+
+def _service_rest_get(path: str) -> Any:
+  """Lee PostgREST con el service key, sin pasar por RLS. Solo para rutas admin."""
+  supabase_url, service_key = _supabase_service_config()
+  try:
+    response = httpx.get(
+      f'{supabase_url}/rest/v1/{path}',
+      headers={'apikey': service_key, 'Authorization': f'Bearer {service_key}'},
+      timeout=15.0,
+    )
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo consultar Supabase.')
+
+  if response.status_code != 200:
+    raise HTTPException(status_code=502, detail='Supabase devolvio un error.')
+
+  return response.json()
+
+
+def _service_rest_request(
+  method: str,
+  path: str,
+  json_body: Optional[Dict[str, Any]] = None,
+  prefer: str = 'return=representation',
+) -> Any:
+  supabase_url, service_key = _supabase_service_config()
+  headers = {
+    'apikey': service_key,
+    'Authorization': f'Bearer {service_key}',
+    'Content-Type': 'application/json',
+    'Prefer': prefer,
+  }
+
+  try:
+    response = httpx.request(method, f'{supabase_url}/rest/v1/{path}', headers=headers, json=json_body, timeout=15.0)
+  except httpx.RequestError:
+    raise HTTPException(status_code=502, detail='No se pudo comunicar con Supabase.')
+
+  if response.status_code not in (200, 201, 204):
+    raise HTTPException(status_code=502, detail=f'Supabase rechazo la operacion: {response.text[:300]}')
+
+  if response.status_code == 204 or not response.content:
+    return []
+
+  return response.json()
+
+
+def _attach_proyecto_counts(rows: List[Dict[str, Any]], token: str) -> List[Dict[str, Any]]:
+  ids = [r['id'] for r in rows if r.get('id')]
+  if not ids:
+    return rows
+
+  ids_filter = ','.join(ids)
+  documentos = _rest_get(f'proyecto_documentos?proyecto_id=in.({ids_filter})&select=proyecto_id', token)
+  tareas = _rest_get(
+    'proyecto_tareas'
+    f'?proyecto_id=in.({ids_filter})&estado=eq.completada&requiere_aprobacion_cliente=eq.true&select=proyecto_id',
+    token,
+  )
+
+  doc_counts: Dict[str, int] = {}
+  for d in documentos:
+    pid = d.get('proyecto_id')
+    if pid:
+      doc_counts[pid] = doc_counts.get(pid, 0) + 1
+
+  tarea_counts: Dict[str, int] = {}
+  for t in tareas:
+    pid = t.get('proyecto_id')
+    if pid:
+      tarea_counts[pid] = tarea_counts.get(pid, 0) + 1
+
+  for row in rows:
+    row['documentos_count'] = doc_counts.get(row['id'], 0)
+    row['tareas_pendientes_aprobacion'] = tarea_counts.get(row['id'], 0)
+
+  return rows
+
+
+class ProyectoResponse(BaseModel):
+  id: str
+  nombre: str
+  descripcion: Optional[str] = None
+  tipo: str
+  ubicacion: Optional[str] = None
+  cliente_user_id: Optional[str] = None
+  avance_pct: int
+  proximo_hito: Optional[str] = None
+  fecha_inicio: Optional[str] = None
+  fecha_prevista_fin: Optional[str] = None
+  estado: str
+  created_by: Optional[str] = None
+  created_at: str
+  updated_at: str
+  documentos_count: int = 0
+  tareas_pendientes_aprobacion: int = 0
+
+
+class DocumentoResponse(BaseModel):
+  id: str
+  proyecto_id: str
+  nombre: str
+  categoria: str
+  storage_path: str
+  mime_type: Optional[str] = None
+  size_bytes: Optional[int] = None
+  descripcion: Optional[str] = None
+  uploaded_by: Optional[str] = None
+  created_at: str
+
+
+class TareaResponse(BaseModel):
+  id: str
+  proyecto_id: str
+  titulo: str
+  descripcion: Optional[str] = None
+  requiere_aprobacion_cliente: bool
+  aprobada_por: Optional[str] = None
+  aprobada_at: Optional[str] = None
+  estado: str
+  created_at: str
+
+
+class NotaResponse(BaseModel):
+  id: str
+  proyecto_id: str
+  texto: str
+  visible_cliente: bool
+  created_by: Optional[str] = None
+  created_at: str
+
+
+class ProyectoDetailResponse(ProyectoResponse):
+  tareas: List[TareaResponse] = Field(default_factory=list)
+  notas: List[NotaResponse] = Field(default_factory=list)
+  documentos: List[DocumentoResponse] = Field(default_factory=list)
+
+
+class ProyectoCreateRequest(BaseModel):
+  nombre: str
+  descripcion: Optional[str] = None
+  tipo: str
+  ubicacion: Optional[str] = None
+  cliente_user_id: Optional[str] = None
+  fecha_inicio: Optional[str] = None
+  fecha_prevista_fin: Optional[str] = None
+  proximo_hito: Optional[str] = None
+
+
+class ProyectoUpdateRequest(BaseModel):
+  nombre: Optional[str] = None
+  descripcion: Optional[str] = None
+  tipo: Optional[str] = None
+  ubicacion: Optional[str] = None
+  cliente_user_id: Optional[str] = None
+  avance_pct: Optional[int] = Field(default=None, ge=0, le=100)
+  proximo_hito: Optional[str] = None
+  fecha_inicio: Optional[str] = None
+  fecha_prevista_fin: Optional[str] = None
+  estado: Optional[str] = None
+
+
+class TareaCreateRequest(BaseModel):
+  titulo: str
+  descripcion: Optional[str] = None
+  requiere_aprobacion_cliente: bool = False
+
+
+class TareaUpdateRequest(BaseModel):
+  titulo: Optional[str] = None
+  descripcion: Optional[str] = None
+  requiere_aprobacion_cliente: Optional[bool] = None
+  estado: Optional[str] = None
+
+
+class NotaCreateRequest(BaseModel):
+  texto: str
+  visible_cliente: bool = True
+
+
+class SignedUrlResponse(BaseModel):
+  url: str
+
+
+@app.get('/api/v1/proyectos', response_model=List[ProyectoResponse])
+def list_proyectos(authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
+  _user, token = resolve_supabase_user(authorization)
+  rows = _rest_get('proyectos?select=*&order=created_at.desc', token)
+  return _attach_proyecto_counts(rows, token)
+
+
+@app.get('/api/v1/proyectos/{proyecto_id}', response_model=ProyectoDetailResponse)
+def get_proyecto(proyecto_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+  _user, token = resolve_supabase_user(authorization)
+
+  rows = _rest_get(f'proyectos?id=eq.{proyecto_id}&select=*', token)
+  if not rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+  proyecto = rows[0]
+
+  tareas = _rest_get(f'proyecto_tareas?proyecto_id=eq.{proyecto_id}&select=*&order=created_at.asc', token)
+  notas = _rest_get(f'proyecto_notas?proyecto_id=eq.{proyecto_id}&select=*&order=created_at.desc', token)
+  documentos = _rest_get(f'proyecto_documentos?proyecto_id=eq.{proyecto_id}&select=*&order=created_at.desc', token)
+
+  proyecto['tareas'] = tareas
+  proyecto['notas'] = notas
+  proyecto['documentos'] = documentos
+  proyecto['documentos_count'] = len(documentos)
+  proyecto['tareas_pendientes_aprobacion'] = sum(
+    1 for t in tareas if t.get('estado') == 'completada' and t.get('requiere_aprobacion_cliente')
+  )
+  return proyecto
+
+
+@app.post('/api/v1/proyectos', response_model=ProyectoResponse)
+def create_proyecto(payload: ProyectoCreateRequest, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+  admin, _token = require_admin(authorization)
+
+  body = {
+    'nombre': payload.nombre.strip(),
+    'descripcion': payload.descripcion,
+    'tipo': payload.tipo,
+    'ubicacion': payload.ubicacion,
+    'cliente_user_id': payload.cliente_user_id,
+    'fecha_inicio': payload.fecha_inicio,
+    'fecha_prevista_fin': payload.fecha_prevista_fin,
+    'proximo_hito': payload.proximo_hito,
+    'created_by': admin.id,
+  }
+
+  rows = _service_rest_request('POST', 'proyectos', json_body=body)
+  if not rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio el proyecto creado.')
+
+  row = rows[0]
+  row['documentos_count'] = 0
+  row['tareas_pendientes_aprobacion'] = 0
+  return row
+
+
+@app.patch('/api/v1/proyectos/{proyecto_id}', response_model=ProyectoResponse)
+def update_proyecto(
+  proyecto_id: str,
+  payload: ProyectoUpdateRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  require_admin(authorization)
+
+  body = payload.model_dump(exclude_unset=True)
+  if not body:
+    raise HTTPException(status_code=400, detail='No hay campos para actualizar.')
+  body['updated_at'] = utc_now_iso()
+
+  rows = _service_rest_request('PATCH', f'proyectos?id=eq.{proyecto_id}', json_body=body)
+  if not rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  row = rows[0]
+  documentos = _service_rest_get(f'proyecto_documentos?proyecto_id=eq.{proyecto_id}&select=id')
+  tareas = _service_rest_get(
+    f'proyecto_tareas?proyecto_id=eq.{proyecto_id}&estado=eq.completada&requiere_aprobacion_cliente=eq.true&select=id'
+  )
+  row['documentos_count'] = len(documentos)
+  row['tareas_pendientes_aprobacion'] = len(tareas)
+  return row
+
+
+@app.post('/api/v1/proyectos/{proyecto_id}/documentos', response_model=DocumentoResponse)
+async def upload_documento(
+  proyecto_id: str,
+  archivo: UploadFile = File(...),
+  categoria: str = Form(...),
+  nombre: str = Form(...),
+  descripcion: str = Form(''),
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  admin, _token = require_admin(authorization)
+
+  proyecto_rows = _service_rest_get(f'proyectos?id=eq.{proyecto_id}&select=id')
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  if categoria not in PROYECTO_DOC_CATEGORIAS:
+    raise HTTPException(status_code=400, detail='Categoria no valida.')
+
+  contents = await archivo.read()
+  if len(contents) > PROYECTO_DOC_MAX_BYTES:
+    raise HTTPException(status_code=413, detail='El archivo supera el limite de 50MB.')
+
+  safe_nombre = nombre.strip().replace('/', '_') or 'archivo'
+  # Sin prefijo "proyectos/": el nombre del bucket ya scopea esta ruta y la
+  # policy de storage espera que (storage.foldername(name))[1] sea el proyecto_id.
+  storage_path = f'{proyecto_id}/{categoria}/{uuid4()}_{safe_nombre}'
+
+  client = _supabase_service_client()
+  try:
+    client.storage.from_(PROYECTOS_BUCKET).upload(
+      storage_path,
+      contents,
+      file_options={'content-type': archivo.content_type or 'application/octet-stream'},
+    )
+  except Exception as exc:
+    raise HTTPException(status_code=502, detail=f'No se pudo subir el archivo a Storage: {exc}')
+
+  rows = _service_rest_request(
+    'POST',
+    'proyecto_documentos',
+    json_body={
+      'proyecto_id': proyecto_id,
+      'nombre': safe_nombre,
+      'categoria': categoria,
+      'storage_path': storage_path,
+      'mime_type': archivo.content_type,
+      'size_bytes': len(contents),
+      'descripcion': descripcion or None,
+      'uploaded_by': admin.id,
+    },
+  )
+  if not rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio el documento creado.')
+  return rows[0]
+
+
+@app.get('/api/v1/proyectos/{proyecto_id}/documentos/{doc_id}/url', response_model=SignedUrlResponse)
+def get_documento_url(
+  proyecto_id: str,
+  doc_id: str,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, str]:
+  _user, token = resolve_supabase_user(authorization)
+
+  proyecto_rows = _rest_get(f'proyectos?id=eq.{proyecto_id}&select=id', token)
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  documento_rows = _rest_get(
+    f'proyecto_documentos?id=eq.{doc_id}&proyecto_id=eq.{proyecto_id}&select=storage_path', token
+  )
+  if not documento_rows:
+    raise HTTPException(status_code=404, detail='Documento no encontrado.')
+
+  storage_path = documento_rows[0]['storage_path']
+  client = _supabase_service_client()
+  try:
+    signed = client.storage.from_(PROYECTOS_BUCKET).create_signed_url(storage_path, 3600)
+  except Exception:
+    raise HTTPException(status_code=502, detail='No se pudo generar la URL firmada.')
+
+  url = (signed or {}).get('signedURL') or (signed or {}).get('signedUrl') or (signed or {}).get('signed_url')
+  if not url:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio una URL firmada valida.')
+
+  if url.startswith('/'):
+    supabase_url, _anon_key = _supabase_anon_config()
+    url = f'{supabase_url}{url}'
+
+  return {'url': url}
+
+
+@app.delete('/api/v1/proyectos/{proyecto_id}/documentos/{doc_id}')
+def delete_documento(
+  proyecto_id: str,
+  doc_id: str,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, bool]:
+  require_admin(authorization)
+
+  rows = _service_rest_get(f'proyecto_documentos?id=eq.{doc_id}&proyecto_id=eq.{proyecto_id}&select=*')
+  if not rows:
+    raise HTTPException(status_code=404, detail='Documento no encontrado.')
+  documento = rows[0]
+
+  client = _supabase_service_client()
+  try:
+    client.storage.from_(PROYECTOS_BUCKET).remove([documento['storage_path']])
+  except Exception as exc:
+    raise HTTPException(status_code=502, detail=f'No se pudo eliminar el archivo de Storage: {exc}')
+
+  _service_rest_request('DELETE', f'proyecto_documentos?id=eq.{doc_id}', prefer='return=minimal')
+  return {'ok': True}
+
+
+@app.post('/api/v1/proyectos/{proyecto_id}/tareas', response_model=TareaResponse)
+def create_tarea(
+  proyecto_id: str,
+  payload: TareaCreateRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  require_admin(authorization)
+
+  proyecto_rows = _service_rest_get(f'proyectos?id=eq.{proyecto_id}&select=id')
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  rows = _service_rest_request(
+    'POST',
+    'proyecto_tareas',
+    json_body={
+      'proyecto_id': proyecto_id,
+      'titulo': payload.titulo.strip(),
+      'descripcion': payload.descripcion,
+      'requiere_aprobacion_cliente': payload.requiere_aprobacion_cliente,
+    },
+  )
+  if not rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio la tarea creada.')
+  return rows[0]
+
+
+@app.patch('/api/v1/proyectos/{proyecto_id}/tareas/{tarea_id}', response_model=TareaResponse)
+def update_tarea(
+  proyecto_id: str,
+  tarea_id: str,
+  payload: TareaUpdateRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  user, token = resolve_supabase_user(authorization)
+
+  proyecto_rows = _rest_get(f'proyectos?id=eq.{proyecto_id}&select=id', token)
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  tarea_rows = _rest_get(f'proyecto_tareas?id=eq.{tarea_id}&proyecto_id=eq.{proyecto_id}&select=*', token)
+  if not tarea_rows:
+    raise HTTPException(status_code=404, detail='Tarea no encontrada.')
+  tarea = tarea_rows[0]
+
+  updates = payload.model_dump(exclude_unset=True)
+
+  if not is_admin_user(user.id, token):
+    if set(updates.keys()) - {'estado'}:
+      raise HTTPException(status_code=403, detail='Solo puedes actualizar el estado de la tarea.')
+    if updates.get('estado') != 'aprobada':
+      raise HTTPException(status_code=403, detail='Solo puedes aprobar la tarea.')
+    if not tarea.get('requiere_aprobacion_cliente') or tarea.get('estado') != 'completada':
+      raise HTTPException(status_code=409, detail='La tarea no esta lista para ser aprobada.')
+    updates = {'estado': 'aprobada', 'aprobada_por': user.id, 'aprobada_at': utc_now_iso()}
+
+  if not updates:
+    raise HTTPException(status_code=400, detail='No hay campos para actualizar.')
+
+  rows = _service_rest_request('PATCH', f'proyecto_tareas?id=eq.{tarea_id}', json_body=updates)
+  if not rows:
+    raise HTTPException(status_code=404, detail='Tarea no encontrada.')
+  return rows[0]
+
+
+@app.post('/api/v1/proyectos/{proyecto_id}/notas', response_model=NotaResponse)
+def create_nota(
+  proyecto_id: str,
+  payload: NotaCreateRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  admin, _token = require_admin(authorization)
+
+  proyecto_rows = _service_rest_get(f'proyectos?id=eq.{proyecto_id}&select=id')
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  rows = _service_rest_request(
+    'POST',
+    'proyecto_notas',
+    json_body={
+      'proyecto_id': proyecto_id,
+      'texto': payload.texto.strip(),
+      'visible_cliente': payload.visible_cliente,
+      'created_by': admin.id,
+    },
+  )
+  if not rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio la nota creada.')
+  return rows[0]
+
+
+@app.delete('/api/v1/proyectos/{proyecto_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_proyecto(proyecto_id: str, authorization: Optional[str] = Header(default=None)) -> None:
+  require_admin(authorization)
+
+  proyecto_rows = _service_rest_get(f'proyectos?id=eq.{proyecto_id}&select=id')
+  if not proyecto_rows:
+    raise HTTPException(status_code=404, detail='Proyecto no encontrado.')
+
+  client = _supabase_service_client()
+  paths_to_remove: List[str] = []
+
+  try:
+    subfolders = client.storage.from_(PROYECTOS_BUCKET).list(proyecto_id) or []
+    for entry in subfolders:
+      name = entry.get('name') if isinstance(entry, dict) else None
+      if not name:
+        continue
+
+      subfolder_path = f'{proyecto_id}/{name}'
+      files = client.storage.from_(PROYECTOS_BUCKET).list(subfolder_path) or []
+      for file_entry in files:
+        file_name = file_entry.get('name') if isinstance(file_entry, dict) else None
+        if file_name:
+          paths_to_remove.append(f'{subfolder_path}/{file_name}')
+
+    if paths_to_remove:
+      client.storage.from_(PROYECTOS_BUCKET).remove(paths_to_remove)
+  except Exception as exc:
+    raise HTTPException(status_code=502, detail=f'No se pudo limpiar Storage antes de eliminar: {exc}')
+
+  # proyecto_documentos, proyecto_tareas y proyecto_notas caen en cascada (on delete cascade).
+  _service_rest_request('DELETE', f'proyectos?id=eq.{proyecto_id}', prefer='return=minimal')
+  return None
+
+
+@app.delete('/api/v1/proyectos/{proyecto_id}/tareas/{tarea_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_tarea(
+  proyecto_id: str,
+  tarea_id: str,
+  authorization: Optional[str] = Header(default=None),
+) -> None:
+  require_admin(authorization)
+
+  tarea_rows = _service_rest_get(f'proyecto_tareas?id=eq.{tarea_id}&proyecto_id=eq.{proyecto_id}&select=id')
+  if not tarea_rows:
+    raise HTTPException(status_code=404, detail='Tarea no encontrada.')
+
+  _service_rest_request('DELETE', f'proyecto_tareas?id=eq.{tarea_id}', prefer='return=minimal')
+  return None

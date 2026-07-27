@@ -62,6 +62,17 @@
               >
                 {{ i18n.lang() === 'es' ? 'Gestion de accesos' : 'Access management' }}
               </button>
+              <button
+                type="button"
+                (click)="onSelectTab('proyectos')"
+                class="rounded-full border px-4 py-1.5 font-semibold"
+                [class.border-cyan-400]="activeTab() === 'proyectos'"
+                [class.text-cyan-200]="activeTab() === 'proyectos'"
+                [class.border-slate-700]="activeTab() !== 'proyectos'"
+                [class.text-slate-400]="activeTab() !== 'proyectos'"
+              >
+                {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
+              </button>
             </div>
           }
 
@@ -402,6 +413,878 @@
                     </button>
                   </div>
                 }
+              }
+            </div>
+          }
+
+          @if (isAdmin() && activeTab() === 'proyectos') {
+            <div class="mt-8">
+              <!-- LISTA -->
+              @if (proyectosVista() === 'lista') {
+                <div class="rounded-lg border border-slate-700/60 bg-slate-800/30 p-5">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-white">{{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}</h2>
+                    <button
+                      type="button"
+                      (click)="abrirFormularioNuevo()"
+                      class="rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+                    >
+                      {{ i18n.lang() === 'es' ? 'Nuevo proyecto' : 'New project' }}
+                    </button>
+                  </div>
+
+                  <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                    @for (opt of filtroEstadoOptions; track opt.key) {
+                      <button
+                        type="button"
+                        (click)="onProyectosFiltroChange(opt.key)"
+                        class="rounded-full border px-3 py-1.5"
+                        [class.border-cyan-400]="proyectosFiltroEstado() === opt.key"
+                        [class.text-cyan-200]="proyectosFiltroEstado() === opt.key"
+                        [class.border-slate-700]="proyectosFiltroEstado() !== opt.key"
+                        [class.text-slate-400]="proyectosFiltroEstado() !== opt.key"
+                      >
+                        {{ i18n.lang() === 'es' ? opt.labelEs : opt.labelEn }}
+                      </button>
+                    }
+                  </div>
+
+                  @if (proyectosUsuariosError()) {
+                    <p class="mt-3 text-xs text-amber-300">{{ proyectosUsuariosError() }}</p>
+                  }
+
+                  @if (proyectosListaLoading()) {
+                    <div class="mt-4 space-y-2">
+                      @for (i of [0, 1, 2]; track i) {
+                        <div class="h-14 w-full rounded-md border border-slate-700/60 bg-slate-900/40 animate-pulse"></div>
+                      }
+                    </div>
+                    <span class="sr-only" role="status">
+                      {{ i18n.lang() === 'es' ? 'Cargando proyectos...' : 'Loading projects...' }}
+                    </span>
+                  } @else if (proyectosListaError()) {
+                    <div class="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      <p>{{ proyectosListaError() }}</p>
+                      <button
+                        type="button"
+                        (click)="loadProyectosLista()"
+                        class="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+                      >
+                        {{ i18n.lang() === 'es' ? 'Reintentar' : 'Retry' }}
+                      </button>
+                    </div>
+                  } @else if (proyectosListaFiltrada().length === 0) {
+                    <p class="mt-4 text-sm text-gray-400">
+                      @if (proyectosLista().length === 0) {
+                        {{ i18n.lang() === 'es' ? 'Todavia no hay proyectos.' : 'No projects yet.' }}
+                      } @else {
+                        {{ i18n.lang() === 'es' ? 'No hay proyectos con ese estado.' : 'No projects with that status.' }}
+                      }
+                    </p>
+                  } @else {
+                    <div class="mt-4 overflow-x-auto rounded-lg border border-slate-700/60">
+                      <table class="min-w-full text-sm">
+                        <thead class="bg-slate-800/80 text-gray-300">
+                          <tr>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Nombre' : 'Name' }}</th>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Cliente' : 'Client' }}</th>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Tipo' : 'Type' }}</th>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</th>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</th>
+                            <th class="px-4 py-3 text-left">{{ i18n.lang() === 'es' ? 'Acciones' : 'Actions' }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (p of proyectosListaFiltrada(); track p.id) {
+                            <tr class="border-t border-slate-700/60 bg-slate-900/40">
+                              <td class="max-w-[220px] break-words px-4 py-3 text-white">{{ p.nombre }}</td>
+                              <td class="px-4 py-3 text-gray-300">{{ clienteEmail(p.cliente_user_id) }}</td>
+                              <td class="px-4 py-3 text-gray-300">{{ proyectoTipoLabel(p.tipo) }}</td>
+                              <td class="px-4 py-3 text-gray-300">
+                                <div class="flex items-center gap-2">
+                                  <div
+                                    class="h-1.5 w-16 overflow-hidden rounded-full bg-slate-700/70"
+                                    role="progressbar"
+                                    [attr.aria-valuenow]="clampPct(p.avance_pct)"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    [attr.aria-label]="(i18n.lang() === 'es' ? 'Avance de ' : 'Progress of ') + p.nombre"
+                                  >
+                                    <div class="h-full bg-cyan-500" [style.width]="clampPct(p.avance_pct) + '%'"></div>
+                                  </div>
+                                  <span class="text-xs">{{ clampPct(p.avance_pct) }}%</span>
+                                </div>
+                              </td>
+                              <td class="px-4 py-3">
+                                <span
+                                  class="rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                  [class]="proyectoEstadoBadgeClass(p.estado)"
+                                >
+                                  {{ proyectoEstadoLabel(p.estado) }}
+                                </span>
+                              </td>
+                              <td class="px-4 py-3">
+                                <div class="flex gap-2">
+                                  <button
+                                    type="button"
+                                    (click)="abrirDetalle(p.id)"
+                                    class="rounded-md border border-cyan-500 px-2.5 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/40"
+                                  >
+                                    {{ i18n.lang() === 'es' ? 'Ver' : 'View' }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    (click)="abrirFormularioEdicionDesdeLista(p)"
+                                    class="rounded-md border border-slate-600 px-2.5 py-1 text-xs font-semibold text-gray-300 hover:bg-slate-700/40"
+                                  >
+                                    {{ i18n.lang() === 'es' ? 'Editar' : 'Edit' }}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- FORMULARIO -->
+              @if (proyectosVista() === 'formulario') {
+                <div class="rounded-lg border border-slate-700/60 bg-slate-800/30 p-5">
+                  <h2 class="text-lg font-semibold text-white">
+                    {{ formularioModo() === 'nuevo'
+                      ? (i18n.lang() === 'es' ? 'Nuevo proyecto' : 'New project')
+                      : (i18n.lang() === 'es' ? 'Editar proyecto' : 'Edit project') }}
+                  </h2>
+
+                  @if (formularioError()) {
+                    <p class="mt-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                      {{ formularioError() }}
+                    </p>
+                  }
+
+                  <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label for="f-nombre" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Nombre' : 'Name' }} *</label>
+                      <input
+                        id="f-nombre"
+                        type="text"
+                        [value]="formularioDatos().nombre"
+                        (input)="updateFormField('nombre', nombreInput.value)"
+                        #nombreInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      />
+                      @if (formularioErrores()['nombre']) {
+                        <p class="mt-1 text-xs text-red-300">{{ formularioErrores()['nombre'] }}</p>
+                      }
+                    </div>
+
+                    <div>
+                      <label for="f-tipo" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Tipo' : 'Type' }}</label>
+                      <select
+                        id="f-tipo"
+                        [value]="formularioDatos().tipo"
+                        (change)="onFormTipoChange(tipoSelect.value)"
+                        #tipoSelect
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      >
+                        @for (opt of tipoProyectoOptions; track opt.key) {
+                          <option [value]="opt.key">{{ i18n.lang() === 'es' ? opt.labelEs : opt.labelEn }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label for="f-descripcion" class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Descripcion' : 'Description' }}
+                      </label>
+                      <textarea
+                        id="f-descripcion"
+                        rows="3"
+                        [value]="formularioDatos().descripcion"
+                        (input)="updateFormField('descripcion', descInput.value)"
+                        #descInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label for="f-ubicacion" class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Ubicacion' : 'Location' }}
+                      </label>
+                      <input
+                        id="f-ubicacion"
+                        type="text"
+                        [value]="formularioDatos().ubicacion"
+                        (input)="updateFormField('ubicacion', ubicInput.value)"
+                        #ubicInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label for="f-cliente" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Cliente' : 'Client' }}</label>
+                      <select
+                        id="f-cliente"
+                        [value]="formularioDatos().cliente_user_id"
+                        (change)="updateFormField('cliente_user_id', clienteSelect.value)"
+                        #clienteSelect
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      >
+                        <option value="">{{ i18n.lang() === 'es' ? 'Sin asignar' : 'Unassigned' }}</option>
+                        @for (u of accessUsers(); track u.id) {
+                          <option [value]="u.id">{{ u.email || u.id }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="f-inicio" class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Fecha de inicio' : 'Start date' }}
+                      </label>
+                      <input
+                        id="f-inicio"
+                        type="date"
+                        [value]="formularioDatos().fecha_inicio"
+                        (change)="updateFormField('fecha_inicio', inicioInput.value)"
+                        #inicioInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label for="f-fin" class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Fecha prevista de fin' : 'Expected end date' }}
+                      </label>
+                      <input
+                        id="f-fin"
+                        type="date"
+                        [value]="formularioDatos().fecha_prevista_fin"
+                        (change)="updateFormField('fecha_prevista_fin', finInput.value)"
+                        #finInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      />
+                      @if (formularioErrores()['fecha_prevista_fin']) {
+                        <p class="mt-1 text-xs text-red-300">{{ formularioErrores()['fecha_prevista_fin'] }}</p>
+                      }
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}: {{ formularioDatos().avance_pct }}%
+                      </label>
+                      <div class="mt-1 flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          [value]="formularioDatos().avance_pct"
+                          (input)="updateFormField('avance_pct', clampPct(+rangeInput.value))"
+                          #rangeInput
+                          class="flex-1"
+                          [attr.aria-label]="i18n.lang() === 'es' ? 'Avance del proyecto' : 'Project progress'"
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          [value]="formularioDatos().avance_pct"
+                          (input)="updateFormField('avance_pct', clampPct(+numInput.value))"
+                          #numInput
+                          class="w-20 rounded-md border border-slate-600 bg-slate-900/70 px-2 py-1 text-sm text-gray-100"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="f-hito" class="text-xs text-gray-400">
+                        {{ i18n.lang() === 'es' ? 'Proximo hito' : 'Next milestone' }}
+                      </label>
+                      <input
+                        id="f-hito"
+                        type="text"
+                        [value]="formularioDatos().proximo_hito"
+                        (input)="updateFormField('proximo_hito', hitoInput.value)"
+                        #hitoInput
+                        class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      />
+                    </div>
+
+                    @if (formularioModo() === 'edicion') {
+                      <div>
+                        <label for="f-estado" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</label>
+                        <select
+                          id="f-estado"
+                          [value]="formularioDatos().estado"
+                          (change)="onFormEstadoChange(estadoSelect.value)"
+                          #estadoSelect
+                          class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                        >
+                          @for (opt of estadoProyectoOptions; track opt.key) {
+                            <option [value]="opt.key">{{ i18n.lang() === 'es' ? opt.labelEs : opt.labelEn }}</option>
+                          }
+                        </select>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="mt-5 flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      [disabled]="formularioGuardando()"
+                      (click)="guardarFormulario()"
+                      class="rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                    >
+                      {{ formularioGuardando() ? (i18n.lang() === 'es' ? 'Guardando...' : 'Saving...') : (i18n.lang() === 'es' ? 'Guardar' : 'Save') }}
+                    </button>
+                    <button
+                      type="button"
+                      [disabled]="formularioGuardando()"
+                      (click)="cancelarFormulario()"
+                      class="rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-gray-300 hover:bg-slate-700/40 disabled:opacity-60"
+                    >
+                      {{ i18n.lang() === 'es' ? 'Cancelar' : 'Cancel' }}
+                    </button>
+                  </div>
+
+                  @if (formularioModo() === 'edicion') {
+                    <div class="mt-6 border-t border-slate-700/60 pt-4">
+                      @if (!confirmandoEliminarProyecto()) {
+                        <button
+                          type="button"
+                          (click)="solicitarEliminarProyectoActual()"
+                          class="rounded-md border border-red-500/60 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-900/30"
+                        >
+                          {{ i18n.lang() === 'es' ? 'Eliminar proyecto' : 'Delete project' }}
+                        </button>
+                      } @else {
+                        <div class="rounded-md border border-red-500/40 bg-red-500/10 p-3" role="alertdialog">
+                          <p class="text-sm text-red-200">
+                            {{ i18n.lang() === 'es'
+                              ? '¿Eliminar este proyecto? Se borraran todos sus documentos, tareas y notas. Esta accion no se puede deshacer.'
+                              : 'Delete this project? All its documents, tasks and notes will be deleted. This action cannot be undone.' }}
+                          </p>
+                          <div class="mt-3 flex gap-2">
+                            <button
+                              type="button"
+                              [disabled]="eliminandoProyecto()"
+                              (click)="cancelarEliminarProyectoActual()"
+                              class="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:bg-slate-700/40 disabled:opacity-60"
+                            >
+                              {{ i18n.lang() === 'es' ? 'Cancelar' : 'Cancel' }}
+                            </button>
+                            <button
+                              type="button"
+                              [disabled]="eliminandoProyecto()"
+                              (click)="confirmarEliminarProyectoActual()"
+                              class="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                            >
+                              {{ eliminandoProyecto() ? (i18n.lang() === 'es' ? 'Eliminando...' : 'Deleting...') : (i18n.lang() === 'es' ? 'Eliminar' : 'Delete') }}
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- DETALLE -->
+              @if (proyectosVista() === 'detalle') {
+                <div class="rounded-lg border border-slate-700/60 bg-slate-800/30 p-5">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      (click)="volverALista()"
+                      class="inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200"
+                    >
+                      <span aria-hidden="true">&larr;</span> {{ i18n.lang() === 'es' ? 'Volver a lista' : 'Back to list' }}
+                    </button>
+                    @if (detalleProyecto()) {
+                      <button
+                        type="button"
+                        (click)="abrirFormularioEdicionDesdeDetalle()"
+                        class="rounded-md border border-slate-600 px-3 py-1.5 text-xs font-semibold text-gray-300 hover:bg-slate-700/40"
+                      >
+                        {{ i18n.lang() === 'es' ? 'Editar' : 'Edit' }}
+                      </button>
+                    }
+                  </div>
+
+                  @if (detalleLoading()) {
+                    <div class="mt-4 space-y-3">
+                      <div class="h-8 w-1/2 rounded bg-slate-700/50 animate-pulse"></div>
+                      <div class="h-24 w-full rounded-md border border-slate-700/60 bg-slate-900/40 animate-pulse"></div>
+                    </div>
+                    <span class="sr-only" role="status">
+                      {{ i18n.lang() === 'es' ? 'Cargando proyecto...' : 'Loading project...' }}
+                    </span>
+                  } @else if (detalleError()) {
+                    <div class="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      <p>{{ detalleError() }}</p>
+                      <div class="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          (click)="cargarDetalle()"
+                          class="rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500"
+                        >
+                          {{ i18n.lang() === 'es' ? 'Reintentar' : 'Retry' }}
+                        </button>
+                        <button
+                          type="button"
+                          (click)="volverALista()"
+                          class="rounded-md border border-slate-600 px-4 py-2 text-sm font-semibold text-gray-300 hover:bg-slate-700/40"
+                        >
+                          {{ i18n.lang() === 'es' ? 'Volver a lista' : 'Back to list' }}
+                        </button>
+                      </div>
+                    </div>
+                  } @else if (detalleProyecto(); as p) {
+                    <h2 class="mt-3 text-xl font-bold text-white break-words">{{ p.nombre }}</h2>
+
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Descripcion' : 'Description' }}</p>
+                        <p class="mt-1 text-gray-200">{{ p.descripcion || '--' }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Tipo' : 'Type' }}</p>
+                        <p class="mt-1 text-gray-200">{{ proyectoTipoLabel(p.tipo) }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Ubicacion' : 'Location' }}</p>
+                        <p class="mt-1 text-gray-200">{{ p.ubicacion || '--' }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Cliente' : 'Client' }}</p>
+                        <p class="mt-1 text-gray-200">{{ clienteEmail(p.cliente_user_id) }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Fecha de inicio' : 'Start date' }}</p>
+                        <p class="mt-1 text-gray-200">{{ formatDate(p.fecha_inicio ?? null) }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">
+                          {{ i18n.lang() === 'es' ? 'Fecha prevista de fin' : 'Expected end date' }}
+                        </p>
+                        <p class="mt-1 text-gray-200">{{ formatDate(p.fecha_prevista_fin ?? null) }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Proximo hito' : 'Next milestone' }}</p>
+                        <p class="mt-1 text-gray-200">{{ p.proximo_hito || '--' }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}</p>
+                        <span
+                          class="mt-1 inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold"
+                          [class]="proyectoEstadoBadgeClass(p.estado)"
+                        >
+                          {{ proyectoEstadoLabel(p.estado) }}
+                        </span>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</p>
+                        <p class="mt-1 text-gray-200">{{ clampPct(p.avance_pct) }}%</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Creado' : 'Created' }}</p>
+                        <p class="mt-1 text-gray-200">{{ formatDate(p.created_at) }}</p>
+                      </div>
+                      <div class="rounded-md border border-slate-700 bg-slate-900/50 p-3">
+                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Actualizado' : 'Updated' }}</p>
+                        <p class="mt-1 text-gray-200">{{ formatDate(p.updated_at) }}</p>
+                      </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="rounded-md border border-cyan-700/40 bg-slate-900/40 p-4">
+                        <h3 class="text-sm font-semibold text-cyan-100">
+                          {{ i18n.lang() === 'es' ? 'Avance rapido' : 'Quick progress' }}
+                        </h3>
+                        <div class="mt-2 flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            [value]="avanceRapido()"
+                            (input)="avanceRapido.set(clampPct(+avRange.value))"
+                            #avRange
+                            class="flex-1"
+                            [attr.aria-label]="i18n.lang() === 'es' ? 'Avance del proyecto' : 'Project progress'"
+                          />
+                          <span class="w-12 text-right text-sm text-white">{{ avanceRapido() }}%</span>
+                        </div>
+                        <button
+                          type="button"
+                          [disabled]="guardandoAvance()"
+                          (click)="guardarAvanceRapido()"
+                          class="mt-3 rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                        >
+                          {{ guardandoAvance() ? (i18n.lang() === 'es' ? 'Guardando...' : 'Saving...') : (i18n.lang() === 'es' ? 'Guardar avance' : 'Save progress') }}
+                        </button>
+                        @if (avanceError()) {
+                          <p class="mt-2 text-xs text-red-300">{{ avanceError() }}</p>
+                        }
+                      </div>
+
+                      <div class="rounded-md border border-cyan-700/40 bg-slate-900/40 p-4">
+                        <h3 class="text-sm font-semibold text-cyan-100">
+                          {{ i18n.lang() === 'es' ? 'Proximo hito' : 'Next milestone' }}
+                        </h3>
+                        <input
+                          type="text"
+                          [value]="proximoHitoRapido()"
+                          (input)="proximoHitoRapido.set(hitoRapidoInput.value)"
+                          #hitoRapidoInput
+                          class="mt-2 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                        />
+                        <button
+                          type="button"
+                          [disabled]="guardandoProximoHito()"
+                          (click)="guardarProximoHitoRapido()"
+                          class="mt-3 rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                        >
+                          {{ guardandoProximoHito() ? (i18n.lang() === 'es' ? 'Guardando...' : 'Saving...') : (i18n.lang() === 'es' ? 'Actualizar' : 'Update') }}
+                        </button>
+                        @if (proximoHitoError()) {
+                          <p class="mt-2 text-xs text-red-300">{{ proximoHitoError() }}</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-slate-700/60 bg-slate-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-white">{{ i18n.lang() === 'es' ? 'Documentos' : 'Documents' }}</h3>
+
+                      <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label for="doc-archivo" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Archivo' : 'File' }}</label>
+                          <input
+                            id="doc-archivo"
+                            type="file"
+                            accept="application/pdf,image/*"
+                            (change)="onDocumentoArchivoChange(docFileInput.files)"
+                            #docFileInput
+                            class="mt-1 w-full text-sm text-gray-300"
+                          />
+                        </div>
+                        <div>
+                          <label for="doc-categoria" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Categoria' : 'Category' }}</label>
+                          <select
+                            id="doc-categoria"
+                            [value]="documentoCategoria()"
+                            (change)="onDocumentoCategoriaChange(docCatSelect.value)"
+                            #docCatSelect
+                            class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                          >
+                            @for (opt of documentoCategoriaOptions; track opt.key) {
+                              <option [value]="opt.key">{{ i18n.lang() === 'es' ? opt.labelEs : opt.labelEn }}</option>
+                            }
+                          </select>
+                        </div>
+                        <div>
+                          <label for="doc-nombre" class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Nombre' : 'Name' }}</label>
+                          <input
+                            id="doc-nombre"
+                            type="text"
+                            [value]="documentoNombre()"
+                            (input)="documentoNombre.set(docNombreInput.value)"
+                            #docNombreInput
+                            class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                          />
+                        </div>
+                        <div>
+                          <label for="doc-descripcion" class="text-xs text-gray-400">
+                            {{ i18n.lang() === 'es' ? 'Descripcion' : 'Description' }} ({{ i18n.lang() === 'es' ? 'opcional' : 'optional' }})
+                          </label>
+                          <input
+                            id="doc-descripcion"
+                            type="text"
+                            [value]="documentoDescripcion()"
+                            (input)="documentoDescripcion.set(docDescInput.value)"
+                            #docDescInput
+                            class="mt-1 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                          />
+                        </div>
+                      </div>
+
+                      @if (documentoError()) {
+                        <p class="mt-2 text-xs text-red-300">{{ documentoError() }}</p>
+                      }
+                      @if (abrirDocumentoError()) {
+                        <p class="mt-2 text-xs text-red-300">{{ abrirDocumentoError() }}</p>
+                      }
+
+                      <button
+                        type="button"
+                        [disabled]="subiendoDocumento()"
+                        (click)="subirDocumento()"
+                        class="mt-3 inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                      >
+                        @if (subiendoDocumento()) {
+                          <span class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                          {{ i18n.lang() === 'es' ? 'Subiendo documento...' : 'Uploading document...' }}
+                        } @else {
+                          {{ i18n.lang() === 'es' ? 'Subir documento' : 'Upload document' }}
+                        }
+                      </button>
+
+                      <div class="mt-4 space-y-2">
+                        @for (doc of p.documentos; track doc.id) {
+                          <div class="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                            <div class="flex items-start justify-between gap-3">
+                              <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-white">{{ doc.nombre }}</p>
+                                <p class="text-xs text-gray-400">
+                                  {{ documentoCategoriaLabel(doc.categoria) }}
+                                  @if (doc.mime_type) {
+                                    <span aria-hidden="true"> · </span>{{ doc.mime_type }}
+                                  }
+                                  @if (doc.size_bytes !== undefined && doc.size_bytes !== null) {
+                                    <span aria-hidden="true"> · </span>{{ formatSize(doc.size_bytes) }}
+                                  }
+                                  <span aria-hidden="true"> · </span>{{ formatDate(doc.created_at) }}
+                                </p>
+                                @if (doc.descripcion) {
+                                  <p class="mt-1 text-xs text-gray-400">{{ doc.descripcion }}</p>
+                                }
+                              </div>
+                              <div class="flex shrink-0 gap-2">
+                                <button
+                                  type="button"
+                                  [disabled]="abriendoDocumentoId() === doc.id"
+                                  (click)="abrirDocumentoAdmin(doc)"
+                                  class="rounded-md border border-cyan-500 px-2.5 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-900/40 disabled:opacity-60"
+                                >
+                                  {{ i18n.lang() === 'es' ? 'Abrir' : 'Open' }}
+                                </button>
+                                <button
+                                  type="button"
+                                  [disabled]="eliminandoDocumentoId() === doc.id"
+                                  (click)="solicitarEliminarDocumento(doc.id)"
+                                  class="rounded-md border border-red-500/60 px-2.5 py-1 text-xs font-semibold text-red-300 hover:bg-red-900/30 disabled:opacity-60"
+                                >
+                                  {{ i18n.lang() === 'es' ? 'Eliminar' : 'Delete' }}
+                                </button>
+                              </div>
+                            </div>
+
+                            @if (confirmandoEliminarDocumentoId() === doc.id) {
+                              <div class="mt-2 rounded-md border border-red-500/40 bg-red-500/10 p-3" role="alertdialog">
+                                <p class="text-xs text-red-200">
+                                  {{ i18n.lang() === 'es' ? '¿Eliminar este documento?' : 'Delete this document?' }}
+                                </p>
+                                <div class="mt-2 flex gap-2">
+                                  <button
+                                    type="button"
+                                    [disabled]="eliminandoDocumentoId() === doc.id"
+                                    (click)="cancelarEliminarDocumento()"
+                                    class="rounded-md border border-slate-600 px-2.5 py-1 text-xs font-semibold text-gray-300 hover:bg-slate-700/40 disabled:opacity-60"
+                                  >
+                                    {{ i18n.lang() === 'es' ? 'Cancelar' : 'Cancel' }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    [disabled]="eliminandoDocumentoId() === doc.id"
+                                    (click)="confirmarEliminarDocumento(doc.id)"
+                                    class="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                                  >
+                                    {{ eliminandoDocumentoId() === doc.id ? (i18n.lang() === 'es' ? 'Eliminando...' : 'Deleting...') : (i18n.lang() === 'es' ? 'Confirmar eliminacion' : 'Confirm deletion') }}
+                                  </button>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        } @empty {
+                          <p class="text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Sin documentos todavia.' : 'No documents yet.' }}</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-slate-700/60 bg-slate-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-white">{{ i18n.lang() === 'es' ? 'Checklist' : 'Checklist' }}</h3>
+
+                      <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          [value]="tareaTitulo()"
+                          (input)="tareaTitulo.set(tareaTituloInput.value)"
+                          #tareaTituloInput
+                          placeholder="{{ i18n.lang() === 'es' ? 'Titulo' : 'Title' }}"
+                          class="rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                        />
+                        <input
+                          type="text"
+                          [value]="tareaDescripcion()"
+                          (input)="tareaDescripcion.set(tareaDescInput.value)"
+                          #tareaDescInput
+                          placeholder="{{ i18n.lang() === 'es' ? 'Descripcion (opcional)' : 'Description (optional)' }}"
+                          class="rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                        />
+                        <label class="flex items-center gap-2 text-sm text-gray-300">
+                          <input
+                            type="checkbox"
+                            [checked]="tareaRequiereAprobacion()"
+                            (change)="tareaRequiereAprobacion.set(tareaAprobCheckbox.checked)"
+                            #tareaAprobCheckbox
+                            class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-500"
+                          />
+                          {{ i18n.lang() === 'es' ? 'Requiere aprobacion del cliente' : 'Requires client approval' }}
+                        </label>
+                      </div>
+
+                      @if (tareaError()) {
+                        <p class="mt-2 text-xs text-red-300">{{ tareaError() }}</p>
+                      }
+
+                      <button
+                        type="button"
+                        [disabled]="creandoTarea()"
+                        (click)="agregarTarea()"
+                        class="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                      >
+                        {{ creandoTarea() ? (i18n.lang() === 'es' ? 'Anadiendo...' : 'Adding...') : (i18n.lang() === 'es' ? 'Anadir tarea' : 'Add task') }}
+                      </button>
+
+                      <div class="mt-4 space-y-2">
+                        @for (tarea of tareasOrdenadas(); track tarea.id) {
+                          <div class="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                              <div class="min-w-0">
+                                <p class="text-sm font-semibold text-white">{{ tarea.titulo }}</p>
+                                @if (tarea.descripcion) {
+                                  <p class="mt-0.5 text-xs text-gray-400">{{ tarea.descripcion }}</p>
+                                }
+                                <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                                  <span>{{ formatDate(tarea.created_at) }}</span>
+                                  @if (tarea.requiere_aprobacion_cliente) {
+                                    <span class="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-amber-200">
+                                      {{ i18n.lang() === 'es' ? 'Requiere aprobacion cliente' : 'Requires client approval' }}
+                                    </span>
+                                  }
+                                </div>
+                              </div>
+
+                              <div class="flex shrink-0 items-center gap-2">
+                                <label class="flex items-center gap-2 text-xs text-gray-300">
+                                  {{ i18n.lang() === 'es' ? 'Estado' : 'Status' }}
+                                  <select
+                                    [value]="tarea.estado"
+                                    [disabled]="actualizandoTareaId() === tarea.id"
+                                    (change)="onCambiarEstadoTarea(tarea, tareaEstadoSelect.value)"
+                                    #tareaEstadoSelect
+                                    class="rounded-md border border-slate-600 bg-slate-900/70 px-2 py-1 text-xs text-gray-100 disabled:opacity-60"
+                                  >
+                                    @for (opt of estadoTareaOptions; track opt.key) {
+                                      <option [value]="opt.key">{{ i18n.lang() === 'es' ? opt.labelEs : opt.labelEn }}</option>
+                                    }
+                                  </select>
+                                </label>
+                                <button
+                                  type="button"
+                                  [disabled]="tareaEliminandoId() === tarea.id"
+                                  (click)="solicitarEliminarTarea(tarea.id)"
+                                  [attr.aria-label]="(i18n.lang() === 'es' ? 'Eliminar tarea ' : 'Delete task ') + tarea.titulo"
+                                  class="rounded-md border border-red-500/60 px-2 py-1 text-xs font-semibold text-red-300 hover:bg-red-900/30 disabled:opacity-60"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            </div>
+
+                            @if (confirmandoEliminarTareaId() === tarea.id) {
+                              <div class="mt-2 rounded-md border border-red-500/40 bg-red-500/10 p-3" role="alertdialog">
+                                <p class="text-xs text-red-200">
+                                  {{ i18n.lang() === 'es' ? '¿Eliminar esta tarea?' : 'Delete this task?' }}
+                                </p>
+                                <div class="mt-2 flex gap-2">
+                                  <button
+                                    type="button"
+                                    [disabled]="tareaEliminandoId() === tarea.id"
+                                    (click)="cancelarEliminarTarea()"
+                                    class="rounded-md border border-slate-600 px-2.5 py-1 text-xs font-semibold text-gray-300 hover:bg-slate-700/40 disabled:opacity-60"
+                                  >
+                                    {{ i18n.lang() === 'es' ? 'Cancelar' : 'Cancel' }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    [disabled]="tareaEliminandoId() === tarea.id"
+                                    (click)="confirmarEliminarTarea(tarea.id)"
+                                    class="rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                                  >
+                                    {{ tareaEliminandoId() === tarea.id ? (i18n.lang() === 'es' ? 'Eliminando...' : 'Deleting...') : (i18n.lang() === 'es' ? 'Confirmar eliminacion' : 'Confirm deletion') }}
+                                  </button>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        } @empty {
+                          <p class="text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Sin tareas todavia.' : 'No tasks yet.' }}</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="mt-6 rounded-md border border-slate-700/60 bg-slate-900/40 p-4">
+                      <h3 class="text-sm font-semibold text-white">{{ i18n.lang() === 'es' ? 'Notas' : 'Notes' }}</h3>
+
+                      <textarea
+                        rows="2"
+                        [value]="notaTexto()"
+                        (input)="notaTexto.set(notaTextoInput.value)"
+                        #notaTextoInput
+                        placeholder="{{ i18n.lang() === 'es' ? 'Escribe una nota...' : 'Write a note...' }}"
+                        class="mt-3 w-full rounded-md border border-slate-600 bg-slate-900/70 px-3 py-2 text-sm text-gray-100"
+                      ></textarea>
+
+                      <label class="mt-2 flex items-center gap-2 text-sm text-gray-300">
+                        <input
+                          type="checkbox"
+                          [checked]="notaVisibleCliente()"
+                          (change)="notaVisibleCliente.set(notaVisibleCheckbox.checked)"
+                          #notaVisibleCheckbox
+                          class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-cyan-500"
+                        />
+                        {{ i18n.lang() === 'es' ? 'Visible para el cliente' : 'Visible to client' }}
+                      </label>
+
+                      @if (notaError()) {
+                        <p class="mt-2 text-xs text-red-300">{{ notaError() }}</p>
+                      }
+
+                      <button
+                        type="button"
+                        [disabled]="creandoNota()"
+                        (click)="agregarNota()"
+                        class="mt-3 rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-60"
+                      >
+                        {{ creandoNota() ? (i18n.lang() === 'es' ? 'Anadiendo...' : 'Adding...') : (i18n.lang() === 'es' ? 'Anadir nota' : 'Add note') }}
+                      </button>
+
+                      <div class="mt-4 space-y-2">
+                        @for (nota of notasOrdenadas(); track nota.id) {
+                          <div class="rounded-md border border-slate-700 bg-slate-900/60 p-3">
+                            <p class="text-sm text-gray-200">{{ nota.texto }}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                              <span>{{ formatDate(nota.created_at) }}</span>
+                              <span
+                                class="rounded-full border px-2 py-0.5"
+                                [class.border-emerald-500/40]="nota.visible_cliente"
+                                [class.text-emerald-300]="nota.visible_cliente"
+                                [class.border-slate-600]="!nota.visible_cliente"
+                                [class.text-slate-400]="!nota.visible_cliente"
+                              >
+                                {{ nota.visible_cliente ? (i18n.lang() === 'es' ? 'Visible para el cliente' : 'Visible to client') : (i18n.lang() === 'es' ? 'Nota interna' : 'Internal note') }}
+                              </span>
+                            </div>
+                          </div>
+                        } @empty {
+                          <p class="text-sm text-gray-400">{{ i18n.lang() === 'es' ? 'Sin notas todavia.' : 'No notes yet.' }}</p>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
               }
             </div>
           }

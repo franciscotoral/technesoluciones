@@ -1,11 +1,12 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { CapabilitiesService } from '../../services/capabilities.service';
 import { LanguageService } from '../../services/language.service';
 import { InvestmentMetric, PortalDataService, PrivateProject } from '../../services/portal-data.service';
+import { Proyecto, ProyectosService } from '../../services/proyectos.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
@@ -46,7 +47,7 @@ declare global {
   templateUrl: './portal.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, DecimalPipe],
+  imports: [HeaderComponent, FooterComponent, DecimalPipe, RouterLink],
 })
 export class PortalComponent implements OnInit, OnDestroy {
   readonly i18n = inject(LanguageService);
@@ -58,6 +59,10 @@ export class PortalComponent implements OnInit, OnDestroy {
   readonly blockVisibility = signal<DashboardVisibility>(this.loadBlockVisibility());
   readonly selectedPhaseMonth = signal<number | null>(null);
   readonly toolsLoading = signal(true);
+
+  readonly misProyectos = signal<Proyecto[]>([]);
+  readonly misProyectosLoading = signal(true);
+  readonly misProyectosError = signal<string | null>(null);
 
   readonly tools: PortalTool[] = [
     {
@@ -138,6 +143,7 @@ export class PortalComponent implements OnInit, OnDestroy {
 
   private readonly portalData = inject(PortalDataService);
   private readonly capabilities = inject(CapabilitiesService);
+  private readonly proyectosService = inject(ProyectosService);
   private readonly router = inject(Router);
   private timelineChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
   private compositionChart: ReturnType<NonNullable<typeof window.echarts>['init']> | null = null;
@@ -196,12 +202,101 @@ export class PortalComponent implements OnInit, OnDestroy {
     return `mailto:francisco.toral@technesoluciones.es?subject=${subject}`;
   }
 
+  tieneModuloProyectos(): boolean {
+    return this.capabilities.hasModule('proyectos');
+  }
+
+  async loadMisProyectos() {
+    this.misProyectosLoading.set(true);
+    this.misProyectosError.set(null);
+    try {
+      const rows = await this.proyectosService.getProyectos();
+      this.misProyectos.set(rows);
+    } catch (err) {
+      this.misProyectosError.set(
+        err instanceof Error && err.message
+          ? err.message
+          : this.i18n.lang() === 'es'
+            ? 'No se pudieron cargar tus proyectos.'
+            : 'Could not load your projects.'
+      );
+    } finally {
+      this.misProyectosLoading.set(false);
+    }
+  }
+
+  proyectoAvance(p: Proyecto): number {
+    const raw = p.avance_pct;
+    if (typeof raw !== 'number' || Number.isNaN(raw)) return 0;
+    return Math.max(0, Math.min(100, Math.round(raw)));
+  }
+
+  proyectoAprobacionesPendientes(p: Proyecto): number {
+    const raw = p.tareas_pendientes_aprobacion;
+    if (typeof raw !== 'number' || Number.isNaN(raw) || raw <= 0) return 0;
+    return Math.floor(raw);
+  }
+
+  proyectoAprobacionesTexto(p: Proyecto): string {
+    const n = this.proyectoAprobacionesPendientes(p);
+    const es = this.i18n.lang() === 'es';
+    if (es) return n === 1 ? '1 aprobación pendiente' : `${n} aprobaciones pendientes`;
+    return n === 1 ? '1 pending approval' : `${n} pending approvals`;
+  }
+
+  proyectoTipoLabel(tipo: Proyecto['tipo']): string {
+    const es = this.i18n.lang() === 'es';
+    switch (tipo) {
+      case 'obra_nueva':
+        return es ? 'Obra nueva' : 'New construction';
+      case 'rehabilitacion':
+        return es ? 'Rehabilitación' : 'Renovation';
+      case 'mantenimiento':
+        return es ? 'Mantenimiento' : 'Maintenance';
+      case 'inspeccion':
+        return es ? 'Inspección' : 'Inspection';
+      default:
+        return tipo;
+    }
+  }
+
+  proyectoEstadoLabel(estado: Proyecto['estado']): string {
+    const es = this.i18n.lang() === 'es';
+    switch (estado) {
+      case 'activo':
+        return es ? 'Activo' : 'Active';
+      case 'pausado':
+        return es ? 'Pausado' : 'Paused';
+      case 'completado':
+        return es ? 'Completado' : 'Completed';
+      default:
+        return estado;
+    }
+  }
+
+  proyectoEstadoBadgeClass(estado: Proyecto['estado']): string {
+    switch (estado) {
+      case 'activo':
+        return 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200';
+      case 'pausado':
+        return 'border-amber-400/30 bg-amber-500/10 text-amber-200';
+      case 'completado':
+        return 'border-blue-400/30 bg-blue-500/10 text-blue-200';
+      default:
+        return 'border-slate-600 bg-slate-700/30 text-slate-300';
+    }
+  }
+
   private async loadTools() {
     this.toolsLoading.set(true);
     try {
       await this.capabilities.getCapabilities();
     } finally {
       this.toolsLoading.set(false);
+    }
+
+    if (this.capabilities.hasModule('proyectos')) {
+      void this.loadMisProyectos();
     }
   }
 
