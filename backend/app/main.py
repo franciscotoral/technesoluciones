@@ -823,7 +823,7 @@ def upsert_grant(payload: GrantUpsertRequest, authorization: Optional[str] = Hea
 
   try:
     response = httpx.post(
-      f'{supabase_url}/rest/v1/user_module_grants',
+      f'{supabase_url}/rest/v1/user_module_grants?on_conflict=user_id,module_key',
       headers={
         'apikey': service_key,
         'Authorization': f'Bearer {service_key}',
