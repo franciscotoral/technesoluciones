@@ -9,7 +9,7 @@ import {
   TenantModel,
   TenantPipeline,
 } from '../../services/admin-api.service';
-import { AdminService, ModuleGrantRow } from '../../services/admin.service';
+import { AdminService, ModuleGrantRow, ModuleRow } from '../../services/admin.service';
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
 import {
@@ -23,12 +23,6 @@ import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
 type AdminTab = 'general' | 'access' | 'proyectos';
-
-const ACCESS_MODULES: ReadonlyArray<{ key: string; name: string }> = [
-  { key: 'pipeline', name: 'Pipeline de Construcción' },
-  { key: 'calculadora', name: 'Calculadora de Huella de Carbono' },
-  { key: 'diagnostico', name: 'Diagnóstico Normativo' },
-];
 
 type ProyectosVista = 'lista' | 'formulario' | 'detalle';
 type ProyectoFiltroEstado = 'todos' | 'activo' | 'pausado' | 'completado';
@@ -132,7 +126,7 @@ export class AdminComponent implements OnInit {
   readonly tenantModels = signal<TenantModel[]>([]);
 
   readonly activeTab = signal<AdminTab>('general');
-  readonly accessModules = ACCESS_MODULES;
+  readonly accessModules = signal<ModuleRow[]>([]);
   readonly accessLoading = signal(false);
   readonly accessError = signal<string | null>(null);
   readonly accessUsers = signal<AdminUser[]>([]);
@@ -547,9 +541,14 @@ export class AdminComponent implements OnInit {
     this.accessLoading.set(true);
     this.accessError.set(null);
     try {
-      const [users, grants] = await Promise.all([this.adminApi.listUsers(), this.admin.getAllModuleGrants()]);
+      const [users, grants, modules] = await Promise.all([
+        this.adminApi.listUsers(),
+        this.admin.getAllModuleGrants(),
+        this.admin.getModules(),
+      ]);
       this.accessUsers.set(users);
       this.accessGrants.set(this.buildGrantsMap(grants));
+      this.accessModules.set(modules);
       this.accessPage.set(1);
     } catch {
       this.accessError.set(

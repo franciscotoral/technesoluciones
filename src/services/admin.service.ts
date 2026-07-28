@@ -38,6 +38,13 @@ export interface ModuleGrantRow {
   granted_at: string;
 }
 
+export interface ModuleRow {
+  key: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   constructor(private readonly auth: AuthService) {}
@@ -152,6 +159,18 @@ export class AdminService {
       throw new Error('No se pudieron cargar los accesos por modulo.');
     }
     return (await response.json()) as ModuleGrantRow[];
+  }
+
+  async getModules(): Promise<ModuleRow[]> {
+    const { config, accessToken } = this.requireAuth();
+    const url = `${config.supabaseUrl}/rest/v1/modules?select=key,name,description,icon&order=name.asc`;
+    const response = await fetch(url, {
+      headers: this.buildHeaders(accessToken, config.supabaseAnonKey),
+    });
+    if (!response.ok) {
+      throw new Error('No se pudieron cargar los modulos.');
+    }
+    return (await response.json()) as ModuleRow[];
   }
 
   private requireAuth(): { config: { supabaseUrl: string; supabaseAnonKey: string }; accessToken: string } {
