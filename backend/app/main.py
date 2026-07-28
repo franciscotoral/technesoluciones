@@ -10,6 +10,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from supabase import Client, create_client
 
@@ -1363,8 +1364,8 @@ def create_nota(
   return rows[0]
 
 
-@app.delete('/api/v1/proyectos/{proyecto_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_proyecto(proyecto_id: str, authorization: Optional[str] = Header(default=None)) -> None:
+@app.delete('/api/v1/proyectos/{proyecto_id}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+def delete_proyecto(proyecto_id: str, authorization: Optional[str] = Header(default=None)) -> Response:
   require_admin(authorization)
 
   proyecto_rows = _service_rest_get(f'proyectos?id=eq.{proyecto_id}&select=id')
@@ -1395,15 +1396,19 @@ def delete_proyecto(proyecto_id: str, authorization: Optional[str] = Header(defa
 
   # proyecto_documentos, proyecto_tareas y proyecto_notas caen en cascada (on delete cascade).
   _service_rest_request('DELETE', f'proyectos?id=eq.{proyecto_id}', prefer='return=minimal')
-  return None
+  return Response(status_code=204)
 
 
-@app.delete('/api/v1/proyectos/{proyecto_id}/tareas/{tarea_id}', status_code=status.HTTP_204_NO_CONTENT)
+@app.delete(
+  '/api/v1/proyectos/{proyecto_id}/tareas/{tarea_id}',
+  status_code=status.HTTP_204_NO_CONTENT,
+  response_class=Response,
+)
 def delete_tarea(
   proyecto_id: str,
   tarea_id: str,
   authorization: Optional[str] = Header(default=None),
-) -> None:
+) -> Response:
   require_admin(authorization)
 
   tarea_rows = _service_rest_get(f'proyecto_tareas?id=eq.{tarea_id}&proyecto_id=eq.{proyecto_id}&select=id')
@@ -1411,4 +1416,4 @@ def delete_tarea(
     raise HTTPException(status_code=404, detail='Tarea no encontrada.')
 
   _service_rest_request('DELETE', f'proyecto_tareas?id=eq.{tarea_id}', prefer='return=minimal')
-  return None
+  return Response(status_code=204)
