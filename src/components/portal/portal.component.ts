@@ -19,6 +19,9 @@ interface PortalTool {
   icon: 'chart-bar' | 'calculator' | 'search';
   kind: 'route' | 'external';
   target: string;
+  thumbnailColor: string;
+  accentColor: string;
+  badge: string;
 }
 
 type DashboardVisibility = Record<DashboardBlockId, boolean>;
@@ -45,6 +48,7 @@ declare global {
 @Component({
   selector: 'app-portal',
   templateUrl: './portal.component.html',
+  styleUrls: ['./portal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [HeaderComponent, FooterComponent, DecimalPipe, RouterLink],
@@ -72,6 +76,9 @@ export class PortalComponent implements OnInit, OnDestroy {
       icon: 'chart-bar',
       kind: 'route',
       target: '/projects',
+      thumbnailColor: '#0D1F33',
+      accentColor: '#378ADD',
+      badge: 'Europa',
     },
     {
       key: 'calculadora',
@@ -80,6 +87,9 @@ export class PortalComponent implements OnInit, OnDestroy {
       icon: 'calculator',
       kind: 'external',
       target: '/calculadora/',
+      thumbnailColor: '#0F3D2E',
+      accentColor: '#1D9E75',
+      badge: 'CO₂',
     },
     {
       key: 'diagnostico',
@@ -88,6 +98,9 @@ export class PortalComponent implements OnInit, OnDestroy {
       icon: 'search',
       kind: 'route',
       target: '/diagnostico',
+      thumbnailColor: '#2C1A4A',
+      accentColor: '#7F77DD',
+      badge: 'IA',
     },
   ];
 
@@ -200,6 +213,14 @@ export class PortalComponent implements OnInit, OnDestroy {
   requestAccessHref(tool: PortalTool): string {
     const subject = encodeURIComponent(`Solicitud de acceso: ${tool.name}`);
     return `mailto:francisco.toral@technesoluciones.es?subject=${subject}`;
+  }
+
+  accentRgba(hex: string, alpha: number): string {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   tieneModuloProyectos(): boolean {

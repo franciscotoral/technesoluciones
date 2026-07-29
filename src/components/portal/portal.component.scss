@@ -1,0 +1,94 @@
+.service-card {
+  border-radius: 14px;
+  overflow: hidden;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.card-thumb {
+  position: relative;
+  height: 110px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+}
+
+.card-thumb-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle, rgba(255, 255, 255, 1) 1px, transparent 1px
+  );
+  background-size: 14px 14px;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.card-thumb-illustration {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.service-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.service-icon {
+  position: relative;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.service-card-body {
+  padding: 12px 14px;
+}
+
+.service-card-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.service-card-description {
+  margin: 0;
+  font-size: 11px;
+}
+
+.service-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+@media (hover: hover) {
+  .service-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .service-card {
+    transition: none;
+  }
+}
