@@ -402,62 +402,107 @@
                 {{ i18n.lang() === 'es' ? 'No tienes proyectos activos en este momento' : 'You have no active projects at this time' }}
               </p>
             } @else {
-              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="projects-grid mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @for (p of misProyectos(); track p.id) {
-                  <article class="flex flex-col rounded-lg border border-slate-700/60 bg-slate-900/40 p-4">
-                    <div class="flex items-start justify-between gap-2">
-                      <h3 class="text-base font-semibold text-white break-words">{{ p.nombre }}</h3>
+                  @let visualType = projectVisualType(p.tipo);
+                  <article
+                    class="project-card"
+                    [attr.data-project-type]="visualType"
+                  >
+                    <div class="project-thumb">
+                      <div class="project-thumb-pattern" aria-hidden="true"></div>
+
+                      @switch (visualType) {
+                        @case ('obra-nueva') {
+                          <svg class="project-thumb-illustration" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                            <path d="M28 79V39l35-17 35 17v40M98 79V27h48v52M146 79V43h48v36" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M43 48h12v12H43zM69 48h12v12H69zM111 40h10v12h-10zM128 40h10v12h-10zM158 54h10v10h-10zM176 54h10v10h-10z" fill="currentColor"/>
+                            <path d="M16 79h208" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        }
+                        @case ('rehabilitacion') {
+                          <svg class="project-thumb-illustration" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                            <path d="M38 79V28h77v51M115 79V42h55v37M50 42h16v14H50zM83 42h16v14H83zM50 64h16v15H50zM83 64h16v15H83z" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M151 22a29 29 0 0 1 24 12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                            <path d="m178 27-2 11-11-2" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20 79h200" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        }
+                        @case ('mantenimiento') {
+                          <svg class="project-thumb-illustration" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                            <circle cx="120" cy="46" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="120" cy="46" r="19" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="120" cy="46" r="7" fill="currentColor"/>
+                            <path d="M120 9v13M120 70v13M83 46h13M144 46h13M94 20l9 9M137 63l9 9M146 20l-9 9M103 63l-9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          </svg>
+                        }
+                        @case ('inspeccion') {
+                          <svg class="project-thumb-illustration" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                            <path d="M78 12h64l20 20v48H78z" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M142 12v20h20M94 43h51M94 54h38M94 65h44" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="158" cy="65" r="14" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path d="m168 75 11 9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                          </svg>
+                        }
+                        @default {
+                          <svg class="project-thumb-illustration" viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                            <path d="M68 25h38l9 10h57v43H68z" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M68 43h104M88 54h16v12H88zM112 54h16v12h-16zM136 54h16v12h-16z" fill="none" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        }
+                      }
+
+                      <span class="project-type-badge">
+                        {{ proyectoTipoLabel(p.tipo) }}
+                      </span>
                       <span
-                        class="shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                        class="project-status-badge border"
                         [class]="proyectoEstadoBadgeClass(p.estado)"
                       >
                         {{ proyectoEstadoLabel(p.estado) }}
                       </span>
+                      <span class="project-pct">{{ proyectoAvance(p) }}%</span>
                     </div>
 
-                    <span class="mt-2 inline-flex w-fit rounded-full border border-slate-600 px-2.5 py-0.5 text-xs text-gray-300">
-                      {{ proyectoTipoLabel(p.tipo) }}
-                    </span>
+                    <div class="project-body">
+                      <h3 class="project-name">{{ p.nombre }}</h3>
 
-                    @if (proyectoAprobacionesPendientes(p) > 0) {
-                      <span class="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/15 px-2.5 py-1 text-xs font-semibold text-red-200">
-                        {{ proyectoAprobacionesTexto(p) }}
-                      </span>
-                    }
+                      @if (proyectoAprobacionesPendientes(p) > 0) {
+                        <span class="project-approvals">
+                          {{ proyectoAprobacionesTexto(p) }}
+                        </span>
+                      }
 
-                    <div class="mt-4">
-                      <div class="flex items-center justify-between text-xs text-gray-400">
-                        <span>{{ i18n.lang() === 'es' ? 'Avance' : 'Progress' }}</span>
-                        <span class="font-semibold text-cyan-200">{{ proyectoAvance(p) }}%</span>
-                      </div>
+                      @if (p.proximo_hito) {
+                        <p class="project-hito">
+                          <span aria-hidden="true">→</span>
+                          <span>{{ p.proximo_hito }}</span>
+                        </p>
+                      } @else {
+                        <p class="project-hito project-hito--empty">
+                          {{ i18n.lang() === 'es' ? 'Sin hito definido' : 'No milestone defined' }}
+                        </p>
+                      }
+
                       <div
-                        class="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-700/70"
+                        class="project-progress-track"
                         role="progressbar"
                         [attr.aria-valuenow]="proyectoAvance(p)"
                         aria-valuemin="0"
                         aria-valuemax="100"
                         [attr.aria-label]="(i18n.lang() === 'es' ? 'Avance de ' : 'Progress of ') + p.nombre"
                       >
-                        <div class="h-full bg-cyan-500" [style.width]="proyectoAvance(p) + '%'"></div>
+                        <div class="project-progress-fill" [style.width.%]="proyectoAvance(p)"></div>
                       </div>
+
+                      <a
+                        [routerLink]="['/portal/proyecto', p.id]"
+                        [attr.aria-label]="(i18n.lang() === 'es' ? 'Ver proyecto ' : 'View project ') + p.nombre"
+                        class="project-btn"
+                      >
+                        {{ i18n.lang() === 'es' ? 'Ver proyecto' : 'View project' }}
+                      </a>
                     </div>
-
-                    @if (p.proximo_hito) {
-                      <div class="mt-3">
-                        <p class="text-xs text-gray-400">{{ i18n.lang() === 'es' ? 'Proximo hito' : 'Next milestone' }}</p>
-                        <p class="mt-0.5 text-sm text-gray-200">{{ p.proximo_hito }}</p>
-                      </div>
-                    }
-
-                    <div class="flex-grow"></div>
-
-                    <a
-                      [routerLink]="['/portal/proyecto', p.id]"
-                      [attr.aria-label]="(i18n.lang() === 'es' ? 'Ver proyecto ' : 'View project ') + p.nombre"
-                      class="mt-4 inline-flex items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 transition-colors"
-                    >
-                      {{ i18n.lang() === 'es' ? 'Ver proyecto' : 'View project' }}
-                    </a>
                   </article>
                 }
               </div>

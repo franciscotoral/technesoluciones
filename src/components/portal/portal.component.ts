@@ -11,6 +11,7 @@ import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
 type DashboardBlockId = 'summary' | 'model' | 'composition' | 'rd105' | 'timeline' | 'projects';
+type ProjectVisualType = 'obra-nueva' | 'rehabilitacion' | 'mantenimiento' | 'inspeccion' | 'default';
 
 interface PortalTool {
   key: string;
@@ -278,6 +279,21 @@ export class PortalComponent implements OnInit, OnDestroy {
         return es ? 'Inspección' : 'Inspection';
       default:
         return tipo;
+    }
+  }
+
+  projectVisualType(tipo: string | null | undefined): ProjectVisualType {
+    switch (tipo) {
+      case 'obra_nueva':
+        return 'obra-nueva';
+      case 'rehabilitacion':
+        return 'rehabilitacion';
+      case 'mantenimiento':
+        return 'mantenimiento';
+      case 'inspeccion':
+        return 'inspeccion';
+      default:
+        return 'default';
     }
   }
 
