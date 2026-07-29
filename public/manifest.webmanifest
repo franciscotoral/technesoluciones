@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Techne Soluciones",
+  "short_name": "Techne",
+  "description": "Portal de consultoría técnica y seguimiento de proyectos",
+  "lang": "es",
+  "dir": "ltr",
+  "theme_color": "#0d1f33",
+  "background_color": "#0d1f33",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/portal",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
