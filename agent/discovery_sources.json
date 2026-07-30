@@ -1,0 +1,126 @@
+[
+  {
+    "key": "trafikverket_projects",
+    "name": "Trafikverket",
+    "country_hint": "Sweden",
+    "seed_urls": [
+      "https://www.trafikverket.se/projekt"
+    ],
+    "sitemap_urls": [
+      "https://www.trafikverket.se/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "trafikverket.se"
+    ],
+    "include_path_patterns": [
+      "/vara-projekt/",
+      "/projekt/"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/nyheter",
+      "/om-webbplatsen/",
+      "/kontakta-oss/",
+      "/jobb-och-framtid/"
+    ],
+    "max_depth": 2,
+    "max_pages": 80,
+    "min_link_score": 2,
+    "min_candidate_score": 6
+  },
+  {
+    "key": "adif_major_projects",
+    "enabled": false,
+    "disabled_reason": "Adif currently returns HTTP 403 to automated clients; re-enable when an approved feed or API is available.",
+    "name": "Adif",
+    "country_hint": "Spain",
+    "seed_urls": [
+      "https://www.adif.es/viajeros/grandes-proyectos"
+    ],
+    "sitemap_urls": [
+      "https://www.adif.es/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "adif.es"
+    ],
+    "include_path_patterns": [
+      "/grandes-proyectos",
+      "/proyectos",
+      "/obras",
+      "/-/"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/empleo",
+      "/contacto",
+      "/aviso-legal",
+      "/politica-de-privacidad"
+    ],
+    "max_depth": 2,
+    "max_pages": 70,
+    "min_link_score": 2,
+    "min_candidate_score": 6
+  },
+  {
+    "key": "autobahn_projects",
+    "name": "Die Autobahn GmbH des Bundes",
+    "country_hint": "Germany",
+    "seed_urls": [
+      "https://www.autobahn.de/planen-bauen"
+    ],
+    "sitemap_urls": [
+      "https://www.autobahn.de/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "autobahn.de"
+    ],
+    "include_path_patterns": [
+      "/planen-bauen/projekt/"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/karriere",
+      "/kontakt",
+      "/datenschutz",
+      "/impressum"
+    ],
+    "max_depth": 2,
+    "max_pages": 70,
+    "min_link_score": 2,
+    "min_candidate_score": 6
+  },
+  {
+    "key": "eu_transport_projects",
+    "name": "European Commission - Mobility and Transport",
+    "country_hint": "European Union",
+    "seed_urls": [
+      "https://transport.ec.europa.eu/news-events/main-events/connecting-europe-days-2026/exhibition/exhibition-programme_en",
+      "https://transport.ec.europa.eu/transport-themes/infrastructure-and-investment/trans-european-transport-network-ten-t_en"
+    ],
+    "sitemap_urls": [
+      "https://transport.ec.europa.eu/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "transport.ec.europa.eu"
+    ],
+    "include_path_patterns": [
+      "/projects/",
+      "/exhibition"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/legal-notice",
+      "/cookies",
+      "/privacy-policy",
+      "/contact",
+      "/news-events/",
+      "/media-corner/",
+      "/facts-funding",
+      "/transport-themes/"
+    ],
+    "max_depth": 2,
+    "max_pages": 80,
+    "min_link_score": 3,
+    "min_candidate_score": 7
+  }
+]

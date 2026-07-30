@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from urllib.parse import quote
+from uuid import UUID, uuid4
 
 import anthropic
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, status
+from fastapi import FastAPI, File, Form, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -935,6 +936,224 @@ def _service_rest_request(
     return []
 
   return response.json()
+
+
+class CandidateApproveRequest(BaseModel):
+  name: str = Field(min_length=1, max_length=240)
+  country: str = Field(min_length=1, max_length=120)
+  infrastructure_type: str = Field(min_length=1, max_length=80)
+  budget_millions: Optional[float] = Field(default=None, ge=0)
+  status: str = Field(min_length=1, max_length=40)
+  description: Optional[str] = Field(default=None, max_length=4000)
+  slug: str = Field(
+    min_length=1,
+    max_length=180,
+    pattern=r'^[a-z0-9]+(?:-[a-z0-9]+)*$',
+  )
+  notes: Optional[str] = Field(default=None, max_length=2000)
+
+
+class CandidateRejectRequest(BaseModel):
+  notes: Optional[str] = Field(default=None, max_length=2000)
+
+
+class CandidatePublishResponse(BaseModel):
+  project_id: str
+  slug: str
+
+
+def _get_discovery_candidate(candidate_id: UUID) -> Dict[str, Any]:
+  rows = _service_rest_get(
+    'project_discovery_candidates'
+    f'?id=eq.{quote(str(candidate_id), safe="")}&select=*'
+  )
+  if not rows:
+    raise HTTPException(status_code=404, detail='Candidato no encontrado.')
+  return rows[0]
+
+
+def _candidate_project_status(value: str) -> str:
+  normalized = value.strip().lower()
+  statuses = {
+    'planificacion': 'Pipeline',
+    'planificación': 'Pipeline',
+    'pipeline': 'Pipeline',
+    'licitacion': 'Tendering',
+    'licitación': 'Tendering',
+    'tendering': 'Tendering',
+    'ejecucion': 'Execution',
+    'ejecución': 'Execution',
+    'execution': 'Execution',
+    'finalizado': 'Monitoring',
+    'monitoring': 'Monitoring',
+  }
+  mapped = statuses.get(normalized)
+  if not mapped:
+    raise HTTPException(status_code=422, detail='Estado de proyecto no valido.')
+  return mapped
+
+
+def _candidate_infrastructure_type(value: str) -> str:
+  normalized = value.strip()
+  if normalized == 'Energético':
+    normalized = 'Energetico'
+  allowed = {'Ferroviario', 'Puentes', 'Hospitalario', 'Energetico', 'Portuario'}
+  if normalized not in allowed:
+    raise HTTPException(status_code=422, detail='Tipo de infraestructura no valido.')
+  return normalized
+
+
+def _rollback_published_candidate_project(project_id: str) -> None:
+  try:
+    _service_rest_request(
+      'DELETE',
+      f'european_projects?id=eq.{quote(project_id, safe="")}',
+      prefer='return=minimal',
+    )
+  except HTTPException:
+    # The original publication error is more useful to the caller. Any orphan
+    # remains identifiable because its official_source_url points to the candidate.
+    pass
+
+
+@app.get('/api/v1/admin/candidates')
+def list_discovery_candidates(
+  status_filter: str = Query(default='qualified', alias='status', min_length=1, max_length=40),
+  review: str = Query(default='pending', min_length=1, max_length=40),
+  limit: int = Query(default=50, ge=1, le=200),
+  offset: int = Query(default=0, ge=0),
+  authorization: Optional[str] = Header(default=None),
+) -> List[Dict[str, Any]]:
+  require_admin(authorization)
+
+  qualification_filter = f'qualification_status=eq.{quote(status_filter, safe="")}'
+  if review == 'reviewed':
+    review_filter = 'review_status=in.(approved,rejected,published)'
+  else:
+    review_filter = f'review_status=eq.{quote(review, safe="")}'
+
+  return _service_rest_get(
+    'project_discovery_candidates'
+    f'?select=*&{qualification_filter}&{review_filter}'
+    '&order=confidence.desc.nullslast,evidence_quality.desc.nullslast'
+    f'&limit={limit}&offset={offset}'
+  )
+
+
+@app.get('/api/v1/admin/candidates/{candidate_id}')
+def get_discovery_candidate(
+  candidate_id: UUID,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+  require_admin(authorization)
+  return _get_discovery_candidate(candidate_id)
+
+
+@app.post(
+  '/api/v1/admin/candidates/{candidate_id}/approve',
+  response_model=CandidatePublishResponse,
+)
+def approve_discovery_candidate(
+  candidate_id: UUID,
+  payload: CandidateApproveRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Dict[str, str]:
+  admin, _token = require_admin(authorization)
+  candidate = _get_discovery_candidate(candidate_id)
+
+  if candidate.get('qualification_status') != 'qualified':
+    raise HTTPException(status_code=409, detail='El candidato no esta calificado para publicacion.')
+  if candidate.get('review_status') != 'pending':
+    raise HTTPException(status_code=409, detail='El candidato ya fue revisado.')
+
+  project_status = _candidate_project_status(payload.status)
+  infrastructure_type = _candidate_infrastructure_type(payload.infrastructure_type)
+  slug = payload.slug.strip()
+  name = payload.name.strip()
+  country = payload.country.strip()
+
+  project_body = {
+    'slug': slug,
+    'name': name,
+    'country': country,
+    'city': None,
+    'infrastructure_type': infrastructure_type,
+    'status': project_status,
+    'budget_eur_m': payload.budget_millions,
+    'timeframe': None,
+    'summary': payload.description.strip() if payload.description and payload.description.strip() else None,
+    'route': None,
+    'client': None,
+    'key_focus': None,
+    'required_services': None,
+    'official_source_url': candidate.get('canonical_url'),
+    'source_owner': candidate.get('source_owner'),
+    'source_last_checked_at': utc_now_iso(),
+  }
+
+  project_rows = _service_rest_request('POST', 'european_projects', json_body=project_body)
+  if not project_rows:
+    raise HTTPException(status_code=502, detail='Supabase no devolvio el proyecto publicado.')
+
+  project_id = str(project_rows[0].get('id') or '')
+  if not project_id:
+    raise HTTPException(status_code=502, detail='El proyecto publicado no tiene identificador.')
+
+  review_body = {
+    'review_status': 'approved',
+    'review_notes': payload.notes.strip() if payload.notes and payload.notes.strip() else None,
+    'reviewed_at': utc_now_iso(),
+    'reviewed_by': admin.id,
+    'published_project_id': project_id,
+  }
+
+  try:
+    candidate_rows = _service_rest_request(
+      'PATCH',
+      'project_discovery_candidates'
+      f'?id=eq.{quote(str(candidate_id), safe="")}&review_status=eq.pending',
+      json_body=review_body,
+    )
+  except HTTPException:
+    _rollback_published_candidate_project(project_id)
+    raise
+
+  if not candidate_rows:
+    _rollback_published_candidate_project(project_id)
+    raise HTTPException(status_code=409, detail='El candidato fue revisado por otro administrador.')
+
+  return {'project_id': project_id, 'slug': slug}
+
+
+@app.post(
+  '/api/v1/admin/candidates/{candidate_id}/reject',
+  status_code=status.HTTP_204_NO_CONTENT,
+  response_class=Response,
+)
+def reject_discovery_candidate(
+  candidate_id: UUID,
+  payload: CandidateRejectRequest,
+  authorization: Optional[str] = Header(default=None),
+) -> Response:
+  admin, _token = require_admin(authorization)
+  candidate = _get_discovery_candidate(candidate_id)
+  if candidate.get('review_status') != 'pending':
+    raise HTTPException(status_code=409, detail='El candidato ya fue revisado.')
+
+  rows = _service_rest_request(
+    'PATCH',
+    'project_discovery_candidates'
+    f'?id=eq.{quote(str(candidate_id), safe="")}&review_status=eq.pending',
+    json_body={
+      'review_status': 'rejected',
+      'review_notes': payload.notes.strip() if payload.notes and payload.notes.strip() else None,
+      'reviewed_at': utc_now_iso(),
+      'reviewed_by': admin.id,
+    },
+  )
+  if not rows:
+    raise HTTPException(status_code=409, detail='El candidato fue revisado por otro administrador.')
+  return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def _attach_proyecto_counts(rows: List[Dict[str, Any]], token: str) -> List[Dict[str, Any]]:

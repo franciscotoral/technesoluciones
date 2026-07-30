@@ -22,10 +22,42 @@ import {
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
-type AdminTab = 'general' | 'access' | 'proyectos';
+type AdminTab = 'general' | 'access' | 'proyectos' | 'candidatos';
 
 type ProyectosVista = 'lista' | 'formulario' | 'detalle';
 type ProyectoFiltroEstado = 'todos' | 'activo' | 'pausado' | 'completado';
+type CandidateCountryFilter = 'all' | 'ES' | 'SE' | 'DE' | 'DK' | 'other';
+type CandidateAction = 'approve' | 'reject';
+
+interface DiscoveryCandidate {
+  id: string;
+  candidate_key: string;
+  canonical_url: string;
+  source_key: string;
+  source_owner: string;
+  country_hint: string | null;
+  title: string;
+  description: string | null;
+  source_excerpt: string | null;
+  heuristic_score: number;
+  is_project: boolean | null;
+  confidence: number | null;
+  evidence_quality: 'strong' | 'medium' | 'weak' | null;
+  rejection_reason: string | null;
+  extracted_json: Record<string, unknown>;
+  proposed_slug: string | null;
+  qualification_status: 'unclassified' | 'qualified' | 'rejected';
+  review_status: 'pending' | 'approved' | 'rejected' | 'published';
+  review_notes: string | null;
+  reviewed_at: string | null;
+  published_project_id: string | null;
+  last_seen_at: string;
+}
+
+interface CandidatePublishResponse {
+  project_id: string;
+  slug: string;
+}
 
 interface ProyectoFormData {
   nombre: string;
@@ -126,6 +158,24 @@ export class AdminComponent implements OnInit {
   readonly tenantModels = signal<TenantModel[]>([]);
 
   readonly activeTab = signal<AdminTab>('general');
+  readonly candidates = signal<DiscoveryCandidate[]>([]);
+  readonly candidatesLoading = signal(false);
+  readonly candidatesLoadedView = signal<'pending' | 'reviewed' | null>(null);
+  readonly candidatesError = signal<string | null>(null);
+  readonly candidatesInfo = signal<string | null>(null);
+  readonly candidateCountryFilter = signal<CandidateCountryFilter>('all');
+  readonly candidatesShowReviewed = signal(false);
+  readonly candidateActionId = signal<string | null>(null);
+  readonly candidateAction = signal<CandidateAction | null>(null);
+  readonly candidateSavingId = signal<string | null>(null);
+
+  readonly filteredCandidates = computed(() => {
+    const filter = this.candidateCountryFilter();
+    return [...this.candidates()]
+      .filter((candidate) => filter === 'all' || this.candidateCountryCode(candidate) === filter)
+      .sort((a, b) => Number(b.confidence ?? 0) - Number(a.confidence ?? 0));
+  });
+
   readonly accessModules = signal<ModuleRow[]>([]);
   readonly accessLoading = signal(false);
   readonly accessError = signal<string | null>(null);
@@ -535,6 +585,240 @@ export class AdminComponent implements OnInit {
     if (tab === 'proyectos' && !this.proyectosListaLoaded() && !this.proyectosListaLoading()) {
       await this.loadProyectosLista();
     }
+    if (tab === 'candidatos' && !this.candidatesLoadedView() && !this.candidatesLoading()) {
+      await this.loadCandidates();
+    }
+  }
+
+  async loadCandidates() {
+    if (this.candidatesLoading()) return;
+    this.candidatesLoading.set(true);
+    this.candidatesError.set(null);
+    this.candidatesInfo.set(null);
+    this.candidateActionId.set(null);
+    this.candidateAction.set(null);
+
+    const view = this.candidatesShowReviewed() ? 'reviewed' : 'pending';
+    try {
+      const params = new URLSearchParams({
+        status: 'qualified',
+        review: view,
+        limit: '200',
+        offset: '0',
+      });
+      const rows = await this.candidateApiRequest<DiscoveryCandidate[]>(
+        `/api/v1/admin/candidates?${params.toString()}`
+      );
+      this.candidates.set(rows);
+      this.candidatesLoadedView.set(view);
+    } catch (err) {
+      this.candidates.set([]);
+      this.candidatesLoadedView.set(null);
+      this.candidatesError.set(
+        this.extractErrorMessage(err, 'No se pudieron cargar los candidatos.', 'Could not load candidates.')
+      );
+    } finally {
+      this.candidatesLoading.set(false);
+    }
+  }
+
+  async onCandidatesReviewedToggle(checked: boolean) {
+    this.candidatesShowReviewed.set(checked);
+    this.candidatesLoadedView.set(null);
+    await this.loadCandidates();
+  }
+
+  onCandidateCountryFilter(filter: CandidateCountryFilter) {
+    this.candidateCountryFilter.set(filter);
+  }
+
+  openCandidateAction(candidateId: string, action: CandidateAction) {
+    this.candidateActionId.set(candidateId);
+    this.candidateAction.set(action);
+    this.candidatesError.set(null);
+    this.candidatesInfo.set(null);
+  }
+
+  cancelCandidateAction() {
+    if (this.candidateSavingId()) return;
+    this.candidateActionId.set(null);
+    this.candidateAction.set(null);
+  }
+
+  async approveCandidate(
+    event: Event,
+    candidate: DiscoveryCandidate,
+    name: string,
+    country: string,
+    infrastructureType: string,
+    budgetMillions: string,
+    projectStatus: string,
+    description: string,
+    slug: string,
+    notes: string
+  ) {
+    event.preventDefault();
+    if (this.candidateSavingId()) return;
+
+    const budget = budgetMillions.trim() ? Number(budgetMillions) : null;
+    if (budget !== null && (!Number.isFinite(budget) || budget < 0)) {
+      this.candidatesError.set(
+        this.i18n.lang() === 'es'
+          ? 'El presupuesto debe ser un numero positivo.'
+          : 'Budget must be a positive number.'
+      );
+      return;
+    }
+
+    this.candidateSavingId.set(candidate.id);
+    this.candidatesError.set(null);
+    this.candidatesInfo.set(null);
+    try {
+      await this.candidateApiRequest<CandidatePublishResponse>(
+        `/api/v1/admin/candidates/${encodeURIComponent(candidate.id)}/approve`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: name.trim(),
+            country,
+            infrastructure_type: infrastructureType,
+            budget_millions: budget,
+            status: projectStatus,
+            description: description.trim() || null,
+            slug: slug.trim(),
+            notes: notes.trim() || null,
+          }),
+        }
+      );
+      this.removeCandidateFromCurrentList(candidate.id);
+      this.candidatesInfo.set(
+        this.i18n.lang() === 'es' ? 'Publicado correctamente' : 'Published successfully'
+      );
+    } catch (err) {
+      this.candidatesError.set(
+        this.extractErrorMessage(err, 'No se pudo publicar el proyecto.', 'Could not publish the project.')
+      );
+    } finally {
+      this.candidateSavingId.set(null);
+    }
+  }
+
+  async rejectCandidate(event: Event, candidate: DiscoveryCandidate, notes: string) {
+    event.preventDefault();
+    if (this.candidateSavingId()) return;
+
+    this.candidateSavingId.set(candidate.id);
+    this.candidatesError.set(null);
+    this.candidatesInfo.set(null);
+    try {
+      await this.candidateApiRequest<void>(
+        `/api/v1/admin/candidates/${encodeURIComponent(candidate.id)}/reject`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ notes: notes.trim() || null }),
+        }
+      );
+      this.removeCandidateFromCurrentList(candidate.id);
+      this.candidatesInfo.set(
+        this.i18n.lang() === 'es' ? 'Candidato rechazado' : 'Candidate rejected'
+      );
+    } catch (err) {
+      this.candidatesError.set(
+        this.extractErrorMessage(err, 'No se pudo rechazar el candidato.', 'Could not reject the candidate.')
+      );
+    } finally {
+      this.candidateSavingId.set(null);
+    }
+  }
+
+  candidateCountryCode(candidate: DiscoveryCandidate): CandidateCountryFilter {
+    const extractedCountry =
+      typeof candidate.extracted_json?.['country'] === 'string'
+        ? candidate.extracted_json['country']
+        : '';
+    const value = `${candidate.country_hint ?? ''} ${extractedCountry}`.toLowerCase();
+    if (value.includes('spain') || value.includes('españa')) return 'ES';
+    if (value.includes('sweden') || value.includes('suecia')) return 'SE';
+    if (value.includes('germany') || value.includes('alemania')) return 'DE';
+    if (value.includes('denmark') || value.includes('dinamarca')) return 'DK';
+    return 'other';
+  }
+
+  candidateCountryFlag(candidate: DiscoveryCandidate): string {
+    switch (this.candidateCountryCode(candidate)) {
+      case 'ES': return '🇪🇸';
+      case 'SE': return '🇸🇪';
+      case 'DE': return '🇩🇪';
+      case 'DK': return '🇩🇰';
+      default: return '🌍';
+    }
+  }
+
+  candidateCountryLabel(candidate: DiscoveryCandidate): string {
+    const extractedCountry =
+      typeof candidate.extracted_json?.['country'] === 'string'
+        ? candidate.extracted_json['country']
+        : '';
+    return candidate.country_hint || extractedCountry || (this.i18n.lang() === 'es' ? 'Sin pais' : 'No country');
+  }
+
+  candidateDefaultCountry(candidate: DiscoveryCandidate): string {
+    switch (this.candidateCountryCode(candidate)) {
+      case 'SE': return 'Sweden';
+      case 'DE': return 'Germany';
+      case 'DK': return 'Denmark';
+      default: return 'Spain';
+    }
+  }
+
+  candidateDefaultInfrastructure(candidate: DiscoveryCandidate): string {
+    const value = candidate.extracted_json?.['infrastructure_type'];
+    const normalized = value === 'Energético' ? 'Energetico' : value;
+    const allowed = ['Ferroviario', 'Puentes', 'Hospitalario', 'Energetico', 'Portuario'];
+    return typeof normalized === 'string' && allowed.includes(normalized) ? normalized : 'Ferroviario';
+  }
+
+  candidateDefaultStatus(candidate: DiscoveryCandidate): string {
+    const value = candidate.extracted_json?.['status'];
+    const allowed = ['Pipeline', 'Tendering', 'Execution', 'Monitoring'];
+    return typeof value === 'string' && allowed.includes(value) ? value : 'Pipeline';
+  }
+
+  candidateDefaultSlug(candidate: DiscoveryCandidate): string {
+    if (candidate.proposed_slug) return candidate.proposed_slug;
+    return candidate.title
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 180);
+  }
+
+  candidateConfidence(candidate: DiscoveryCandidate): number {
+    return Math.round(Number(candidate.confidence ?? 0) * 100);
+  }
+
+  candidateConfidenceClass(candidate: DiscoveryCandidate): string {
+    const confidence = Number(candidate.confidence ?? 0);
+    if (confidence >= 0.9) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300';
+    if (confidence >= 0.7) return 'border-amber-500/40 bg-amber-500/10 text-amber-300';
+    return 'border-slate-600 bg-slate-800 text-slate-300';
+  }
+
+  candidateEvidenceLabel(candidate: DiscoveryCandidate): string {
+    switch (candidate.evidence_quality) {
+      case 'strong': return this.i18n.lang() === 'es' ? 'Evidencia fuerte' : 'Strong evidence';
+      case 'medium': return this.i18n.lang() === 'es' ? 'Evidencia media' : 'Medium evidence';
+      case 'weak': return this.i18n.lang() === 'es' ? 'Evidencia debil' : 'Weak evidence';
+      default: return this.i18n.lang() === 'es' ? 'Sin evaluar' : 'Not assessed';
+    }
+  }
+
+  candidateDescription(candidate: DiscoveryCandidate): string {
+    const value = (candidate.description || candidate.source_excerpt || '').trim();
+    if (!value) return this.i18n.lang() === 'es' ? 'Sin descripcion.' : 'No description.';
+    return value.length > 280 ? `${value.slice(0, 277)}...` : value;
   }
 
   async loadAccessTab() {
@@ -1266,6 +1550,54 @@ export class AdminComponent implements OnInit {
     if (this.accessUsers().length > 0) return;
     const users = await this.adminApi.listUsers();
     this.accessUsers.set(users);
+  }
+
+  private removeCandidateFromCurrentList(candidateId: string) {
+    this.candidates.set(this.candidates().filter((candidate) => candidate.id !== candidateId));
+    this.candidateActionId.set(null);
+    this.candidateAction.set(null);
+  }
+
+  private async candidateApiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+    const accessToken = this.auth.accessToken();
+    if (!accessToken) {
+      throw new Error(
+        this.i18n.lang() === 'es' ? 'La sesion no es valida.' : 'The session is not valid.'
+      );
+    }
+
+    const response = await fetch(path, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        ...(init?.headers ?? {}),
+      },
+    });
+
+    if (!response.ok) {
+      let message = this.i18n.lang() === 'es' ? 'Error en la API de candidatos.' : 'Candidate API error.';
+      try {
+        const payload = (await response.json()) as {
+          detail?: string | Array<{ msg?: string }>;
+          error?: string;
+          message?: string;
+        };
+        if (typeof payload.detail === 'string') {
+          message = payload.detail;
+        } else if (Array.isArray(payload.detail)) {
+          message = payload.detail.map((item) => item.msg).filter(Boolean).join('. ') || message;
+        } else {
+          message = payload.error ?? payload.message ?? message;
+        }
+      } catch {
+        // Ignore non-JSON error bodies.
+      }
+      throw new Error(message);
+    }
+
+    if (response.status === 204) return undefined as T;
+    return (await response.json()) as T;
   }
 
   private extractErrorMessage(err: unknown, fallbackEs: string, fallbackEn: string): string {

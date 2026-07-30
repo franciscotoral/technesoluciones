@@ -17,6 +17,11 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
+try:
+    from project_discovery import DiscoverySource, ProjectDiscoveryEngine
+except ModuleNotFoundError:
+    from agent.project_discovery import DiscoverySource, ProjectDiscoveryEngine
+
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -34,6 +39,9 @@ class AgentStats:
     oportunidades_inserted: int = 0
     european_projects_upserted: int = 0
     cambios_logged: int = 0
+    project_candidates_discovered: int = 0
+    project_candidates_qualified: int = 0
+    project_candidates_staged: int = 0
 
 
 class OstlankenAgent:
@@ -53,8 +61,26 @@ class OstlankenAgent:
             self.portfolio_sources_path = configured_sources_path
         else:
             self.portfolio_sources_path = Path(__file__).resolve().parent / configured_sources_path
+        discovery_sources_value = os.getenv("DISCOVERY_SOURCES_FILE", "discovery_sources.json").strip()
+        configured_discovery_path = Path(discovery_sources_value)
+        if configured_discovery_path.is_absolute():
+            self.discovery_sources_path = configured_discovery_path
+        else:
+            self.discovery_sources_path = Path(__file__).resolve().parent / configured_discovery_path
         self.enable_portfolio_sync = os.getenv("ENABLE_PORTFOLIO_SYNC", "1").strip() == "1"
         self.portfolio_only = os.getenv("PORTFOLIO_ONLY", "0").strip() == "1"
+        self.enable_project_discovery = os.getenv("ENABLE_PROJECT_DISCOVERY", "0").strip() == "1"
+        self.discovery_only = os.getenv("DISCOVERY_ONLY", "0").strip() == "1"
+        self.discovery_max_candidates = max(1, min(200, int(os.getenv("DISCOVERY_MAX_CANDIDATES", "40"))))
+        self.discovery_batch_size = max(1, min(10, int(os.getenv("DISCOVERY_BATCH_SIZE", "5"))))
+        self.discovery_max_text_chars = max(
+            2_000,
+            min(20_000, int(os.getenv("DISCOVERY_MAX_TEXT_CHARS", "6000"))),
+        )
+        self.discovery_min_ai_confidence = max(
+            0.0,
+            min(1.0, float(os.getenv("DISCOVERY_MIN_AI_CONFIDENCE", "0.65"))),
+        )
         self.max_portfolio_source_chars = int(os.getenv("MAX_PORTFOLIO_SOURCE_CHARS", "9000"))
         self.max_procurement_items = int(os.getenv("MAX_PROCUREMENT_ITEMS", "24"))
         self.max_news_items = int(os.getenv("MAX_NEWS_ITEMS", "30"))
@@ -85,7 +111,7 @@ class OstlankenAgent:
             licitaciones_structured: list[dict[str, Any]] = []
             scored_articles: list[dict[str, Any]] = []
 
-            if not self.portfolio_only:
+            if not self.portfolio_only and not self.discovery_only:
                 licitaciones_raw = self.scrape_trafikverket_procurement()
                 licitaciones_structured = self.classify_licitaciones_with_claude(licitaciones_raw)
                 self.upsert_licitaciones(licitaciones_structured)
@@ -97,10 +123,15 @@ class OstlankenAgent:
                 opportunities = self.generate_opportunities_with_claude(licitaciones_structured, scored_articles)
                 self.insert_opportunities(opportunities)
 
-            if self.enable_portfolio_sync:
+            if self.enable_portfolio_sync and not self.discovery_only:
                 official_sources = self.scrape_official_portfolio_sources()
                 structured_projects = self.classify_portfolio_projects_with_claude(official_sources)
                 self.upsert_european_projects(structured_projects)
+
+            if self.enable_project_discovery:
+                candidates = self.discover_project_candidates()
+                classifications = self.classify_discovery_candidates_with_claude(candidates)
+                self.stage_discovery_candidates(candidates, classifications)
         except Exception as exc:  # noqa: BLE001
             logger.exception("Agent run failed.")
             status = "error"
@@ -118,6 +149,9 @@ class OstlankenAgent:
                 "oportunidades_inserted": 0,
                 "european_projects_upserted": 0,
                 "cambios_logged": 0,
+                "project_candidates_discovered": 0,
+                "project_candidates_qualified": 0,
+                "project_candidates_staged": 0,
             },
         }
         result = self.supabase.table("agent_runs").insert(payload).execute()
@@ -134,6 +168,7 @@ class OstlankenAgent:
                 self.stats.licitaciones_upserted == 0
                 and self.stats.noticias_inserted == 0
                 and self.stats.european_projects_upserted == 0
+                and self.stats.project_candidates_staged == 0
             ):
                 status = "parcial"
 
@@ -147,10 +182,179 @@ class OstlankenAgent:
                 "oportunidades_inserted": self.stats.oportunidades_inserted,
                 "european_projects_upserted": self.stats.european_projects_upserted,
                 "cambios_logged": self.stats.cambios_logged,
+                "project_candidates_discovered": self.stats.project_candidates_discovered,
+                "project_candidates_qualified": self.stats.project_candidates_qualified,
+                "project_candidates_staged": self.stats.project_candidates_staged,
             },
         }
         self.supabase.table("agent_runs").update(payload).eq("id", self.run_id).execute()
         logger.info("Finished run %s with status=%s", self.run_id, status)
+
+    def discover_project_candidates(self) -> list[dict[str, Any]]:
+        self._ensure_discovery_schema()
+        sources = self._load_discovery_sources()
+        if not sources:
+            logger.warning("No project discovery sources configured.")
+            return []
+
+        engine = ProjectDiscoveryEngine(max_text_chars=self.discovery_max_text_chars)
+        candidates = engine.discover(sources, self.discovery_max_candidates)
+        self.stats.project_candidates_discovered = len(candidates)
+        logger.info("Discovered %s project candidates for AI qualification.", len(candidates))
+        return candidates
+
+    def _ensure_discovery_schema(self) -> None:
+        try:
+            self.supabase.table("project_discovery_candidates").select("id").limit(1).execute()
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                "Project discovery schema is not available. Run supabase/project_discovery.sql "
+                "in the Supabase SQL editor before starting discovery."
+            ) from exc
+
+    def classify_discovery_candidates_with_claude(
+        self,
+        candidates: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        if not candidates:
+            return []
+
+        system_prompt = (
+            "You qualify candidate pages from official European infrastructure websites.\n"
+            "Return JSON only: a strict JSON list with one output per candidate_key.\n"
+            "Never invent a project. Set is_project=false if the page is a listing, policy page, generic news, "
+            "funding call, event, continent-wide corridor/program/system, completed minor maintenance action, "
+            "or lacks evidence of a concrete infrastructure project.\n"
+            "A valid project must identify a specific physical asset and location and contain evidence of planned, "
+            "tendering, or executing construction works. A subpage of a larger project is valid only when the source "
+            "text still names that parent project and gives concrete scope or works evidence.\n"
+            "Fields: candidate_key, is_project (boolean), confidence (0..1), evidence_quality "
+            "(strong|medium|weak), rejection_reason, name, country, city, infrastructure_type, status, "
+            "budget_eur_m, timeframe, summary, client, key_focus (array), required_services (array), "
+            "evidence_quotes (array of short paraphrased evidence statements; do not copy long passages).\n"
+            "Allowed infrastructure_type: Ferroviario, Carreteras, Puentes, Tuneles, Hospitalario, "
+            "Energetico, Portuario, Aeropuertos, Edificacion, Agua, Other.\n"
+            "Allowed status: Pipeline, Tendering, Execution, Monitoring.\n"
+            "Allowed required_services: CE-Marking, BIM requerido, Due Diligence.\n"
+            "Use null for unknown values. Keep facts grounded in source_text and source metadata."
+        )
+
+        classified: list[dict[str, Any]] = []
+        for offset in range(0, len(candidates), self.discovery_batch_size):
+            batch = candidates[offset : offset + self.discovery_batch_size]
+            payload = [
+                {
+                    "candidate_key": item["candidate_key"],
+                    "source_owner": item["source_owner"],
+                    "country_hint": item["country_hint"],
+                    "official_source_url": item["canonical_url"],
+                    "title": item["title"],
+                    "description": item["description"],
+                    "source_text": item["source_text"],
+                    "heuristic_score": item["heuristic_score"],
+                }
+                for item in batch
+            ]
+            batch_number = offset // self.discovery_batch_size + 1
+            parsed = self._parse_json_array(
+                self._get_claude_text(
+                    f"project_discovery_{batch_number}",
+                    system_prompt,
+                    json.dumps(payload, ensure_ascii=False),
+                    0,
+                    self.classify_model,
+                    3_200,
+                )
+            )
+            expected_keys = {item["candidate_key"] for item in batch}
+            classified.extend(
+                item
+                for item in parsed
+                if str(item.get("candidate_key") or "") in expected_keys
+            )
+            logger.info(
+                "Classified discovery batch %s: %s valid responses for %s candidates.",
+                batch_number,
+                len(parsed),
+                len(batch),
+            )
+
+        self.stats.project_candidates_qualified = sum(
+            1
+            for item in classified
+            if item.get("is_project") is True
+            and self._safe_confidence(item.get("confidence")) >= self.discovery_min_ai_confidence
+        )
+        logger.info(
+            "AI qualified %s of %s discovery candidates at confidence >= %.2f.",
+            self.stats.project_candidates_qualified,
+            len(candidates),
+            self.discovery_min_ai_confidence,
+        )
+        return classified
+
+    def stage_discovery_candidates(
+        self,
+        candidates: list[dict[str, Any]],
+        classifications: list[dict[str, Any]],
+    ) -> None:
+        classifications_by_key = {
+            str(item.get("candidate_key")): item
+            for item in classifications
+            if item.get("candidate_key")
+        }
+        staged_qualified = 0
+
+        for candidate in candidates:
+            candidate_key = candidate["candidate_key"]
+            classification = classifications_by_key.get(candidate_key)
+            confidence = self._safe_confidence(classification.get("confidence")) if classification else 0.0
+            is_project = classification.get("is_project") is True if classification else None
+            qualifies = bool(is_project and confidence >= self.discovery_min_ai_confidence)
+            if qualifies:
+                staged_qualified += 1
+            proposed_slug = self._discovery_slug(classification.get("name")) if classification and qualifies else None
+
+            payload = {
+                "candidate_key": candidate_key,
+                "canonical_url": candidate["canonical_url"],
+                "source_key": candidate["source_key"],
+                "source_owner": candidate["source_owner"],
+                "country_hint": candidate.get("country_hint"),
+                "discovered_from_url": candidate.get("discovered_from_url"),
+                "title": candidate.get("title") or candidate["canonical_url"],
+                "description": candidate.get("description"),
+                "source_excerpt": str(candidate.get("source_text") or "")[:2_000],
+                "content_sha256": hashlib.sha256(
+                    str(candidate.get("source_text") or "").encode("utf-8")
+                ).hexdigest(),
+                "heuristic_score": candidate.get("heuristic_score") or 0,
+                "crawl_depth": candidate.get("crawl_depth") or 0,
+                "is_project": is_project,
+                "confidence": confidence if classification else None,
+                "evidence_quality": self._safe_evidence_quality(
+                    classification.get("evidence_quality") if classification else None
+                ),
+                "rejection_reason": classification.get("rejection_reason") if classification else "AI classification missing",
+                "extracted_json": classification or {},
+                "proposed_slug": proposed_slug,
+                "qualification_status": "qualified" if qualifies else ("rejected" if classification else "unclassified"),
+                "last_seen_at": now_iso(),
+                "agent_run_id": self.run_id,
+            }
+            self.supabase.table("project_discovery_candidates").upsert(
+                payload,
+                on_conflict="canonical_url",
+            ).execute()
+            self.stats.project_candidates_staged += 1
+
+        rejected = self.stats.project_candidates_staged - staged_qualified
+        logger.info(
+            "Staged %s discovery candidates for human review: %s qualified and %s rejected/unclassified.",
+            self.stats.project_candidates_staged,
+            staged_qualified,
+            rejected,
+        )
 
     def scrape_official_portfolio_sources(self) -> list[dict[str, Any]]:
         sources = self._load_portfolio_sources()
@@ -685,6 +889,81 @@ class OstlankenAgent:
         if not isinstance(data, list):
             raise RuntimeError("Portfolio sources file must contain a JSON list.")
         return [item for item in data if isinstance(item, dict)]
+
+    def _load_discovery_sources(self) -> list[DiscoverySource]:
+        if not self.discovery_sources_path.exists():
+            logger.warning("Discovery sources file not found: %s", self.discovery_sources_path)
+            return []
+
+        with self.discovery_sources_path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+        if not isinstance(data, list):
+            raise RuntimeError("Discovery sources file must contain a JSON list.")
+
+        sources: list[DiscoverySource] = []
+        for index, item in enumerate(data):
+            if not isinstance(item, dict):
+                continue
+            if item.get("enabled") is False:
+                logger.info(
+                    "Discovery source %s is disabled: %s",
+                    item.get("key") or index,
+                    item.get("disabled_reason") or "no reason provided",
+                )
+                continue
+            try:
+                sources.append(DiscoverySource.from_dict(item))
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError(f"Invalid discovery source at index {index}: {exc}") from exc
+        return sources
+
+    def _safe_float(self, value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _safe_confidence(self, value: Any) -> float:
+        return max(0.0, min(1.0, self._safe_float(value)))
+
+    def _safe_evidence_quality(self, value: Any) -> str | None:
+        normalized = str(value or "").strip().lower()
+        return normalized if normalized in {"strong", "medium", "weak"} else None
+
+    def _discovery_slug(self, value: Any) -> str | None:
+        text = str(value or "").strip().lower()
+        if not text:
+            return None
+        replacements = {
+            "á": "a",
+            "à": "a",
+            "ä": "a",
+            "å": "a",
+            "â": "a",
+            "é": "e",
+            "è": "e",
+            "ë": "e",
+            "ê": "e",
+            "í": "i",
+            "ì": "i",
+            "ï": "i",
+            "î": "i",
+            "ó": "o",
+            "ò": "o",
+            "ö": "o",
+            "ô": "o",
+            "ú": "u",
+            "ù": "u",
+            "ü": "u",
+            "û": "u",
+            "ñ": "n",
+            "ç": "c",
+            "ß": "ss",
+        }
+        for source, target in replacements.items():
+            text = text.replace(source, target)
+        slug = re.sub(r"[^a-z0-9]+", "-", text).strip("-")
+        return slug[:100] or None
 
     def _normalize_portfolio_record(self, item: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
         allowed_types = {"Ferroviario", "Puentes", "Hospitalario", "Energetico", "Portuario"}
