@@ -122,5 +122,102 @@
     "max_pages": 80,
     "min_link_score": 3,
     "min_candidate_score": 7
+  },
+  {
+    "key": "mitma_projects",
+    "enabled": false,
+    "disabled_reason": "transportes.gob.es returns HTTP 403 to automated clients; consider RSS feed or official API when available.",
+    "name": "Ministerio de Transportes y Movilidad Sostenible",
+    "country_hint": "Spain",
+    "seed_urls": [
+      "https://www.transportes.gob.es/carreteras/proyectos-y-obras",
+      "https://www.transportes.gob.es/ferroviario/proyectos-y-obras"
+    ],
+    "sitemap_urls": [
+      "https://www.transportes.gob.es/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "transportes.gob.es"
+    ],
+    "include_path_patterns": [
+      "/proyectos",
+      "/obras",
+      "/actuaciones"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/empleo",
+      "/contacto",
+      "/aviso-legal",
+      "/prensa",
+      "/noticias",
+      "/estadisticas",
+      "/normativa"
+    ],
+    "max_depth": 2,
+    "max_pages": 80,
+    "min_link_score": 2,
+    "min_candidate_score": 6
+  },
+  {
+    "key": "contratacion_estado_obras",
+    "enabled": false,
+    "disabled_reason": "Dynamic portal requires specific API integration; static crawling returns no usable links.",
+    "name": "Plataforma de Contratación del Sector Público",
+    "country_hint": "Spain",
+    "seed_urls": [
+      "https://contrataciondelestado.es/wps/portal/plataforma"
+    ],
+    "sitemap_urls": [],
+    "allowed_domains": [
+      "contrataciondelestado.es"
+    ],
+    "include_path_patterns": [
+      "/licitacion",
+      "/expediente",
+      "/obra",
+      "/contrato"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/contacto",
+      "/aviso-legal",
+      "/accesibilidad",
+      "/ayuda"
+    ],
+    "max_depth": 2,
+    "max_pages": 30,
+    "min_link_score": 3,
+    "min_candidate_score": 7
+  },
+  {
+    "key": "seopan_observatorio",
+    "name": "SEOPAN - Observatorio de la Construcción",
+    "country_hint": "Spain",
+    "seed_urls": [
+      "https://seopan.es"
+    ],
+    "sitemap_urls": [
+      "https://seopan.es/sitemap.xml"
+    ],
+    "allowed_domains": [
+      "seopan.es"
+    ],
+    "include_path_patterns": [
+      "/licitacion/",
+      "/obra-publica/"
+    ],
+    "require_include_path_match": true,
+    "exclude_path_patterns": [
+      "/contacto",
+      "/aviso-legal",
+      "/empleo",
+      "/noticias",
+      "/eventos"
+    ],
+    "max_depth": 2,
+    "max_pages": 50,
+    "min_link_score": 2,
+    "min_candidate_score": 6
   }
 ]
