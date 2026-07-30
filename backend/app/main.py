@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
@@ -939,17 +940,13 @@ def _service_rest_request(
 
 
 class CandidateApproveRequest(BaseModel):
-  name: str = Field(min_length=1, max_length=240)
-  country: str = Field(min_length=1, max_length=120)
+  name: Optional[str] = Field(default=None, max_length=240)
+  country: Optional[str] = Field(default=None, max_length=120)
   infrastructure_type: str = Field(min_length=1, max_length=80)
   budget_millions: Optional[float] = Field(default=None, ge=0)
   status: str = Field(min_length=1, max_length=40)
   description: Optional[str] = Field(default=None, max_length=4000)
-  slug: str = Field(
-    min_length=1,
-    max_length=180,
-    pattern=r'^[a-z0-9]+(?:-[a-z0-9]+)*$',
-  )
+  slug: Optional[str] = Field(default=None, max_length=180)
   notes: Optional[str] = Field(default=None, max_length=2000)
 
 
@@ -1068,9 +1065,25 @@ def approve_discovery_candidate(
 
   project_status = _candidate_project_status(payload.status)
   infrastructure_type = _candidate_infrastructure_type(payload.infrastructure_type)
-  slug = payload.slug.strip()
-  name = payload.name.strip()
-  country = payload.country.strip()
+  name = (payload.name or '').strip() or str(candidate.get('title') or '').strip()
+  slug = (payload.slug or '').strip() or str(candidate.get('proposed_slug') or '').strip()
+  country = (payload.country or '').strip() or str(candidate.get('country_hint') or '').strip()
+  summary = (
+    (payload.description or '').strip()
+    or str(candidate.get('description') or '').strip()
+    or str(candidate.get('title') or '').strip()
+  )
+
+  if not name:
+    raise HTTPException(status_code=422, detail='El nombre del proyecto es obligatorio.')
+  if not slug:
+    raise HTTPException(status_code=422, detail='El slug del proyecto es obligatorio.')
+  if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', slug):
+    raise HTTPException(status_code=422, detail='El slug del proyecto no es valido.')
+  if not country:
+    raise HTTPException(status_code=422, detail='El pais del proyecto es obligatorio.')
+  if not summary:
+    raise HTTPException(status_code=422, detail='El resumen del proyecto es obligatorio.')
 
   project_body = {
     'slug': slug,
@@ -1081,7 +1094,7 @@ def approve_discovery_candidate(
     'status': project_status,
     'budget_eur_m': payload.budget_millions,
     'timeframe': None,
-    'summary': payload.description.strip() if payload.description and payload.description.strip() else None,
+    'summary': summary,
     'route': None,
     'client': None,
     'key_focus': None,
