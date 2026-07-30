@@ -1089,20 +1089,17 @@ def approve_discovery_candidate(
     'slug': slug,
     'name': name,
     'country': country,
-    'city': None,
     'infrastructure_type': infrastructure_type,
     'status': project_status,
-    'budget_eur_m': payload.budget_millions,
-    'timeframe': None,
     'summary': summary,
-    'route': None,
-    'client': None,
-    'key_focus': None,
-    'required_services': None,
-    'official_source_url': candidate.get('canonical_url'),
-    'source_owner': candidate.get('source_owner'),
     'source_last_checked_at': utc_now_iso(),
   }
+  if payload.budget_millions is not None:
+    project_body['budget_eur_m'] = payload.budget_millions
+  if candidate.get('canonical_url'):
+    project_body['official_source_url'] = candidate['canonical_url']
+  if candidate.get('source_owner'):
+    project_body['source_owner'] = candidate['source_owner']
 
   project_rows = _service_rest_request('POST', 'european_projects', json_body=project_body)
   if not project_rows:
