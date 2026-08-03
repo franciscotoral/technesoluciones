@@ -80,6 +80,264 @@
   margin-top: 8px;
 }
 
+.early-access-separator {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  grid-column: 1 / -1;
+  gap: 14px;
+  margin: 38px 0 12px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.early-access-separator-line {
+  height: 1px;
+  min-width: 20px;
+  flex: 1;
+  background: rgba(100, 116, 139, 0.6);
+}
+
+.early-access-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 14px;
+}
+
+.tool-card--early-access {
+  min-width: 0;
+  height: 100%;
+  box-shadow: none;
+}
+
+.tool-card--early-access .service-card-body {
+  min-width: 0;
+  padding: 11px 13px 13px;
+}
+
+.early-access-thumb {
+  height: 104px;
+  flex: 0 0 104px;
+}
+
+.early-access-illustration {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.early-access-category-badge {
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  border: 1px solid transparent;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.early-access-title {
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.early-access-tagline {
+  min-height: 2.8em;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.early-access-description {
+  display: -webkit-box;
+  max-height: 4.5em;
+  overflow: hidden;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.early-access-footer {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.early-access-status {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.1);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.early-access-link {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
+}
+
+.early-access-link:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.tool-card--early-access[data-visual-variant='inspection'] {
+  .early-access-thumb {
+    background: #1a1a2e;
+  }
+
+  .early-access-illustration,
+  .early-access-category-badge,
+  .early-access-link {
+    color: #4a9eff;
+  }
+
+  .early-access-category-badge,
+  .early-access-link {
+    border-color: rgba(74, 158, 255, 0.25);
+    background: rgba(74, 158, 255, 0.2);
+  }
+}
+
+.tool-card--early-access[data-visual-variant='facility'] {
+  .early-access-thumb {
+    background: #0a1f0a;
+  }
+
+  .early-access-illustration,
+  .early-access-category-badge,
+  .early-access-link {
+    color: #00c851;
+  }
+
+  .early-access-category-badge,
+  .early-access-link {
+    border-color: rgba(0, 200, 81, 0.25);
+    background: rgba(0, 200, 81, 0.2);
+  }
+}
+
+.tool-card--early-access[data-visual-variant='regulations'] {
+  .early-access-thumb {
+    background: #1e0a2e;
+  }
+
+  .early-access-illustration,
+  .early-access-category-badge,
+  .early-access-link {
+    color: #c084fc;
+  }
+
+  .early-access-category-badge,
+  .early-access-link {
+    border-color: rgba(192, 132, 252, 0.25);
+    background: rgba(192, 132, 252, 0.2);
+  }
+}
+
+.tool-card--early-access[data-visual-variant='construction'] {
+  .early-access-thumb {
+    background: #1e1200;
+  }
+
+  .early-access-illustration,
+  .early-access-category-badge,
+  .early-access-link {
+    color: #f59e0b;
+  }
+
+  .early-access-category-badge,
+  .early-access-link {
+    border-color: rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.2);
+  }
+}
+
+:host-context(body.theme-light) {
+  .early-access-separator {
+    color: #64748b;
+  }
+
+  .early-access-separator-line {
+    background: rgba(100, 116, 139, 0.44);
+  }
+
+  .early-access-status {
+    border-color: rgba(71, 85, 105, 0.22);
+    background: rgba(71, 85, 105, 0.08);
+    color: #475569;
+  }
+
+  .early-access-link:focus-visible {
+    outline-color: #0f172a;
+  }
+
+  .tool-card--early-access[data-visual-variant='inspection'] .early-access-link {
+    color: #1d4ed8;
+  }
+
+  .tool-card--early-access[data-visual-variant='facility'] .early-access-link {
+    color: #087f3d;
+  }
+
+  .tool-card--early-access[data-visual-variant='regulations'] .early-access-link {
+    color: #7e22ce;
+  }
+
+  .tool-card--early-access[data-visual-variant='construction'] .early-access-link {
+    color: #92400e;
+  }
+}
+
+@media (min-width: 640px) {
+  .early-access-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1440px) {
+  .early-access-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .projects-grid {
   .project-card {
     display: flex;
@@ -330,6 +588,11 @@
     border-color: rgba(255, 255, 255, 0.16);
   }
 
+  .tool-card--early-access:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
   .projects-grid .project-card:hover {
     transform: translateY(-2px);
     border-color: rgba(255, 255, 255, 0.16);
@@ -339,13 +602,19 @@
   .projects-grid .project-btn:hover {
     filter: brightness(1.08);
   }
+
+  .early-access-link:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .service-card,
   .projects-grid .project-card,
   .projects-grid .project-progress-fill,
-  .projects-grid .project-btn {
+  .projects-grid .project-btn,
+  .early-access-link {
     transition: none;
   }
 }

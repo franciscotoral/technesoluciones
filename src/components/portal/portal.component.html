@@ -370,6 +370,96 @@
                 </article>
               }
             </div>
+
+            <div
+              class="early-access-separator"
+              role="separator"
+              [attr.aria-label]="i18n.lang() === 'es' ? 'Próximamente en Techne' : 'Coming soon to Techne'"
+            >
+              <span class="early-access-separator-line" aria-hidden="true"></span>
+              <span>{{ i18n.lang() === 'es' ? 'Próximamente en Techne' : 'Coming soon to Techne' }}</span>
+              <span class="early-access-separator-line" aria-hidden="true"></span>
+            </div>
+
+            <div class="early-access-grid">
+              @for (tool of earlyAccessTools; track tool.id) {
+                <article
+                  class="service-card tool-card--early-access flex flex-col border border-slate-700/60 bg-slate-900/40"
+                  [attr.data-visual-variant]="tool.visualVariant"
+                  [attr.aria-labelledby]="'early-access-title-' + tool.id"
+                >
+                  <div class="card-thumb early-access-thumb">
+                    <div class="card-thumb-pattern" aria-hidden="true"></div>
+
+                    @switch (tool.visualVariant) {
+                      @case ('inspection') {
+                        <svg class="early-access-illustration" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                          <path d="M34 88V30h72v58M50 42h12m12 0h12M50 56h12m12 0h12M50 70h12m12 0h12M25 88h95" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <path d="M106 38h24v50h-24" fill="currentColor" opacity="0.18"/>
+                          <circle cx="143" cy="57" r="17" fill="none" stroke="currentColor" stroke-width="2.5"/>
+                          <path d="m155 69 14 14M136 57l5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      }
+                      @case ('facility') {
+                        <svg class="early-access-illustration" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                          <path d="M34 89V34h66v55M49 47h10m16 0h10M49 61h10m16 0h10M49 75h10m16 0h10M25 89h88" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                          <circle cx="144" cy="60" r="21" fill="currentColor" opacity="0.18" stroke="currentColor" stroke-width="1.5"/>
+                          <circle cx="144" cy="60" r="8" fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="2.5"/>
+                          <path d="M144 34v10m0 32v10m26-26h-10m-32 0h-10m44.4-18.4-7.1 7.1m-22.6 22.6-7.1 7.1m36.8 0-7.1-7.1m-22.6-22.6-7.1-7.1" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                      }
+                      @case ('regulations') {
+                        <svg class="early-access-illustration" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                          <path d="M45 24h72l17 17v48H45z" fill="currentColor" opacity="0.15"/>
+                          <path d="M45 24h72l17 17v48H45V24Zm72 0v18h17M60 49h44M60 62h34M60 75h25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M151 51c-9 0-16 7-16 16 0 12 16 25 16 25s16-13 16-25c0-9-7-16-16-16Z" fill="currentColor" opacity="0.27"/>
+                          <circle cx="151" cy="67" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                      }
+                      @case ('construction') {
+                        <svg class="early-access-illustration" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                          <path d="m28 72 47-24 47 24-47 24-47-24Zm0-13 47-24 47 24M28 85l47 24 47-24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="m111 69 25-13 27 13-27 14-25-14Z" fill="currentColor" opacity="0.24"/>
+                          <path d="M137 83v-9m13-23V31m-14 20V38m-14 13v-7M117 27h39" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                      }
+                    }
+
+                    <span class="service-badge early-access-category-badge">
+                      {{ earlyAccessText(tool.category) }}
+                    </span>
+                  </div>
+
+                  <div class="service-card-body flex flex-1 flex-col">
+                    <h3
+                      class="service-card-title early-access-title text-white"
+                      [id]="'early-access-title-' + tool.id"
+                    >
+                      {{ earlyAccessText(tool.name) }}
+                    </h3>
+                    <p class="early-access-tagline text-slate-300">
+                      {{ earlyAccessText(tool.tagline) }}
+                    </p>
+                    <p class="service-card-description early-access-description flex-grow text-gray-400">
+                      {{ earlyAccessText(tool.description) }}
+                    </p>
+
+                    <div class="service-card-footer early-access-footer">
+                      <span class="early-access-status">
+                        {{ i18n.lang() === 'es' ? 'Próximamente' : 'Coming soon' }}
+                      </span>
+                      <a
+                        class="early-access-link"
+                        [href]="earlyAccessMailto(tool)"
+                        [attr.aria-label]="(i18n.lang() === 'es' ? 'Solicitar acceso anticipado a ' : 'Request early access to ') + earlyAccessText(tool.name)"
+                      >
+                        {{ i18n.lang() === 'es' ? 'Solicitar acceso anticipado' : 'Request early access' }}
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
           }
         </section>
 

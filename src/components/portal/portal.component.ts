@@ -25,6 +25,22 @@ interface PortalTool {
   badge: string;
 }
 
+interface LocalisedText {
+  es: string;
+  en: string;
+}
+
+type EarlyAccessVisualVariant = 'inspection' | 'facility' | 'regulations' | 'construction';
+
+interface EarlyAccessTool {
+  id: string;
+  name: LocalisedText;
+  tagline: LocalisedText;
+  description: LocalisedText;
+  category: LocalisedText;
+  visualVariant: EarlyAccessVisualVariant;
+}
+
 type DashboardVisibility = Record<DashboardBlockId, boolean>;
 
 interface TimelinePhase {
@@ -102,6 +118,65 @@ export class PortalComponent implements OnInit, OnDestroy {
       thumbnailColor: '#2C1A4A',
       accentColor: '#7F77DD',
       badge: 'IA',
+    },
+  ];
+
+  readonly earlyAccessTools: readonly EarlyAccessTool[] = [
+    {
+      id: 'ite-iee',
+      name: { es: 'Informes ITE · IEE', en: 'ITE · IEE Reports' },
+      tagline: {
+        es: 'Inspección técnica digital de edificios',
+        en: 'Digital technical inspection of buildings',
+      },
+      description: {
+        es: 'Digitaliza inspecciones, recopila evidencias y genera informes automáticamente.',
+        en: 'Digitise inspections, collect evidence and generate reports automatically.',
+      },
+      category: { es: 'Inspección', en: 'Inspection' },
+      visualVariant: 'inspection',
+    },
+    {
+      id: 'facility-management-ia',
+      name: { es: 'Facility Management IA', en: 'AI Facility Management' },
+      tagline: {
+        es: 'Gestión inteligente de activos e instalaciones',
+        en: 'Intelligent asset and facility management',
+      },
+      description: {
+        es: 'Centraliza el mantenimiento y anticipa fallos mediante inteligencia artificial.',
+        en: 'Centralise maintenance and anticipate failures using artificial intelligence.',
+      },
+      category: { es: 'FM', en: 'FM' },
+      visualVariant: 'facility',
+    },
+    {
+      id: 'normativa-urbanistica-cte',
+      name: { es: 'Normativa Urbanística y CTE', en: 'Urban Planning & CTE Analyser' },
+      tagline: {
+        es: 'Normativa aplicable a tu local o actividad',
+        en: 'Applicable regulations for your premises',
+      },
+      description: {
+        es: 'Identifica la normativa urbanística y técnica aplicable a cada local y actividad.',
+        en: 'Identify the planning and technical regulations applicable to each premises and activity.',
+      },
+      category: { es: 'Normativa', en: 'Regulations' },
+      visualVariant: 'regulations',
+    },
+    {
+      id: 'sistemas-constructivos',
+      name: { es: 'Sistemas Constructivos', en: 'Construction Systems' },
+      tagline: {
+        es: 'Compara sistemas con datos técnicos reales',
+        en: 'Compare systems with real technical data',
+      },
+      description: {
+        es: 'Compara alternativas, costes de ciclo de vida y necesidades de mantenimiento.',
+        en: 'Compare alternatives, lifecycle costs and maintenance requirements.',
+      },
+      category: { es: 'Construcción', en: 'Construction' },
+      visualVariant: 'construction',
     },
   ];
 
@@ -214,6 +289,21 @@ export class PortalComponent implements OnInit, OnDestroy {
   requestAccessHref(tool: PortalTool): string {
     const subject = encodeURIComponent(`Solicitud de acceso: ${tool.name}`);
     return `mailto:francisco.toral@technesoluciones.es?subject=${subject}`;
+  }
+
+  earlyAccessText(text: LocalisedText): string {
+    return this.i18n.lang() === 'es' ? text.es : text.en;
+  }
+
+  earlyAccessMailto(tool: EarlyAccessTool): string {
+    const isSpanish = this.i18n.lang() === 'es';
+    const name = this.earlyAccessText(tool.name);
+    const subject = isSpanish ? `Acceso anticipado: ${name}` : `Early access: ${name}`;
+    const body = isSpanish
+      ? `Hola, me interesa acceder antes del lanzamiento de ${name}.\n\nMi empresa es:`
+      : `Hi, I would like early access to ${name}.\n\nMy company is:`;
+
+    return `mailto:francisco.toral@technesoluciones.es?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   accentRgba(hex: string, alpha: number): string {
