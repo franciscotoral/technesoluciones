@@ -15,20 +15,14 @@
           <a href="/#services" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Servicios' : 'Services' }}
           </a>
+          <a href="/#how" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Cómo funciona' : 'How it works' }}
+          </a>
+          <a href="/#plans" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Planes' : 'Plans' }}
+          </a>
           <a routerLink="/cases" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}
-          </a>
-          <a routerLink="/projects" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
-          </a>
-          <a routerLink="/briefing" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            Briefing
-          </a>
-          <a href="#" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
-          </a>
-          <a routerLink="/contact" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}
+            {{ i18n.lang() === 'es' ? 'Casos' : 'Cases' }}
           </a>
         </nav>
       </div>
@@ -89,8 +83,9 @@
             routerLink="/login"
             class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300"
           >
-            {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
+            {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
           </a>
+          <a routerLink="/contact" class="bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
         }
       </div>
 
@@ -115,20 +110,14 @@
           <a href="/#services" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
             {{ i18n.lang() === 'es' ? 'Servicios' : 'Services' }}
           </a>
+          <a href="/#how" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Cómo funciona' : 'How it works' }}
+          </a>
+          <a href="/#plans" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
+            {{ i18n.lang() === 'es' ? 'Planes' : 'Plans' }}
+          </a>
           <a routerLink="/cases" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Casos de Estudio' : 'Case Studies' }}
-          </a>
-          <a routerLink="/projects" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Proyectos' : 'Projects' }}
-          </a>
-          <a routerLink="/briefing" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            Briefing
-          </a>
-          <a href="#" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Nosotros' : 'About Us' }}
-          </a>
-          <a routerLink="/contact" (click)="closeMenu()" class="text-[#0d1f33] hover:text-[#0a4a86] transition-colors duration-200">
-            {{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}
+            {{ i18n.lang() === 'es' ? 'Casos' : 'Cases' }}
           </a>
         </nav>
 
@@ -193,8 +182,9 @@
               (click)="closeMenu()"
               class="border border-[#0a4a86] text-[#0a4a86] px-4 py-2 rounded-md text-center font-semibold hover:bg-[#0a4a86] hover:text-white transition-colors duration-300"
             >
-              {{ i18n.lang() === 'es' ? 'Acceso' : 'Login' }}
+              {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
             </a>
+            <a routerLink="/contact" (click)="closeMenu()" class="bg-[#0a4a86] text-white px-4 py-2 rounded-md text-center font-semibold">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
           }
         </div>
       </div>

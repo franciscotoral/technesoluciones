@@ -85,6 +85,18 @@ export class PortalComponent implements OnInit, OnDestroy {
   readonly misProyectosLoading = signal(true);
   readonly misProyectosError = signal<string | null>(null);
 
+  greeting(): string {
+    const hour = new Date().getHours();
+    if (this.i18n.lang() === 'en') return hour < 12 ? 'Good morning' : hour < 19 ? 'Good afternoon' : 'Good evening';
+    return hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  }
+
+  activeProjectCount(): number {
+    const clientProjects = this.misProyectos().filter(project => project.estado === 'activo').length;
+    if (clientProjects) return clientProjects;
+    return this.projects().filter(project => project.status.toLowerCase() === 'active' || project.status.toLowerCase() === 'activo').length;
+  }
+
   readonly tools: PortalTool[] = [
     {
       key: 'pipeline',
