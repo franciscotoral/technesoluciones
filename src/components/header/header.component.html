@@ -48,13 +48,13 @@
             type="button"
             (click)="i18n.setLang('es')"
             class="px-2 py-1 text-xs font-semibold"
-            [class]="i18n.lang() === 'es' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+            [class]="i18n.lang() === 'es' ? 'bg-[#0a4a86] text-white brand-contrast-text px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
           >ES</button>
           <button
             type="button"
             (click)="i18n.setLang('en')"
             class="px-2 py-1 text-xs font-semibold"
-            [class]="i18n.lang() === 'en' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+            [class]="i18n.lang() === 'en' ? 'bg-[#0a4a86] text-white brand-contrast-text px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
           >EN</button>
         </div>
 
@@ -85,7 +85,7 @@
           >
             {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
           </a>
-          <a routerLink="/contact" class="bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
+          <a routerLink="/contact" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
         }
       </div>
 
@@ -142,13 +142,13 @@
               type="button"
               (click)="i18n.setLang('es')"
               class="px-2 py-1 text-xs font-semibold"
-              [class]="i18n.lang() === 'es' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+              [class]="i18n.lang() === 'es' ? 'bg-[#0a4a86] text-white brand-contrast-text px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
             >ES</button>
             <button
               type="button"
               (click)="i18n.setLang('en')"
               class="px-2 py-1 text-xs font-semibold"
-              [class]="i18n.lang() === 'en' ? 'bg-[#0a4a86] text-white px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
+              [class]="i18n.lang() === 'en' ? 'bg-[#0a4a86] text-white brand-contrast-text px-2 py-1 text-xs font-semibold' : 'bg-white text-[#0d1f33] px-2 py-1 text-xs font-semibold'"
             >EN</button>
           </div>
         </div>
@@ -184,7 +184,7 @@
             >
               {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
             </a>
-            <a routerLink="/contact" (click)="closeMenu()" class="bg-[#0a4a86] text-white px-4 py-2 rounded-md text-center font-semibold">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
+            <a routerLink="/contact" (click)="closeMenu()" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md text-center font-semibold">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
           }
         </div>
       </div>

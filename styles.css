@@ -67,6 +67,10 @@ body.theme-light .text-slate-300 {
   color: #0f172a !important;
 }
 
+body.theme-light .brand-contrast-text {
+  color: #ffffff !important;
+}
+
 body.theme-light .text-gray-400,
 body.theme-light .text-gray-500,
 body.theme-light .text-slate-400 {
