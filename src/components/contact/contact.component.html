@@ -1,20 +1,36 @@
-﻿<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
+<div class="min-h-screen flex flex-col bg-[#0d1f33] text-gray-300">
   <app-header></app-header>
 
   <main class="flex-grow py-16 md:py-24">
     <section class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
-        <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">{{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }}</h1>
+        <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">
+          @switch (intent()) {
+            @case ('demo') { {{ i18n.lang() === 'es' ? 'Solicitar una demostración' : 'Request a demo' }} }
+            @case ('access') { {{ i18n.lang() === 'es' ? 'Solicitar acceso' : 'Request access' }} }
+            @case ('proposal') { {{ i18n.lang() === 'es' ? 'Solicitar una propuesta' : 'Request a proposal' }} }
+            @default { {{ i18n.lang() === 'es' ? 'Contacto' : 'Contact' }} }
+          }
+        </h1>
         <p class="mt-4 text-lg text-gray-400">
-          {{ i18n.lang() === 'es' ? 'Cuéntanos sobre tu proyecto y te responderemos con un diagnóstico y próximos pasos.' : 'Tell us about your project and we will get back to you with a tailored diagnostic and next steps.' }}
+          {{ i18n.lang() === 'es' ? 'Cuéntanos qué decisión necesitas resolver y con qué datos cuentas. Te responderemos con los próximos pasos.' : 'Tell us which decision you need to make and what data you have. We will get back to you with next steps.' }}
         </p>
       </div>
 
       <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <article class="rounded-xl border border-gray-700/50 bg-slate-900/40 p-6 md:p-8">
-          <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Envíanos un mensaje' : 'Send us a message' }}</h2>
+          <h2 class="text-xl font-semibold text-white">{{ i18n.lang() === 'es' ? 'Datos de la solicitud' : 'Request details' }}</h2>
+          <p class="mt-2 text-sm text-amber-200/90">{{ i18n.lang() === 'es' ? 'No incluyas formulaciones ni información confidencial en este formulario.' : 'Please do not include formulations or confidential information in this form.' }}</p>
 
           <form class="mt-6 space-y-4" [formGroup]="contactForm" (ngSubmit)="submitForm()" novalidate>
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="company">{{ i18n.lang() === 'es' ? 'Empresa' : 'Company' }}</label>
+              <input id="company" formControlName="company" type="text" autocomplete="organization" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              @if (contactForm.controls.company.touched && contactForm.controls.company.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Indica el nombre de la empresa.' : 'Enter your company name.' }}</p>
+              }
+            </div>
+
             <div>
               <label class="block text-sm text-gray-300 mb-1" for="name">{{ i18n.lang() === 'es' ? 'Nombre completo' : 'Full name' }}</label>
               <input id="name" formControlName="name" type="text" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -24,43 +40,77 @@
             </div>
 
             <div>
-              <label class="block text-sm text-gray-300 mb-1" for="email">Email</label>
-              <input id="email" formControlName="email" type="email" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label class="block text-sm text-gray-300 mb-1" for="email">{{ i18n.lang() === 'es' ? 'Correo profesional' : 'Work email' }}</label>
+              <input id="email" formControlName="email" type="email" autocomplete="email" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               @if (contactForm.controls.email.touched && contactForm.controls.email.invalid) {
                 <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Introduce un correo válido.' : 'Enter a valid email address.' }}</p>
               }
             </div>
 
             <div>
-              <label class="block text-sm text-gray-300 mb-1" for="company">{{ i18n.lang() === 'es' ? 'Empresa' : 'Company' }}</label>
-              <input id="company" formControlName="company" type="text" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-
-            <div>
-              <label class="block text-sm text-gray-300 mb-1" for="message">{{ i18n.lang() === 'es' ? 'Mensaje' : 'Message' }}</label>
-              <textarea id="message" formControlName="message" rows="5" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-              @if (contactForm.controls.message.touched && contactForm.controls.message.invalid) {
-                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Añade más contexto (mín. 10 caracteres).' : 'Please add a bit more context (min 10 characters).' }}</p>
+              <label class="block text-sm text-gray-300 mb-1" for="tool">{{ i18n.lang() === 'es' ? 'Herramienta de interés' : 'Tool of interest' }}</label>
+              <select id="tool" formControlName="tool" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="" disabled>{{ i18n.lang() === 'es' ? 'Selecciona una opción' : 'Select an option' }}</option>
+                @for (t of tools; track t.id) { <option [value]="t.id">{{ i18n.lang() === 'es' ? t.es : t.en }}</option> }
+              </select>
+              @if (contactForm.controls.tool.touched && contactForm.controls.tool.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Selecciona una herramienta.' : 'Select a tool.' }}</p>
               }
             </div>
 
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="decision">{{ i18n.lang() === 'es' ? 'Decisión que necesitas resolver' : 'Decision you need to make' }}</label>
+              <textarea id="decision" formControlName="decision" rows="3" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              @if (contactForm.controls.decision.touched && contactForm.controls.decision.invalid) {
+                <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Describe brevemente la decisión (mín. 10 caracteres).' : 'Briefly describe the decision (min 10 characters).' }}</p>
+              }
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm text-gray-300 mb-1" for="frequency">{{ i18n.lang() === 'es' ? 'Frecuencia' : 'Frequency' }}</label>
+                <select id="frequency" formControlName="frequency" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="" disabled>{{ i18n.lang() === 'es' ? 'Selecciona' : 'Select' }}</option>
+                  @for (f of frequencies; track f.id) { <option [value]="f.id">{{ i18n.lang() === 'es' ? f.es : f.en }}</option> }
+                </select>
+                @if (contactForm.controls.frequency.touched && contactForm.controls.frequency.invalid) {
+                  <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Selecciona la frecuencia.' : 'Select a frequency.' }}</p>
+                }
+              </div>
+              <div>
+                <label class="block text-sm text-gray-300 mb-1" for="dataAvailability">{{ i18n.lang() === 'es' ? 'Disponibilidad de datos' : 'Data availability' }}</label>
+                <select id="dataAvailability" formControlName="dataAvailability" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="" disabled>{{ i18n.lang() === 'es' ? 'Selecciona' : 'Select' }}</option>
+                  @for (d of dataOptions; track d.id) { <option [value]="d.id">{{ i18n.lang() === 'es' ? d.es : d.en }}</option> }
+                </select>
+                @if (contactForm.controls.dataAvailability.touched && contactForm.controls.dataAvailability.invalid) {
+                  <p class="mt-1 text-xs text-red-300">{{ i18n.lang() === 'es' ? 'Indica qué datos tienes.' : 'Tell us what data you have.' }}</p>
+                }
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-1" for="message">{{ i18n.lang() === 'es' ? 'Comentarios (opcional)' : 'Comments (optional)' }}</label>
+              <textarea id="message" formControlName="message" rows="3" class="w-full rounded-md border border-gray-600 bg-slate-800/70 px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
             @if (submitError()) {
-              <p class="text-sm text-red-300">{{ submitError() }}</p>
+              <p role="alert" class="text-sm text-red-300">{{ submitError() }}</p>
             }
 
             @if (submitOk()) {
-              <p class="text-sm text-green-300">{{ i18n.lang() === 'es' ? 'Mensaje enviado correctamente. Te contactaremos pronto.' : 'Message sent successfully. We will contact you shortly.' }}</p>
+              <p role="status" class="text-sm text-green-300">{{ i18n.lang() === 'es' ? 'Solicitud enviada. Te contactaremos pronto.' : 'Request sent. We will contact you shortly.' }}</p>
             }
 
             <button
               type="submit"
               [disabled]="submitting()"
-              class="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              class="inline-flex items-center justify-center rounded-md bg-blue-600 brand-contrast-text px-5 py-3 font-semibold text-white hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               @if (submitting()) {
                 {{ i18n.lang() === 'es' ? 'Enviando...' : 'Sending...' }}
               } @else {
-                {{ i18n.lang() === 'es' ? 'Enviar mensaje' : 'Send Message' }}
+                {{ i18n.lang() === 'es' ? 'Enviar solicitud' : 'Send request' }}
               }
             </button>
           </form>

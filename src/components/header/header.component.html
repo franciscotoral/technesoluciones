@@ -33,13 +33,13 @@
             type="button"
             (click)="theme.setTheme('dark')"
             class="px-3 py-1 text-xs font-semibold"
-            [class]="theme.theme() === 'dark' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+            [class]="theme.theme() === 'dark' ? 'bg-[#0a4a86] text-white brand-contrast-text' : 'bg-white text-[#0d1f33]'"
           >Dark</button>
           <button
             type="button"
             (click)="theme.setTheme('light')"
             class="px-3 py-1 text-xs font-semibold"
-            [class]="theme.theme() === 'light' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+            [class]="theme.theme() === 'light' ? 'bg-[#0a4a86] text-white brand-contrast-text' : 'bg-white text-[#0d1f33]'"
           >Light</button>
         </div>
 
@@ -85,12 +85,12 @@
           >
             {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
           </a>
-          <a routerLink="/contact" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
+          <a routerLink="/contact" [queryParams]="{intent: 'access'}" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md font-semibold hover:bg-[#083963] transition-colors duration-300">{{ i18n.lang() === 'es' ? 'Solicitar acceso' : 'Request access' }}</a>
         }
       </div>
 
       <div class="md:hidden">
-        <button type="button" (click)="toggleMenu()" class="text-[#0d1f33] hover:text-[#0a4a86]">
+        <button type="button" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" [attr.aria-label]="i18n.lang() === 'es' ? 'Abrir o cerrar menú' : 'Toggle menu'" class="text-[#0d1f33] hover:text-[#0a4a86]">
           <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             @if (menuOpen()) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -127,13 +127,13 @@
               type="button"
               (click)="theme.setTheme('dark')"
               class="px-3 py-1 text-xs font-semibold"
-              [class]="theme.theme() === 'dark' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+              [class]="theme.theme() === 'dark' ? 'bg-[#0a4a86] text-white brand-contrast-text' : 'bg-white text-[#0d1f33]'"
             >Dark</button>
             <button
               type="button"
               (click)="theme.setTheme('light')"
               class="px-3 py-1 text-xs font-semibold"
-              [class]="theme.theme() === 'light' ? 'bg-[#0a4a86] text-white' : 'bg-white text-[#0d1f33]'"
+              [class]="theme.theme() === 'light' ? 'bg-[#0a4a86] text-white brand-contrast-text' : 'bg-white text-[#0d1f33]'"
             >Light</button>
           </div>
 
@@ -184,7 +184,7 @@
             >
               {{ i18n.lang() === 'es' ? 'Iniciar sesión' : 'Sign in' }}
             </a>
-            <a routerLink="/contact" (click)="closeMenu()" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md text-center font-semibold">{{ i18n.lang() === 'es' ? 'Crear cuenta gratis' : 'Create free account' }}</a>
+            <a routerLink="/contact" [queryParams]="{intent: 'access'}" (click)="closeMenu()" class="brand-contrast-text bg-[#0a4a86] text-white px-4 py-2 rounded-md text-center font-semibold">{{ i18n.lang() === 'es' ? 'Solicitar acceso' : 'Request access' }}</a>
           }
         </div>
       </div>
